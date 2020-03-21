@@ -1,0 +1,11 @@
+# This is gitignore file
+
+ ############
+## binaries ##
+ ############
+ 
+*.a
+*.bin
+*.out
+*.elf
+*.exe
