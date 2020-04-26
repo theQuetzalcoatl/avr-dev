@@ -9,6 +9,7 @@ OBJECT_FILES =
  #################################
 # this part will flash the binary #
  #################################
+.PHONY: upload
 upload:
  
  ###############################
