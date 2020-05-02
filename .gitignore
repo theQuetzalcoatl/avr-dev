@@ -9,3 +9,11 @@
 *.out
 *.elf
 *.exe
+*.hex
+*.o
+
+ #################
+## Miscellaneous ##
+ #################
+ 
+EXAMPLE.mk
