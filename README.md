@@ -26,7 +26,7 @@ The PCB will be a single one and will contain HW elements as:
 * voltage/angle sensing
 * Rotary encoder
 
-More information:
+More information: [HW](https://github.com/theQuetzalcoatl/avr-dev/blob/master/HW/README.md "Hardware")
 
 ### Software:
 
@@ -38,4 +38,4 @@ And on top of that, the **Application**
 
 The SW architecture will slightly resamble that of the AUTOSAR standard's.
 
-More information:
+More information: [SW](https://github.com/theQuetzalcoatl/avr-dev/blob/master/SW/README.md "Software")
