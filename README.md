@@ -38,4 +38,4 @@ And on top of that, the **Application**
 
 The SW architecture will slightly resamble that of the AUTOSAR standard's.
 
-More information:
+More information: [SW](https://github.com/theQuetzalcoatl/avr-dev/blob/master/SW/README.md "Software")
