@@ -24,9 +24,9 @@ MEMORY_SECTIONS = --only-section=.text --only-section=.data
 #############################################################################
 #############################################################################
 
- #################################
-## this part will compile the SW ##
- #################################
+ ##################
+## compile the SW ##
+ ##################
 .PHONY: all
 
 all: $(ELF_FILE)
@@ -34,9 +34,9 @@ $(ELF_FILE): $(OBJECT_FILES)
 	# here goes something
 	avr-size --format=avr --mcu=atmega128 $@
 
- ###################################
-## this part will flash the binary ##
- ###################################
+ ####################
+## flash the binary ##
+ ####################
 .PHONY: upload
 
 upload: $(HEX_FILE)

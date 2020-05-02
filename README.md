@@ -14,7 +14,7 @@ A AVR based development board is currently being developed to support the the SW
 
 The PCB will be a single one and will contain HW elements as:
 * LCD
-* ADC
+* DAC
 * Buzzer
 * LEDs & buttons
 * Keypad
