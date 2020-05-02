@@ -26,7 +26,7 @@ The PCB will be a single one and will contain HW elements as:
 * voltage/angle sensing
 * Rotary encoder
 
-More information:
+More information: [HW](https://github.com/theQuetzalcoatl/avr-dev/blob/master/HW/README.md "Hardware")
 
 ### Software:
 
