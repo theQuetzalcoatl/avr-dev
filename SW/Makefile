@@ -32,6 +32,7 @@ MEMORY_SECTIONS = --only-section=.text --only-section=.data
 all: $(ELF_FILE)
 $(ELF_FILE): $(OBJECT_FILES)
 	# here goes something
+	# here definitely should go some 'find' command magic
 	avr-size --format=avr --mcu=atmega128 $@
 
  ####################
