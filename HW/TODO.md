@@ -10,4 +10,5 @@
 * [ ] Separate Arduino programmer from the board, only SPI connectrions shall remain
 * [ ] Change the connector pinout to the USB/UART module to have it 5V
 * [ ] Change position of C17,C9 and L1
-* [ ] Use one resistor for Tx pin insted of R30 and R12 
+* [ ] Use one resistor for Tx pin insted of R30 and R12
+* [ ] Rotary encoder's case shall be grounded
