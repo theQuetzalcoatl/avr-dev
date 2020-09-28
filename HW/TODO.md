@@ -12,3 +12,4 @@
 * [ ] Change position of C17,C9 and L1
 * [ ] Use one resistor for Tx pin insted of R30 and R12
 * [ ] Rotary encoder's case shall be grounded
+* [ ] Led resistors to the back side
