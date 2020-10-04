@@ -41,7 +41,7 @@ int main()
 	_delay_ms(1);
 	LCD_flash();
 	// 4)
-	PORTB &= ~(1<<LCD_D4);	// 0b0010xxxx 
+	LCD_PORT &= ~(1<<LCD_D4);	// 0b0010xxxx 
 	_delay_ms(5);
 	LCD_flash();
 	// 5)
@@ -70,13 +70,13 @@ int main()
 }
 
 static void LCD_flash(void)
-	{
-		LCD_PORT |= (1<<EN);
-		asm("nop");
-		asm("nop");
-		asm("nop");		
-		LCD_PORT &= ~(1<<EN);
-	}
+{
+	LCD_PORT |= (1<<EN);
+	asm("nop");
+	asm("nop");
+	asm("nop");		
+	LCD_PORT &= ~(1<<EN);
+}
 	
 static void LCD_command(unsigned char command)
 {
