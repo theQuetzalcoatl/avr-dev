@@ -107,7 +107,7 @@ static void LCD_write(unsigned char data)
 	}
 
 /*
- * leds.c
+ * lcd.c
  * This file is part of examples
  *
  * Copyright (C) 2020 - theQuetzalcoatl

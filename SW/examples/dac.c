@@ -22,9 +22,9 @@ int main()
 
 /*
  * dac.c
- * This file is part of <program name>
+ * This file is part of examples
  *
- * Copyright (C) 2020 - Dani
+ * Copyright (C) 2020 - theQuetzalcoatl
  *
  * <program name> is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
