@@ -20,39 +20,59 @@
 #define ONLY_A_HIGH (0b01000000u)
 #define ONLY_B_HIGH (0b10000000u)
 
+#define NO_ROTATION (0u)
+#define CLOCKWISE (1u)
+#define ANTI_CLOCKWISE (2u)
+#define HW_FAULT (3u)
+
+
 int main()
 {
 	/* rotary pins init */
 	DDRC &= ~(1<<PINC6 | 1<<PINC7);
 	PORTC |= (1<<PINC6 | 1<<PINC7); /* activating pullup resistors */
 	
-	/* init leds */
-	DDRC |= (1<<PINC2 | 1<<PINC3);
+	DDRC |= (1<<PINC2 | 1<<PINC3); 	/* init leds */
 	
-	unsigned char current_state = PINC & (1<<PINC7 | 1<<PINC6);
-	unsigned char previous_state = PINC & (1<<PINC7 | 1<<PINC6);
+	unsigned char current_state = PINC & 0b11000000;
+	unsigned char previous_state = PINC & 0b11000000;
 	
-	while(4){
-		current_state = PINC & (1<<PINC7 | 1<<PINC6); 
+	unsigned char direction_of_rotation = NO_ROTATION;
+	
+	while(1){
+		current_state = PINC & 0b11000000;
 		
-		if(previous_state == current_state){
-			;/* do nothing */		
+		if(current_state == previous_state) continue;
+		else{
+			switch(current_state){
+				case BOTH_HIGH:
+					if(previous_state == ONLY_A_HIGH) direction_of_rotation = ANTI_CLOCKWISE;
+					else if(previous_state == ONLY_B_HIGH) direction_of_rotation = CLOCKWISE;
+					else direction_of_rotation = HW_FAULT;
+					break;
+				case BOTH_LOW:
+					if(previous_state == ONLY_A_HIGH) direction_of_rotation = CLOCKWISE;
+					else if(previous_state == ONLY_B_HIGH) direction_of_rotation = ANTI_CLOCKWISE;
+					else direction_of_rotation = HW_FAULT;
+					break;
+				case ONLY_A_HIGH:
+					if(previous_state == BOTH_LOW) direction_of_rotation = ANTI_CLOCKWISE;
+					else if(previous_state == BOTH_HIGH) direction_of_rotation = CLOCKWISE;
+					else direction_of_rotation = HW_FAULT;
+					break;
+				case ONLY_B_HIGH:
+					if(previous_state == BOTH_LOW) direction_of_rotation = CLOCKWISE;
+					else if(previous_state == BOTH_HIGH) direction_of_rotation = ANTI_CLOCKWISE;
+					else direction_of_rotation = HW_FAULT;
+					break;
+				break;
+			}
+			
+			if(direction_of_rotation == CLOCKWISE) PORTC ^= 1<<PINC2; 
+			else if(direction_of_rotation == ANTI_CLOCKWISE) PORTC ^= 1<<PINC3;
+			else PORTC &= ~(1<<PINC2 | 1<<PINC1);
+			previous_state = current_state; 
 		}
-		else if( (previous_state == BOTH_LOW) && (current_state == ONLY_A_HIGH)  || /* 00 -> 01 */
-						 (previous_state == BOTH_HIGH) && (current_state == ONLY_B_HIGH) || /* 11 -> 10 */
-						 (previous_state == ONLY_A_HIGH) && (current_state == BOTH_HIGH) || /* 01 -> 11 */
-						 (previous_state == ONLY_B_HIGH) && (current_state == BOTH_LOW)){   /* 01 -> 00 */
-			PORTC ^= 1<<PINC2;
-			previous_state = current_state;
-		}
-		else if( (previous_state == ONLY_B_HIGH) && (current_state == BOTH_HIGH) || /* 10 -> 11 */
-				     (previous_state == ONLY_A_HIGH) && (current_state == BOTH_LOW)  || /* 01 -> 00 */
-				     (previous_state == BOTH_HIGH) && (current_state == ONLY_A_HIGH) || /* 11 -> 01 */
-				     (previous_state == BOTH_LOW) && (current_state == ONLY_B_HIGH)){   /* 00 -> 10 */
-			PORTC ^= 1<<PINC3;
-			previous_state = current_state;
-		}
-		_delay_ms(1);
 	}
 	
 	while(1){;}
@@ -66,12 +86,12 @@ int main()
  *
  * Copyright (C) 2020 - theQuetzalcoatl
  *
- * <program name> is free software; you can redistribute it and/or modify
+ * examples is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * <program name> is distributed in the hope that it will be useful,
+ * examples is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.

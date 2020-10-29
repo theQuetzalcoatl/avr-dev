@@ -2,42 +2,28 @@
 
 /**************************************************
  * description:
- * 
- * Initializes the UART peripheral.
- * Constantly send the 'U' character so it makes a
- * 4800 Hz square waveform which can be measured
- * with a DMM or an oscilloscope.
- * The example assume 8MHz system clock frequency.
- **************************************************/
-
+ * -------------------------------------
+ * Covering the LDR should light up LED1,
+ * uncovering it should turn it off.
+ * The turnon/off treshold can be adjusted using
+ * the pot. meter.
+ *************************************************/
+ 
 int main()
 {
-
-	UBRR0H = 0u;
-	UBRR0L = 51u; // 9600 baud rate
+	DDRE &= ~(1<<PINE1 | 1<<PINE2);
+	DDRC |= 1<<PINC2; /* LED1 ready */
 	
-	UCSR0B |= 1<<TXEN;
-	
-	UCSR0C &= ~(1<<UMSEL0 | 1<<UPM00 | 1<<UPM01 | 1<<USBS0 );
-	UCSR0C |= (1<<UCSZ00 | 1<<UCSZ01);
-	UCSR0B &= ~(1<<UCSZ02);
-
-	UDR0 = 0x55;
-
-	while(4)
-	{
-		while((UCSR0A & (1<<UDRE0)))
-		{
-			UDR0 = 0x55;
-		}
+	while(4){
+		if(ACSR & 1<<ACO) PORTC &= ~(1<<PINC2);
+		else PORTC |= 1<<PINC2;
 	}
 
  return 0;
 }
 
-
 /*
- * uart.c
+ * comparator.c
  * This file is part of examples
  *
  * Copyright (C) 2020 - theQuetzalcoatl
@@ -55,4 +41,5 @@ int main()
  * You should have received a copy of the GNU General Public License
  * along with <program name>. If not, see <http://www.gnu.org/licenses/>.
  */
+
 
