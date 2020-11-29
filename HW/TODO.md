@@ -16,3 +16,7 @@
 * [ ] Rotary encoder's case shall be grounded
 * [ ] Led resistors to the back side
 * [ ] Separate the analogue circuitries from each other.
+* [ ] Change the GND and VCC planes.
+* [ ] 5V Jack connector side fuse shall be placed before the zener diodes
+* [ ] Delete the voltage/angle sensor, a.k.a. pot meter and the one which is used for Analoge Comparison should be moved to one of the ADC multiplexer pins so it can be used for both.
+			Additionally, the placement of the pot. meter should be considered as it may get a handle or something. 
