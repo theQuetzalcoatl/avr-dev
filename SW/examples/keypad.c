@@ -81,7 +81,7 @@ int main()
 }
 
 /*
- * keyboard.c
+ * keypad.c
  * This file is part of examples
  *
  * Copyright (C) 2020 - theQuetzalcoatl
