@@ -20,3 +20,6 @@
 * [ ] 5V Jack connector side fuse shall be placed before the zener diodes
 * [ ] Delete the voltage/angle sensor, a.k.a. pot meter and the one which is used for Analoge Comparison should be moved to one of the ADC multiplexer pins so it can be used for both.
 			Additionally, the placement of the pot. meter should be considered as it may get a handle or something. 
+* [ ] Add Zner diode + resistor to tie the BJT's base to a lower voltage level in order to be able to function as current generator
+* [ ] Re-order the pinout to the keyboard
+* [ ] Reverse the order of leds to be able to visually represent binariy counting bits etc.. because right now it is backwards
