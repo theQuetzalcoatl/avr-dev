@@ -1,5 +1,5 @@
 **How to compile:**
-	$ make source=<sourcefile_name>
+	$ ./build.sh <sourcefile_name>
 	
 **example:**
-	$ make source=buttons.c
+	$ ./build.sh buttons.c
