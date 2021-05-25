@@ -9,17 +9,22 @@
 
 ---------------- v2.0 ----------------------
 
-* [ ] Separate Arduino programmer from the board, only SPI connectrions shall remain
-* [ ] Change the connector pinout to the USB/UART module to have it 5V
-* [ ] Change position of C17,C9 and L1
-* [ ] Use one resistor for Tx pin insted of R30 and R12
-* [ ] Rotary encoder's case shall be grounded
-* [ ] Led resistors to the back side
-* [ ] Separate the analogue circuitries from each other.
-* [ ] Change the GND and VCC planes.
-* [ ] 5V Jack connector side fuse shall be placed before the zener diodes
-* [ ] Delete the voltage/angle sensor, a.k.a. pot meter and the one which is used for Analoge Comparison should be moved to one of the ADC multiplexer pins so it can be used for both.
+* [x] Separate Arduino programmer from the board, only SPI connectrions shall remain
+* [x] Change the connector pinout to the USB/UART module to have it 5V
+* [x] Change position of C17,C9 and L1
+* [x] Use one resistor for Tx pin insted of R30 and R12
+* [x] Rotary encoder's case shall be grounded
+* [x] Led resistors to the back side
+* [x] Separate the analogue circuitries from each other.
+* [x] Change the GND and VCC planes.
+* [x] 5V Jack connector side fuse shall be placed before the zener diodes
+* [-] Delete the voltage/angle sensor, a.k.a. pot meter and the one which is used for Analoge Comparison should be moved to one of the ADC multiplexer pins so it can be used for both.
 			Additionally, the placement of the pot. meter should be considered as it may get a handle or something. 
-* [ ] Add Zner diode + resistor to tie the BJT's base to a lower voltage level in order to be able to function as current generator
-* [ ] Re-order the pinout to the keyboard
-* [ ] Reverse the order of leds to be able to visually represent binariy counting bits etc.. because right now it is backwards
+* [x] Add Zner diode + resistor to tie the BJT's base to a lower voltage level in order to be able to function as current generator
+* [-] Re-order the pinout to the keyboard
+* [x] Reverse the order of leds to be able to visually represent binariy counting bits etc.. because right now it is backwards
+
+
+---------------- v3.0 ----------------------
+
+* [ ] Shrink the ground connection to the PT1000 in order to make it able to represent the *air's* temperature
