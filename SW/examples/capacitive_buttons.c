@@ -1,6 +1,6 @@
 #include "avr/io.h"
 
-#define F_CPU 8000000UL	
+#define F_CPU 16000000UL	
 #include "avr/delay.h"
 
 /**************************************************
@@ -14,7 +14,7 @@
  
 #define treshold_isnt_reached_for(pin) !(PING & 1<<pin)
 #define treshold_not_reached() !(PING & 0b00000011)
-#define SENSITIVITY (50u)
+#define SENSITIVITY (60u)
 
 	unsigned char initial_button_val = 0u;
 

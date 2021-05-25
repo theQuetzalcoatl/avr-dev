@@ -1,5 +1,5 @@
 #include "avr/io.h"
-#define F_CPU 8000000UL
+#define F_CPU 16000000UL
 #include "avr/delay.h"
 
 
@@ -35,7 +35,7 @@ unsigned char mirror_bits(unsigned char value) /* this is needed because current
 
 #define switch_to(column) PORTD |= 1<<COL_2 | 1<<COL_1 | 1<<COL_3; PORTD &= ~(1<<column)
 #define is_row_active(row) !(PIND & 1<<row)
-#define display(value) PORTC |= mirror_bits(value)<<2
+#define display(value) PORTC |= value<<2
 
 int main()
 {

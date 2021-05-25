@@ -1,4 +1,4 @@
-#include "avr/io.h"
+#include <avr/io.h>
 
 /**************************************************
  * description:
@@ -14,7 +14,8 @@ int main()
 {
 
 	UBRR0H = 0u;
-	UBRR0L = 51u; // 9600 baud rate
+	UBRR0L = 103u; // 9600 baud rate at 16 MHz
+	PORTC |= 1<<PINC0;
 	
 	UCSR0B |= 1<<TXEN;
 	
@@ -22,13 +23,11 @@ int main()
 	UCSR0C |= (1<<UCSZ00 | 1<<UCSZ01);
 	UCSR0B &= ~(1<<UCSZ02);
 
-	UDR0 = 0x55;
-
 	while(4)
 	{
-		while((UCSR0A & (1<<UDRE0)))
-		{
-			UDR0 = 0x55;
+		if(( (PINC & (1<<PINC0)) == 0)){
+		while(!(UCSR0A & (1<<UDRE0))){;}
+		UDR0 = 0x55;
 		}
 	}
 

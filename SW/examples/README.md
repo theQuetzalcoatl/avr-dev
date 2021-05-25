@@ -1,5 +1,5 @@
 **How to compile:**
-	$ ./build.sh <sourcefile_name>
+	$ ./build_n_burn.sh <sourcefile_name>
 	
 **example:**
-	$ ./build.sh buttons.c
+	$ ./build_n_burn.sh buttons.c

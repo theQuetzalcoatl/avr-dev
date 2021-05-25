@@ -11,7 +11,7 @@
  
 int main()
 {
-	DDRE &= ~(1<<PINE1 | 1<<PINE2);
+	DDRE &= ~(1<<PINE2 | 1<<PINE3);
 	DDRC |= 1<<PINC2; /* LED1 ready */
 	
 	while(4){

@@ -2,6 +2,8 @@
 
 #define 	F_CPU   16000000UL
 #include "avr/delay.h"
+#include <stdlib.h>
+#include <stdint.h>
 
 #define LCD_D7		PINA7
 #define LCD_D6		PINA6
@@ -16,14 +18,31 @@
 #define COMMAND_MODE()	LCD_PORT &= ~(1<<RS)
 #define DATA_MODE()	    LCD_PORT |= (1<<RS)
 
+#define CURSOR_TO_HOME (0b00000010u)
+
 static void LCD_flash(void);
 static void LCD_command(unsigned char command);
 static void LCD_write(unsigned char data);
 
+
+/**************************************************
+ * description:
+ * -----------------------------------------------
+ * The LCD should display a value between 210-240
+ * depending on the ambient temperature.
+ **************************************************/
+
 int main()
 {
+    /* INIT ADC */
+	ADMUX |= 1<<REFS0; ADMUX &= ~(1<<REFS1); // selecting AVCC as reference voltage for the DAC
+	ADCSRA |= 1<<ADFR; //activate free running mode
+	ADMUX |= 1<<0; // selecting channel 0 for the input
+	ADCSRA |= 0b00000111; // dividing F_CPU(16 MHz by 128 = 125000 Hz for the ADC
+	ADCSRA |= 1<<ADEN; // enable ADC
+	ADCSRA |= 1<<ADSC; // start free running
 
- /* Initialization */
+    /* INIT LCD */
 	DDRA = 0xff;
 	
 	LCD_PORT |= 1<<BACK_LIGHT;
@@ -33,8 +52,8 @@ int main()
 	LCD_PORT &= ~((1<<LCD_D6) | (1<<LCD_D7));	// 0b0011xxxx
 	
 	// 1)
-	_delay_ms(20);
-	LCD_flash();
+	_delay_ms(20);// itt világít
+	LCD_flash(); // ezután már nem
 	
 	// 2)
 	_delay_ms(5);
@@ -56,20 +75,27 @@ int main()
 
 	LCD_command(0b00001100);	// display back on
 
-	/* Writing */
-	LCD_write('S');
-	LCD_write('u');
-	LCD_write('c');
-	LCD_write('c');
-	LCD_write('e');
-	LCD_write('s');
-	LCD_write('s');
-	LCD_write('!');
-	
-	while(4){;}
-	
+    char buffer[5] = {0};
+    uint16_t result = 0;
+    
+	while(4){
+
+    result = (unsigned short int)ADCL;
+    result += (unsigned short int)ADCH<<8;
+
+    itoa(result, buffer, 10);
+
+    LCD_write(buffer[0]);
+    LCD_write(buffer[1]);
+    LCD_write(buffer[2]);
+    _delay_ms(250);
+    LCD_command(CURSOR_TO_HOME);
+   }
+
+
 	return 0;
 }
+
 
 static void LCD_flash(void)
 {
@@ -114,10 +140,10 @@ static void LCD_write(unsigned char data)
 	}
 
 /*
- * lcd.c
+ * temperature_sensor.c
  * This file is part of examples
  *
- * Copyright (C) 2020 - theQuetzalcoatl
+ * Copyright (C) 2021 - theQuetzalcoatl
  *
  * examples is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

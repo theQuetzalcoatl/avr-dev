@@ -1,6 +1,6 @@
 #include "avr/io.h"
 
-#define F_CPU 8000000UL
+#define F_CPU 16000000UL
 #include "avr/delay.h"
 
 /**************************************************
@@ -21,11 +21,8 @@
 
 int main()
 {
-	ADMUX |= 1<<REFS0; // selecting AVCC as reference voltage for the DAC
-	ADMUX &= ~(1<<REFS1); // selecting AVCC as reference voltage for the DAC
+	ADMUX |= 1<<REFS0; ADMUX &= ~(1<<REFS1); // selecting AVCC as reference voltage for the DAC
 	ADCSRA |= 1<<ADFR; //activate free running mode
-	//ADMUX &= ~(1<<ADLAR); //Make result right adjusted
-	//ADMUX &= 0b11100000; // selecting channel 0 for the input
 	ADCSRA |= 0b00000111; // dividing F_CPU by 128 = 62500 Hz for the ADC
 	ADCSRA |= 1<<ADEN; // enable ADC
 	ADCSRA |= 1<<ADSC; // start free running

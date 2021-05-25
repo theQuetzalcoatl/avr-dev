@@ -17,8 +17,10 @@ int main()
 	/* enabling pullups */
 	PORTC |= (1<<PINC0 | 1<<PINC1);
 	
-	if( (PINC & (1<<PINC0)) == 0 || (PINC & (1<<PINC1)) == 0) PORTC |= 1<<PINC2;
-	else PORTC &= ~(1<<PINC2);
+	while(1){
+		if( (PINC & (1<<PINC0)) == 0 || (PINC & (1<<PINC1)) == 0) PORTC |= 1<<PINC2;
+		else PORTC &= ~(1<<PINC2);
+	}
 	
 	return 0;
 }
