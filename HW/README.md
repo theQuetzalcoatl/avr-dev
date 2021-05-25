@@ -9,10 +9,10 @@ The PCB is currently developed in KiCAD.
 * **Buzzer**: MOSFET switched, frequency can be set by SW
 * **LEDS & buttons**: 4 leds, two push buttons without external pullup resistors
 * **Keypad**: a simple 3 by 4 one</br>
-      |1|2|3|
-      |4|5|6|
-      |7|8|9|
-      |*|0|#|
+      |1|2|3|</br>
+      |4|5|6|</br>
+      |7|8|9|</br>
+      |*|0|#|</br>
 * **UART**: Jumper pins for UART  communication, with a suitable connector USB is possible using the CH340G based USB/UART module
 * **Temp sensing**: A PT1000 and a current source is used
 * **Light sensing**: An LDR is used alongside a regular pot. meter so treshold can also be set
