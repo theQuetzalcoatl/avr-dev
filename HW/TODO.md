@@ -28,3 +28,8 @@
 ---------------- v3.0 ----------------------
 
 * [ ] Shrink the ground connection to the PT1000 in order to make it able to represent the *air's* temperature
+* [ ] Male headers in series with DC jack input to be able to measure input current.
+* [ ] Create a proper footprint for the UART 90° connector.
+* [ ] Push buttons shall be SMD
+* [ ] Insert LED1..LED4 for leds instead of D4..D7
+* [ ] Add a 4 pin male header connected to GND for easier access to GND.
