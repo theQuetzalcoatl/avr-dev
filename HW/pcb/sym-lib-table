@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name panel-rescue)(type Legacy)(uri ${KIPRJMOD}/panel-rescue.lib)(options "")(descr ""))
+  (lib (name MyLib)(type Legacy)(uri /home/dani/sajat/Villamosmernok/Progi/KiCAD/MyLibrary/MyLib.lib)(options "")(descr ""))
+)
