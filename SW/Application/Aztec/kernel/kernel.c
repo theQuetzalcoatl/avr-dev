@@ -7,14 +7,14 @@
 typedef struct ThreadControlBlock
 {
     Thread thread[NUM_OF_THREADS];
-    uint8_t current_thread;
+    Thread *current_thread;
 }ThreadControlBlock;
 
 static ThreadControlBlock tcb = {0};
 
 #define RESTORE_CONTEXT()\
-    SPL = (uint16_t)tcb.thread[tcb.current_thread].stack_pointer; \
-    SPH = (uint16_t)tcb.thread[tcb.current_thread].stack_pointer >> 8; \
+    SPL = (uint16_t)tcb.current_thread->stack_pointer; \
+    SPH = (uint16_t)tcb.current_thread->stack_pointer >> 8; \
     asm volatile(" \
                 pop R31 \n\
                 out  __SREG__, R31  \n\
@@ -93,8 +93,8 @@ static ThreadControlBlock tcb = {0};
                 in R31, __SREG__ \n  \
                 push R31 \n  \
                 "); \
-    tcb.thread[tcb.current_thread].stack_pointer = SPL; \
-    tcb.thread[tcb.current_thread].stack_pointer = (uint8_t *) ((uint16_t)tcb.thread[tcb.current_thread].stack_pointer | (SPH<<8u));
+    tcb.current_thread->stack_pointer = SPL; \
+    tcb.current_thread->stack_pointer = (uint8_t *) ((uint16_t)tcb.current_thread->stack_pointer | (SPH<<8u));
 
 /*
     * OCRn = (F_CPU*T/2N) - 1
@@ -132,33 +132,37 @@ static uint8_t init_system_ticking(const uint8_t ms_tick)
 }
 
 
-static void insert_stack_overflow_detection(uint8_t curr_thread);
-static Register *init_stack(thread_address thread_addr, Register *stack_start, uint8_t curr_thread);
+static void insert_stack_overflow_detection(void);
+static Register *init_stack(thread_address thread_addr, Register *stack_start);
 uint8_t kernel_register_thread(thread_address thread_addr, Register *stack_start, StackSize stack_size)
 {
-    if(tcb.current_thread > NUM_OF_THREADS-1) return GENERAL_ERROR;
+    static uint8_t thread_number = 0;
+    if(thread_number > NUM_OF_THREADS-1) return GENERAL_ERROR;
     if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return ERR_INVALID_STACKSIZE;
 
+    tcb.current_thread = &tcb.thread[thread_number];
+
     /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is changed here */
-    tcb.thread[tcb.current_thread] = \
+    *tcb.current_thread = \
         (Thread){
         .stack_bottom = stack_start,
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
-        .remaining_wait_ticks = 0u
+        .remaining_wait_ticks = 0u,
+        .next = &tcb.thread[thread_number + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
-    (void)init_stack(thread_addr, tcb.thread[tcb.current_thread].stack_pointer, tcb.current_thread);
+    (void)init_stack(thread_addr, tcb.current_thread->stack_pointer);
     
-    ++tcb.current_thread;
+    ++thread_number;
 
     return NO_ERROR;
 }
 
-static void insert_stack_overflow_detection(uint8_t curr_thread)
+static void insert_stack_overflow_detection()
 {
-    *(tcb.thread[curr_thread].stack_bottom + 1) = 0xBE;
-    *(tcb.thread[curr_thread].stack_bottom) = 0xEF;
+    *(tcb.current_thread->stack_bottom + 1) = 0xBE;
+    *(tcb.current_thread->stack_bottom) = 0xEF;
 }
 
 /*
@@ -171,7 +175,7 @@ static void insert_stack_overflow_detection(uint8_t curr_thread)
     RAMPZ
     SREG
 */
-static Register *init_stack(thread_address thread_addr, Register *stack_start, uint8_t curr_thread)
+static Register *init_stack(thread_address thread_addr, Register *stack_start)
 {
     Register *stack_pointer = stack_start;
 
@@ -182,45 +186,38 @@ static Register *init_stack(thread_address thread_addr, Register *stack_start, u
     for(int i = 2; i < 32; ++i, --stack_pointer) *stack_pointer = i; /* R2 - R31 */
     *stack_pointer = RAMPZ; /* RAMPZ */ --stack_pointer;
     *stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --stack_pointer;
-    tcb.thread[curr_thread].stack_pointer = stack_pointer;
+    tcb.current_thread->stack_pointer = stack_pointer;
 
-    insert_stack_overflow_detection(curr_thread);
+    insert_stack_overflow_detection();
     
     return stack_pointer;
 }
 
 static uint8_t check_stack_for_overflow(void)
 {
-    if(*(tcb.thread[tcb.current_thread].stack_bottom + 1) != 0xBE || *(tcb.thread[tcb.current_thread].stack_bottom) != 0xEF) return ERR_STACK_OVERFLOW;
+    if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return ERR_STACK_OVERFLOW;
     else return NO_ERROR;
 }
 
 static void schedule_next_task(void)
 {
-    tcb.thread[tcb.current_thread].state = READY;
+    tcb.current_thread->state = READY;
+    tcb.current_thread = tcb.current_thread->next;
 
-    while(TRUE){
-        if((tcb.current_thread + 1) > (NUM_OF_THREADS-1)) tcb.current_thread = 0;
-        else ++tcb.current_thread;
-
-        if(tcb.thread[tcb.current_thread].remaining_wait_ticks == 0){
-            tcb.thread[tcb.current_thread].state = RUNNING;
-            break;
-        }
-        else{
-            --tcb.thread[tcb.current_thread].remaining_wait_ticks;
-            continue;
-        }
+    while(tcb.current_thread->state != READY){
+        tcb.current_thread = tcb.current_thread->next;
     }
+    tcb.current_thread->state = RUNNING;
 }
 
 static void start_scheduling(void)
 {
-    tcb.current_thread = 0;
+    tcb.current_thread = &tcb.thread[0];
     RESTORE_CONTEXT();
     asm volatile("ret \n"); // Note : embedded assembly is needed because the compiler may optimize the function call out, thus not returning here
 }
 
+static void make_threadlist_circular(void);
 uint8_t kernel_init_os(void)
 {
     cli();
@@ -240,10 +237,13 @@ uint8_t kernel_init_os(void)
     buzzer_init_device();
     keypad_init_device();
     led_init_device();
+
     
     ret |= init_system_ticking(SYSTEM_TICK_IN_MS);
 
     if(ret != NO_ERROR) return ret;
+
+    make_threadlist_circular();
 
     TCNT0 = 0;
     TIFR |= 1<<OCF0;
@@ -251,6 +251,11 @@ uint8_t kernel_init_os(void)
     start_scheduling();
 
     return ret; /* we should never be here */
+}
+
+static void make_threadlist_circular(void)
+{
+    tcb.current_thread->next = &tcb.thread[0];
 }
 
 void TIMER0_COMP_vect( void ) __attribute__ ( ( signal, naked ) );

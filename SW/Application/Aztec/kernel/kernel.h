@@ -46,6 +46,7 @@ typedef struct Thread
     Register *stack_bottom;
     uint8_t state;
     uint8_t remaining_wait_ticks;
+    struct Thread *next;
 }Thread;
 
 #if WAY_TO_DO_ATOMIC == SIMPLE_ATOMIC /* For when we don't care about the previous state of the global interrupts */

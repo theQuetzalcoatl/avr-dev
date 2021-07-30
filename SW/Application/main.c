@@ -13,8 +13,8 @@ void thread_1(void)
 void thread_2(void)
 {
     while(1){
-        if(button_get_button_state(BUTTON_3) == PIN_LOW) turn_led_on(LED4);
-        else turn_led_off(LED4);
+        toggle_led(LED3);
+        _delay_ms(100);
     }
 }
 
@@ -30,10 +30,10 @@ int main(void)
 {
     uint8_t thread_1_stack[MIN_STACK_SIZE+30];
     kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+30);
-    /*
-    uint8_t thread_2_stack[MIN_STACK_SIZE+30];
-    kernel_register_thread(thread_2, thread_2_stack, MIN_STACK_SIZE+30);
-    */
+    
+    uint8_t thread_2_stack[MIN_STACK_SIZE+5];
+    kernel_register_thread(thread_2, thread_2_stack, MIN_STACK_SIZE+5);
+    
     
     uint8_t thread_3_stack[MIN_STACK_SIZE+30];
     kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+30);
