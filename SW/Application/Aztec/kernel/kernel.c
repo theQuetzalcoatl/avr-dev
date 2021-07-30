@@ -99,7 +99,7 @@ static ThreadControlBlock tcb = {0};
 /*
     * OCRn = (F_CPU*T/2N) - 1
 
-    where N(prescaler) = 1024, T should be in second and then devided by 1000 to get ms.
+    where N(prescaler) = 1024, T should be in seconds and then it gets devided by 1000 to get ms.
 */
 
 #define MAX_MS_TICK (32u) /* Maximum possible period is about 32 ms. (2*1024*256)/(16*10^6) */
@@ -121,7 +121,7 @@ static uint8_t init_system_ticking(const uint8_t ms_tick)
     TCCR0 |= 1<<WGM01;
     TCCR0 &= ~(1<<WGM01);
 
-    /* devide F_CLK by 128 */
+    /* devide F_CLK by 1024 */
     TCCR0 |= 1<<CS02 | 1<<CS01 | 1<<CS00;
 
     /* enable compare output match interrupt */
