@@ -43,7 +43,6 @@ typedef void (*thread_address)(void);
 typedef struct Thread
 {
     Register *stack_pointer;
-    thread_address id;
     Register *stack_bottom;
     uint8_t state;
     uint8_t remaining_wait_ticks;

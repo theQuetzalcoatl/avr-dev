@@ -11,7 +11,6 @@ typedef struct ThreadControlBlock
 }ThreadControlBlock;
 
 static ThreadControlBlock tcb = {0};
-static Thread *current_thread;
 
 #define RESTORE_CONTEXT()\
     SPL = (uint16_t)tcb.thread[tcb.current_thread].stack_pointer; \
@@ -146,11 +145,10 @@ uint8_t kernel_register_thread(thread_address thread_addr, Register *stack_start
         .stack_bottom = stack_start,
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
-        .remaining_wait_ticks = 0u,
-        .id = thread_addr
+        .remaining_wait_ticks = 0u
         };
     
-    (void)init_stack(tcb.thread[tcb.current_thread].id, tcb.thread[tcb.current_thread].stack_pointer, tcb.current_thread);
+    (void)init_stack(thread_addr, tcb.thread[tcb.current_thread].stack_pointer, tcb.current_thread);
     
     ++tcb.current_thread;
 
