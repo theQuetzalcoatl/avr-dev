@@ -6,16 +6,21 @@
 
 typedef struct ThreadControlBlock
 {
-    Thread thread[NUM_OF_THREADS];
     Thread *current_thread;
+    Thread thread[NUM_OF_THREADS];
 }ThreadControlBlock;
 
 static ThreadControlBlock tcb = {0};
 
+
 #define RESTORE_CONTEXT()\
-    SPL = (uint16_t)tcb.current_thread->stack_pointer; \
-    SPH = (uint16_t)tcb.current_thread->stack_pointer >> 8; \
     asm volatile(" \
+                lds R26, tcb \n\
+                lds R27, tcb+1 \n\
+                ld R31, X+ \n\
+                out __SP_L__, R31 \n\
+                ld R31, X \n\
+                out __SP_H__, R31 \n\
                 pop R31 \n\
                 out  __SREG__, R31  \n\
                 pop R31 \n\
@@ -92,9 +97,13 @@ static ThreadControlBlock tcb = {0};
                 push R31 \n  \
                 in R31, __SREG__ \n  \
                 push R31 \n  \
-                "); \
-    tcb.current_thread->stack_pointer = SPL; \
-    tcb.current_thread->stack_pointer = (uint8_t *) ((uint16_t)tcb.current_thread->stack_pointer | (SPH<<8u));
+                lds R26, tcb \n\
+                lds R27, tcb+1 \n\
+                in R31, __SP_L__ \n\
+                st X+, R31 \n\
+                in R31, __SP_H__ \n\
+                st X, R31 \n\
+                ");
 
 /*
     * OCRn = (F_CPU*T/2N) - 1
