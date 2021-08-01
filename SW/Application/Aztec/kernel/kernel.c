@@ -7,6 +7,7 @@
 typedef struct ThreadControlBlock
 {
     Thread *current_thread;
+    Thread *prev_thread;
     Thread thread[NUM_OF_THREADS];
 }ThreadControlBlock;
 
@@ -202,23 +203,6 @@ static Register *init_stack(thread_address thread_addr, Register *stack_start)
     return stack_pointer;
 }
 
-static uint8_t check_stack_for_overflow(void)
-{
-    if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return ERR_STACK_OVERFLOW;
-    else return NO_ERROR;
-}
-
-static void schedule_next_task(void)
-{
-    tcb.current_thread->state = READY;
-    tcb.current_thread = tcb.current_thread->next;
-
-    while(tcb.current_thread->state != READY){
-        tcb.current_thread = tcb.current_thread->next;
-    }
-    tcb.current_thread->state = RUNNING;
-}
-
 static void start_scheduling(void)
 {
     tcb.current_thread = &tcb.thread[0];
@@ -267,6 +251,8 @@ static void make_threadlist_circular(void)
     tcb.current_thread->next = &tcb.thread[0];
 }
 
+static void schedule_next_task(void);
+static uint8_t check_stack_for_overflow(void);
 void TIMER0_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
 void TIMER0_COMP_vect( void )
 {
@@ -281,4 +267,32 @@ void TIMER0_COMP_vect( void )
     schedule_next_task();
     RESTORE_CONTEXT();
     asm volatile ("reti"); // enables global interrupt flag
+}
+
+static uint8_t check_stack_for_overflow(void)
+{
+    if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return ERR_STACK_OVERFLOW;
+    else return NO_ERROR;
+}
+
+static void schedule_next_task(void)
+{
+    tcb.current_thread->state = READY;
+    tcb.prev_thread = tcb.current_thread;
+    tcb.current_thread = tcb.current_thread->next;
+
+    while(tcb.current_thread->state != READY){
+        tcb.current_thread = tcb.current_thread->next;
+    }
+    tcb.current_thread->state = RUNNING;
+}
+
+void kernel_exit(void)
+{
+    KERNEL_ENTER_ATOMIC();
+    tcb.prev_thread->next = tcb.current_thread->next;
+    tcb.current_thread = tcb.current_thread->next;
+    RESTORE_CONTEXT();
+    KERNEL_EXIT_ATOMIC();
+    asm volatile("ret");
 }

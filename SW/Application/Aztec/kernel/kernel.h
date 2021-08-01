@@ -23,7 +23,7 @@ AVR stuff:
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/delay.h>
+#include <util/delay.h>
 
         /* DRIVERS */
 #include "../Drivers/button/button.h"
@@ -68,6 +68,7 @@ typedef struct Thread
 
 extern uint8_t kernel_register_thread(thread_address addr, Register *stack_start, StackSize stack_size);
 extern uint8_t kernel_init_os(void);
+extern void kernel_exit(void);
 
 
 #endif /* KERNEL_H */

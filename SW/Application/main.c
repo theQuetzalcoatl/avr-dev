@@ -12,18 +12,21 @@ void thread_1(void)
 
 void thread_2(void)
 {
-    while(1){
-        toggle_led(LED3);
+    for(int i = 10; i ; --i){
+        toggle_led(LED1);
         _delay_ms(100);
     }
+    kernel_exit();
 }
 
 void thread_3(void)
 {
-    while(1){
-        toggle_led(LED1);
-        _delay_ms(123);
+    for(int i = 5; i ; --i){
+        toggle_led(LED3);
+        _delay_ms(300);
     }
+    turn_led_off(LED3);
+    kernel_exit();
 }
 
 int main(void)
@@ -33,7 +36,6 @@ int main(void)
     
     uint8_t thread_2_stack[MIN_STACK_SIZE+5];
     kernel_register_thread(thread_2, thread_2_stack, MIN_STACK_SIZE+5);
-    
     
     uint8_t thread_3_stack[MIN_STACK_SIZE+30];
     kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+30);
