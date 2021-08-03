@@ -313,6 +313,7 @@ static void schedule_next_task(void)
 void kernel_exit(void)
 {
     KERNEL_ENTER_ATOMIC();
+    tcb.current_thread->state = DELETED;
     tcb.prev_thread->next = tcb.current_thread->next;
     tcb.current_thread = tcb.current_thread->next;
     RESTORE_CONTEXT();
