@@ -4,6 +4,33 @@
     #error "Number of maximum threads shall not exceed 255."
 #endif
 
+
+typedef struct Thread
+{
+    Register *stack_pointer;
+    Register *stack_bottom;
+    uint8_t state;
+    uint8_t remaining_wait_ticks;
+    struct Thread *next;
+}Thread;
+
+#if WAY_TO_DO_ATOMIC == SIMPLE_ATOMIC /* For when we don't care about the previous state of the global interrupts */
+    #define KERNEL_ENTER_ATOMIC() cli() 
+    #define KERNEL_EXIT_ATOMIC() sei()
+#elif WAY_TO_DO_ATOMIC == COMPLEX_ATOMIC /* For when we do care about the previous state of the global interrupts */ 
+    #define KERNEL_ENTER_ATOMIC() Register __temp__ = SREG & 0x80; cli()
+    #define KERNEL_EXIT_ATOMIC() SREG |= __temp__
+#else
+    #error "Some kind of atomic operation must be defined"
+#endif
+
+
+/* THREAD STATES */
+#define RUNNING ('X')
+#define WAITING ('W')
+#define READY   ('R')
+#define DELETED ('D')
+
 typedef struct ThreadControlBlock
 {
     Thread *current_thread;
@@ -13,6 +40,7 @@ typedef struct ThreadControlBlock
 
 static ThreadControlBlock tcb = {0};
 
+#define RESET_SYSTICK_TIMER() TCNT0 = 0
 
 #define RESTORE_CONTEXT()\
     asm volatile(" \
@@ -24,8 +52,6 @@ static ThreadControlBlock tcb = {0};
                 out __SP_H__, R31 \n\
                 pop R31 \n\
                 out  __SREG__, R31  \n\
-                pop R31 \n\
-                out  __RAMPZ__, R31  \n\
                 pop R31 \n  \
                 pop R30 \n  \
                 pop R29 \n  \
@@ -93,8 +119,6 @@ static ThreadControlBlock tcb = {0};
                 push R28 \n  \
                 push R29 \n  \
                 push R30 \n  \
-                push R31 \n  \
-                in R31, __RAMPZ__ \n  \
                 push R31 \n  \
                 in R31, __SREG__ \n  \
                 push R31 \n  \
@@ -182,7 +206,6 @@ static void insert_stack_overflow_detection()
     R1
     ...
     R31
-    RAMPZ
     SREG
 */
 static Register *init_stack(thread_address thread_addr, Register *stack_start)
@@ -194,7 +217,6 @@ static Register *init_stack(thread_address thread_addr, Register *stack_start)
     *stack_pointer = 0u; /* R0 */ --stack_pointer;
     *stack_pointer = 0u; /* R1 */ --stack_pointer;
     for(int i = 2; i < 32; ++i, --stack_pointer) *stack_pointer = i; /* R2 - R31 */
-    *stack_pointer = RAMPZ; /* RAMPZ */ --stack_pointer;
     *stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --stack_pointer;
     tcb.current_thread->stack_pointer = stack_pointer;
 
@@ -238,7 +260,7 @@ uint8_t kernel_init_os(void)
 
     make_threadlist_circular();
 
-    TCNT0 = 0;
+    RESET_SYSTICK_TIMER();
     TIFR |= 1<<OCF0;
     sei();
     start_scheduling();
@@ -265,6 +287,7 @@ void TIMER0_COMP_vect( void )
         }
     }
     schedule_next_task();
+    RESET_SYSTICK_TIMER();
     RESTORE_CONTEXT();
     asm volatile ("reti"); // enables global interrupt flag
 }
@@ -293,6 +316,7 @@ void kernel_exit(void)
     tcb.prev_thread->next = tcb.current_thread->next;
     tcb.current_thread = tcb.current_thread->next;
     RESTORE_CONTEXT();
+    RESET_SYSTICK_TIMER();
     KERNEL_EXIT_ATOMIC();
     asm volatile("ret");
 }

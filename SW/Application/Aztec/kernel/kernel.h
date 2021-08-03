@@ -40,35 +40,9 @@ typedef uint16_t StackSize;
 typedef uint8_t Register;
 typedef void (*thread_address)(void);
 
-typedef struct Thread
-{
-    Register *stack_pointer;
-    Register *stack_bottom;
-    uint8_t state;
-    uint8_t remaining_wait_ticks;
-    struct Thread *next;
-}Thread;
-
-#if WAY_TO_DO_ATOMIC == SIMPLE_ATOMIC /* For when we don't care about the previous state of the global interrupts */
-    #define KERNEL_ENTER_ATOMIC() cli() 
-    #define KERNEL_EXIT_ATOMIC() sei()
-#elif WAY_TO_DO_ATOMIC == COMPLEX_ATOMIC /* For when we do care about the previous state of the global interrupts */ 
-    #define KERNEL_ENTER_ATOMIC() Register __temp__ = SREG & 0x80; cli()
-    #define KERNEL_EXIT_ATOMIC() SREG |= __temp__
-#else
-    #error "Some kind of atomic operation must be defined"
-#endif
-
-
-/* THREAD STATES */
-#define RUNNING ('X')
-#define WAITING ('W')
-#define READY   ('R')
-#define DELETED ('D')
-
-extern uint8_t kernel_register_thread(thread_address addr, Register *stack_start, StackSize stack_size);
-extern uint8_t kernel_init_os(void);
-extern void kernel_exit(void);
+extern uint8_t kernel_register_thread(thread_address addr, Register *stack_start, StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
+extern uint8_t kernel_init_os(void); // Last one to call in main, after all the thread registration
+extern void kernel_exit(void);  // Threads can exit from being scheduled and run again.
 
 
 #endif /* KERNEL_H */
