@@ -26,12 +26,12 @@ AVR stuff:
 #include <util/delay.h>
 
         /* DRIVERS */
-#include "../Drivers/button/button.h"
-#include "../Drivers/buzzer/buzzer.h"
-#include "../Drivers/dac/dac.h"
-#include "../Drivers/keypad/keypad.h"
-#include "../Drivers/led/led.h"
-#include "../Drivers/uart/uart.h"
+#include "../drivers/button/button.h"
+#include "../drivers/buzzer/buzzer.h"
+#include "../drivers/dac/dac.h"
+#include "../drivers/keypad/keypad.h"
+#include "../drivers/led/led.h"
+#include "../drivers/uart/uart.h"
 
 #define HAL_OK (0u)
 #define HAL_NOK (1u)
@@ -39,6 +39,9 @@ AVR stuff:
 typedef uint16_t StackSize;
 typedef uint8_t Register;
 typedef void (*thread_address)(void);
+
+
+    /* SYSTEM CALLS */
 
 extern uint8_t kernel_register_thread(thread_address addr, Register *stack_start, StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
 extern uint8_t kernel_init_os(void); // Last one to call in main, after all the thread registration
