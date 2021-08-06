@@ -4,6 +4,7 @@
     #error "Number of maximum threads shall not exceed 255."
 #endif
 
+static void kernel_panic(void);
 
 typedef struct Thread
 {
@@ -280,12 +281,7 @@ void TIMER0_COMP_vect( void )
 {
     // global interrupt flag is disabled
     STORE_CONTEXT();
-    if(ERR_STACK_OVERFLOW == check_stack_for_overflow()){ // buzzing with 1kHz
-        while(TRUE){
-            PORTB ^= 1<<PINB4; 
-            _delay_ms(1);
-        }
-    }
+    if(ERR_STACK_OVERFLOW == check_stack_for_overflow()) kernel_panic();
     schedule_next_task();
     RESET_SYSTICK_TIMER();
     RESTORE_CONTEXT();
@@ -320,4 +316,43 @@ void kernel_exit(void)
     RESET_SYSTICK_TIMER();
     KERNEL_EXIT_ATOMIC();
     asm volatile("ret");
+}
+
+static void signal_morse_sos();
+static void disable_systick(void);
+static void kernel_panic(void)
+{
+    disable_systick();
+    signal_morse_sos();
+}
+
+static void disable_systick(void)
+{
+    TCCR0 &= ~(1<<CS02 | 1<<CS01 | 1<<CS00);
+    TIMSK &= ~(1<<OCIE0); 
+}
+
+static void signal_morse_sos()
+{
+    while(1){
+        for(uint8_t i = 3; i; --i){
+            PORTC |= 1<<LED4;
+            _delay_ms(100);
+            PORTC &= ~(1<<LED4);
+            _delay_ms(100);
+        }
+        for(uint8_t i = 3; i; --i){
+            PORTC |= 1<<LED4;
+            _delay_ms(300);
+            PORTC &= ~(1<<LED4);
+            _delay_ms(100);
+        }
+        for(uint8_t i = 3; i; --i){
+            PORTC |= 1<<LED4;
+            _delay_ms(100);
+            PORTC &= ~(1<<LED4);
+            _delay_ms(100);
+        }
+        _delay_ms(500);
+    }
 }

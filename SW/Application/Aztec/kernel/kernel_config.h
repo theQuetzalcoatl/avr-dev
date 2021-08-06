@@ -1,7 +1,7 @@
 #ifndef KERNEL_CONFIG_H
 #define KERNEL_CONFIG_H
 
-#define F_CPU (16000000UL)
+#define F_CPU (16000000UL) /* Hz */
 
 #define SIMPLE_ATOMIC 0u
 #define COMPLEX_ATOMIC  1u
