@@ -40,6 +40,7 @@ typedef uint16_t StackSize;
 typedef uint8_t Register;
 typedef void (*ThreadAddress)(void);
 
+extern void disable_systick(void);
 
     /* SYSTEM CALLS */
 

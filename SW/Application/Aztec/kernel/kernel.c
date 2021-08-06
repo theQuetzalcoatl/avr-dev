@@ -1,10 +1,10 @@
 #include "../kernel/kernel.h"
+#include "../kernel/error_handling.h"
 
 #if (NUM_OF_THREADS > MAX_THREADS || NUM_OF_THREADS == 0)
     #error "Number of maximum threads shall not exceed 255."
 #endif
 
-static void kernel_panic(void);
 
 typedef struct Thread
 {
@@ -14,6 +14,7 @@ typedef struct Thread
     uint8_t remaining_wait_ticks;
     struct Thread *next;
 }Thread;
+
 
 #if WAY_TO_DO_ATOMIC == SIMPLE_ATOMIC /* For when we don't care about the previous state of the global interrupts */
     #define KERNEL_ENTER_ATOMIC() cli() 
@@ -36,6 +37,7 @@ typedef struct ThreadControlBlock
 {
     Thread *current_thread;
     Thread *prev_thread;
+    uint8_t num_of_active_threads; /* = not deleted */
     Thread thread[NUM_OF_THREADS];
 }ThreadControlBlock;
 
@@ -142,7 +144,7 @@ static ThreadControlBlock tcb = {0};
 
 static uint8_t init_system_ticking(const uint8_t ms_tick)
 {
-    if(ms_tick > MAX_MS_TICK || ms_tick == 0u) return 11;
+    if(ms_tick > MAX_MS_TICK || ms_tick == 0u) return K_ERR_MS_TICK_OUT_OF_BOUNDS;
 
     uint32_t val = (uint32_t)ms_tick*F_CPU;
     val /= 2u;
@@ -150,7 +152,7 @@ static uint8_t init_system_ticking(const uint8_t ms_tick)
     val/= 1000;
     val -= 1u;
     if(val < 256u) OCR0 = val;
-    else return ERR_FAILED_INIT_SYSTICK;
+    else return K_ERR_FAILED_INIT_SYSTICK;
 
     /* CTC mode */
     TCCR0 |= 1<<WGM01;
@@ -171,11 +173,10 @@ static void insert_stack_overflow_detection(void);
 static Register *init_stack(ThreadAddress thread_addr, Register *stack_start);
 uint8_t kernel_register_thread(ThreadAddress thread_addr, Register *stack_start, StackSize stack_size)
 {
-    static uint8_t thread_number = 0;
-    if(thread_number > NUM_OF_THREADS-1) return GENERAL_ERROR;
-    if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return ERR_INVALID_STACKSIZE;
+    if(tcb.num_of_active_threads > NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
 
-    tcb.current_thread = &tcb.thread[thread_number];
+    tcb.current_thread = &tcb.thread[tcb.num_of_active_threads];
 
     /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is flipped here */
     *tcb.current_thread = \
@@ -184,12 +185,12 @@ uint8_t kernel_register_thread(ThreadAddress thread_addr, Register *stack_start,
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
         .remaining_wait_ticks = 0u,
-        .next = &tcb.thread[thread_number + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
+        .next = &tcb.thread[tcb.num_of_active_threads + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
     (void)init_stack(thread_addr, tcb.current_thread->stack_pointer);
     
-    ++thread_number;
+    ++tcb.num_of_active_threads;
 
     return NO_ERROR;
 }
@@ -239,6 +240,8 @@ uint8_t kernel_init_os(void)
     cli();
     uint8_t ret = NO_ERROR;
 
+    if(tcb.num_of_active_threads == 0 || tcb.num_of_active_threads > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+
     const Uart uart =
     {
         .baud_rate=9600,
@@ -254,7 +257,6 @@ uint8_t kernel_init_os(void)
     keypad_init_device();
     led_init_device();
 
-    
     ret |= init_system_ticking(SYSTEM_TICK_IN_MS);
 
     if(ret != NO_ERROR) return ret;
@@ -281,7 +283,7 @@ void TIMER0_COMP_vect( void )
 {
     // global interrupt flag is disabled
     STORE_CONTEXT();
-    if(ERR_STACK_OVERFLOW == check_stack_for_overflow()) kernel_panic();
+    if(K_ERR_STACK_OVERFLOW == check_stack_for_overflow()) kernel_panic();
     schedule_next_task();
     RESET_SYSTICK_TIMER();
     RESTORE_CONTEXT();
@@ -290,7 +292,7 @@ void TIMER0_COMP_vect( void )
 
 static uint8_t check_stack_for_overflow(void)
 {
-    if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return ERR_STACK_OVERFLOW;
+    if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return K_ERR_STACK_OVERFLOW;
     else return NO_ERROR;
 }
 
@@ -310,6 +312,11 @@ void kernel_exit(void)
 {
     KERNEL_ENTER_ATOMIC();
     tcb.current_thread->state = DELETED;
+    --tcb.num_of_active_threads;
+    if(tcb.num_of_active_threads == 0){
+        disable_systick();
+        while(1){;}
+    }
     tcb.prev_thread->next = tcb.current_thread->next;
     tcb.current_thread = tcb.current_thread->next;
     RESTORE_CONTEXT();
@@ -318,41 +325,8 @@ void kernel_exit(void)
     asm volatile("ret");
 }
 
-static void signal_morse_sos_forever();
-static void disable_systick(void);
-static void kernel_panic(void)
-{
-    disable_systick();
-    signal_morse_sos_forever();
-}
-
-static void disable_systick(void)
+void disable_systick(void)
 {
     TCCR0 &= ~(1<<CS02 | 1<<CS01 | 1<<CS00);
     TIMSK &= ~(1<<OCIE0); 
-}
-
-static void signal_morse_sos_forever()
-{
-    while(1){
-        for(uint8_t i = 3; i; --i){
-            PORTC |= 1<<LED4;
-            _delay_ms(100);
-            PORTC &= ~(1<<LED4);
-            _delay_ms(100);
-        }
-        for(uint8_t i = 3; i; --i){
-            PORTC |= 1<<LED4;
-            _delay_ms(300);
-            PORTC &= ~(1<<LED4);
-            _delay_ms(100);
-        }
-        for(uint8_t i = 3; i; --i){
-            PORTC |= 1<<LED4;
-            _delay_ms(100);
-            PORTC &= ~(1<<LED4);
-            _delay_ms(100);
-        }
-        _delay_ms(500);
-    }
 }
