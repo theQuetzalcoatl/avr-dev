@@ -168,8 +168,8 @@ static uint8_t init_system_ticking(const uint8_t ms_tick)
 
 
 static void insert_stack_overflow_detection(void);
-static Register *init_stack(thread_address thread_addr, Register *stack_start);
-uint8_t kernel_register_thread(thread_address thread_addr, Register *stack_start, StackSize stack_size)
+static Register *init_stack(ThreadAddress thread_addr, Register *stack_start);
+uint8_t kernel_register_thread(ThreadAddress thread_addr, Register *stack_start, StackSize stack_size)
 {
     static uint8_t thread_number = 0;
     if(thread_number > NUM_OF_THREADS-1) return GENERAL_ERROR;
@@ -209,7 +209,7 @@ static void insert_stack_overflow_detection()
     R31
     SREG
 */
-static Register *init_stack(thread_address thread_addr, Register *stack_start)
+static Register *init_stack(ThreadAddress thread_addr, Register *stack_start)
 {
     Register *stack_pointer = stack_start;
 

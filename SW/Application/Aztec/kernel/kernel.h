@@ -38,12 +38,12 @@ AVR stuff:
 
 typedef uint16_t StackSize;
 typedef uint8_t Register;
-typedef void (*thread_address)(void);
+typedef void (*ThreadAddress)(void);
 
 
     /* SYSTEM CALLS */
 
-extern uint8_t kernel_register_thread(thread_address addr, Register *stack_start, StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
+extern uint8_t kernel_register_thread(ThreadAddress addr, Register *stack_start, StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
 extern uint8_t kernel_init_os(void); // Last one to call in main, after all the thread registration
 extern void kernel_exit(void);  // Threads can exit from being scheduled and run again.
 

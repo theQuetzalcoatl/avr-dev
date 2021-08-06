@@ -33,8 +33,8 @@ int main(void)
     uint8_t thread_1_stack[MIN_STACK_SIZE+4];
     kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+4);
     
-    uint8_t thread_2_stack[MIN_STACK_SIZE+5];
-    kernel_register_thread(sys_alive_led, thread_2_stack, MIN_STACK_SIZE+5);
+    uint8_t thread_2_stack[MIN_STACK_SIZE+2];
+    kernel_register_thread(sys_alive_led, thread_2_stack, MIN_STACK_SIZE+2);
     
     uint8_t thread_3_stack[MIN_STACK_SIZE+30];
     kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+30);
