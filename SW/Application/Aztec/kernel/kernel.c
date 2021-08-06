@@ -132,17 +132,17 @@ static ThreadControlBlock tcb = {0};
                 ");
 
 /*
-    * OCRn = (F_CPU*T/2N) - 1
+    * OCRn = (F_CPU*T/(2*prescaler)) - 1
 
-    where N(prescaler) = 1024, T should be in seconds and then it gets devided by 1000 to get ms.
+    T should be in seconds and then it gets devided by 1000 to get ms.
 */
 
-#define MAX_MS_TICK (32u) /* Maximum possible period is about 32 ms. (2*1024*256)/(16*10^6) */
+#define MAX_MS_TICK (32u) /* (2*1024*256)/(16*10^6) */
 #define PRESCALER (1024u)
 
 static uint8_t init_system_ticking(const uint8_t ms_tick)
 {
-    if(ms_tick > MAX_MS_TICK || ms_tick == 0u) return 11; /* checking systick boundaries  */
+    if(ms_tick > MAX_MS_TICK || ms_tick == 0u) return 11;
 
     uint32_t val = (uint32_t)ms_tick*F_CPU;
     val /= 2u;
@@ -177,7 +177,7 @@ uint8_t kernel_register_thread(ThreadAddress thread_addr, Register *stack_start,
 
     tcb.current_thread = &tcb.thread[thread_number];
 
-    /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is changed here */
+    /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is flipped here */
     *tcb.current_thread = \
         (Thread){
         .stack_bottom = stack_start,
@@ -266,7 +266,7 @@ uint8_t kernel_init_os(void)
     sei();
     start_scheduling();
 
-    return ret; /* we should never be here */
+    return ret;
 }
 
 static void make_threadlist_circular(void)
@@ -318,12 +318,12 @@ void kernel_exit(void)
     asm volatile("ret");
 }
 
-static void signal_morse_sos();
+static void signal_morse_sos_forever();
 static void disable_systick(void);
 static void kernel_panic(void)
 {
     disable_systick();
-    signal_morse_sos();
+    signal_morse_sos_forever();
 }
 
 static void disable_systick(void)
@@ -332,7 +332,7 @@ static void disable_systick(void)
     TIMSK &= ~(1<<OCIE0); 
 }
 
-static void signal_morse_sos()
+static void signal_morse_sos_forever()
 {
     while(1){
         for(uint8_t i = 3; i; --i){
