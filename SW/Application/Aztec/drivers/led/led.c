@@ -1,4 +1,5 @@
 #include "led.h"
+#include "../../kernel/kernel.h"
 
 /* Device initialization */
 
@@ -24,28 +25,16 @@ static void turn_all_leds_off(void)
 
 void turn_led_on(uint8_t led)
 {
-    
-    if(led == LED1 || led == LED2 || led == LED3 || led == LED4){
-        cli();
-        PORTC |= 1<<led;
-        sei();
-    } 
-    
+    if(led >= LED1 || led <= LED4) PORTC |= 1<<led;
 }
 
 void turn_led_off(uint8_t led)
 {
-    if(led == LED1 || led == LED2 || led == LED3 || led == LED4){
-        cli();
-        PORTC &= ~(1<<led);  
-        sei();
-    } 
+    if(led >= LED1 || led <= LED4) PORTC &= ~(1<<led);  
 }
 
 void toggle_led(uint8_t led)
 {
-    //cli();
-    if(led == LED1 || led == LED2 || led == LED3 || led == LED4) PORTC ^= 1<<led;
-    //sei();
+    if(led >= LED1 || led <= LED4) PORTC ^= 1<<led;
 }
 
