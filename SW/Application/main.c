@@ -3,7 +3,7 @@
 void thread_1(void)
 {
     for(;;){
-        if(button_get_button_state(BUTTON_2) == PIN_LOW){
+        if(button_get_state(BUTTON_2) == PIN_LOW){
             uart_send('U');
             _delay_ms(120);
         }
@@ -20,12 +20,61 @@ void sys_alive_led(void)
 
 void thread_3(void)
 {
-    for(int i = 10; i; --i){
-        toggle_led(LED3);
-        _delay_ms(300);
+    char key;
+    while(1){
+        key = get_pressed_key();
+        switch(key)
+        {
+            case KEYPAD_0:
+                lcd_write('0');
+            break;
+
+            case KEYPAD_1:
+                lcd_write('1');
+            break;
+
+            case KEYPAD_2:
+                lcd_write('2');
+            break;
+
+            case KEYPAD_3:
+                lcd_write('3');
+            break;
+
+            case KEYPAD_4:
+                lcd_write('4');
+            break;
+
+            case KEYPAD_5:
+                lcd_write('5');
+            break;
+
+            case KEYPAD_6:
+                lcd_write('6');
+            break;
+
+            case KEYPAD_7:
+                lcd_write('7');
+            break;
+
+            case KEYPAD_8:
+                lcd_write('8');
+            break;
+
+            case KEYPAD_9:
+                lcd_write('9');
+            break;
+
+            case KEYPAD_ASTERISK:
+                lcd_write('*');
+            break;
+
+            case KEYPAD_POUND:
+                lcd_send_command(LCD_CLEAR);
+            break;
+        }
+        _delay_ms(50);
     }
-    turn_led_off(LED3);
-    kernel_exit();
 }
 
 int main(void)
@@ -38,6 +87,7 @@ int main(void)
     
     uint8_t thread_3_stack[MIN_STACK_SIZE+30];
     kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+30);
+
     kernel_init_os();
 
     return 0;
