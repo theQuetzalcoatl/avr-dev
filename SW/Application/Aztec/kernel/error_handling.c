@@ -1,5 +1,7 @@
 #include "../kernel/kernel.h"
 
+extern void disable_systick(void);
+
 static void signal_morse_sos_forever();
 void kernel_panic(void)
 {

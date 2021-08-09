@@ -16,17 +16,6 @@ typedef struct Thread
 }Thread;
 
 
-#if WAY_TO_DO_ATOMIC == SIMPLE_ATOMIC /* For when we don't care about the previous state of the global interrupts */
-    #define KERNEL_ENTER_ATOMIC() cli() 
-    #define KERNEL_EXIT_ATOMIC() sei()
-#elif WAY_TO_DO_ATOMIC == COMPLEX_ATOMIC /* For when we do care about the previous state of the global interrupts */ 
-    #define KERNEL_ENTER_ATOMIC() Register __temp__ = SREG & 0x80; cli()
-    #define KERNEL_EXIT_ATOMIC() SREG |= __temp__
-#else
-    #error "Some kind of atomic operation must be defined"
-#endif
-
-
 /* THREAD STATES */
 #define RUNNING ('X')
 #define WAITING ('W')
@@ -45,7 +34,7 @@ static ThreadControlBlock tcb = {0};
 
 #define RESET_SYSTICK_TIMER() TCNT0 = 0
 
-#define RESTORE_CONTEXT()\
+#define RESTORE_CONTEXT() \
     asm volatile(" \
                 lds R26, tcb \n\
                 lds R27, tcb+1 \n\
@@ -132,6 +121,8 @@ static ThreadControlBlock tcb = {0};
                 in R31, __SP_H__ \n\
                 st X, R31 \n\
                 ");
+
+extern void disable_systick(void);
 
 /*
     * OCRn = (F_CPU*T/(2*prescaler)) - 1
@@ -256,6 +247,7 @@ uint8_t kernel_init_os(void)
     buzzer_init_device();
     keypad_init_device();
     led_init_device();
+    lcd_init_device();
 
     ret |= init_system_ticking(SYSTEM_TICK_IN_MS);
 
