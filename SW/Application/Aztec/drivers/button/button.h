@@ -11,7 +11,7 @@
 #define ERR_INVALID_BUTTON (0xffu)
 
 extern void button_init_device(void);
-extern uint8_t button_get_button_state(uint8_t button);
+extern uint8_t button_get_state(uint8_t button);
 extern void button_deactive_buttons(void);
 extern void button_activate_buttons(void);
 

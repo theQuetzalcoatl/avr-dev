@@ -23,9 +23,9 @@ static void activate_pullup_resistors()
 
 /* Device functionalities */
 
-uint8_t button_get_button_state(uint8_t button)
+uint8_t button_get_state(uint8_t button)
 {
-    if(button == BUTTON_2 || button == BUTTON_3) return (PINC & (1<<button))>>button;
+    if(button == BUTTON_2 || button == BUTTON_3) return (PINC & (uint8_t)((1<<button))>>button);
     else return ERR_INVALID_BUTTON;
 }
 
