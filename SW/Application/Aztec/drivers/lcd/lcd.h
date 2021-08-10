@@ -9,5 +9,7 @@
 extern void lcd_init_device(void);
 extern void lcd_send_command(uint8_t command);
 extern void lcd_write(uint8_t data);
+extern void lcd_turn_backligh_off(void);
+extern void lcd_turn_backligh_on(void);
 
 #endif  /* LCD_H */

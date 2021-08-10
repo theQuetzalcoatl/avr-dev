@@ -83,15 +83,25 @@ void lcd_send_command(uint8_t command)
 }
 
 void lcd_write(uint8_t data)
-	{
-		DATA_MODE();
-		LCD_PORT &= 0x0f;
-		LCD_PORT |= (data & 0xf0);
-		flash();
-		
-		LCD_PORT &= 0x0f;
-		LCD_PORT |= ((data<<4) & 0xf0);
-		flash();
-		
-		_delay_us(50);
-	}
+{
+	DATA_MODE();
+	LCD_PORT &= 0x0f;
+	LCD_PORT |= (data & 0xf0);
+	flash();
+	
+	LCD_PORT &= 0x0f;
+	LCD_PORT |= ((data<<4) & 0xf0);
+	flash();
+	
+	_delay_us(50);
+}
+
+void lcd_turn_backligh_on(void)
+{
+	LCD_PORT |= 1<<BACK_LIGHT;
+}
+
+void lcd_turn_backligh_off(void)
+{
+	LCD_PORT &= ~(1<<BACK_LIGHT);
+}

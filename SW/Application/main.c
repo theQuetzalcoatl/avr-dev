@@ -21,6 +21,7 @@ void sys_alive_led(void)
 void thread_3(void)
 {
     char key;
+    lcd_turn_backligh_on();
     while(1){
         key = get_pressed_key();
         switch(key)
