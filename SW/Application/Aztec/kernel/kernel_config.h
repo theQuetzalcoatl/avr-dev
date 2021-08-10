@@ -5,11 +5,6 @@
 #define F_CPU (16000000UL) /* Hz */
 #define AVAILABLE_SRAM (4096u) /* bytes */
 
-    /* ATOMICITY */
-#define SIMPLE_ATOMIC 0u
-#define COMPLEX_ATOMIC  1u
-#define WAY_TO_DO_ATOMIC SIMPLE_ATOMIC
-
     /* THREADS */
 #define MAX_THREADS (255u)
 #define NUM_OF_THREADS (3u)

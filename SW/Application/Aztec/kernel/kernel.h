@@ -37,15 +37,8 @@ AVR stuff:
 #define HAL_OK (0u)
 #define HAL_NOK (1u)
 
-#if WAY_TO_DO_ATOMIC == SIMPLE_ATOMIC /* For when we don't care about the previous state of the global interrupts */
-    #define KERNEL_ENTER_ATOMIC() cli() 
-    #define KERNEL_EXIT_ATOMIC() sei()
-#elif WAY_TO_DO_ATOMIC == COMPLEX_ATOMIC /* For when we do care about the previous state of the global interrupts */ 
-    #define KERNEL_ENTER_ATOMIC() Register __temp__ = SREG & 0x80; cli()
-    #define KERNEL_EXIT_ATOMIC() SREG |= __temp__
-#else
-    #error "Some kind of atomic operation must be defined"
-#endif
+#define KERNEL_ENTER_ATOMIC() cli() 
+#define KERNEL_EXIT_ATOMIC() sei()
 
 typedef uint16_t StackSize;
 typedef uint8_t Register;
