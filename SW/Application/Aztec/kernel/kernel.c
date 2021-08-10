@@ -11,7 +11,6 @@ typedef struct Thread
     Register *stack_pointer;
     Register *stack_bottom;
     uint8_t state;
-    uint8_t remaining_wait_ticks;
     struct Thread *next;
 }Thread;
 
@@ -175,7 +174,6 @@ uint8_t kernel_register_thread(ThreadAddress thread_addr, Register *stack_start,
         .stack_bottom = stack_start,
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
-        .remaining_wait_ticks = 0u,
         .next = &tcb.thread[tcb.num_of_active_threads + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
