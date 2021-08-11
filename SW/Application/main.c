@@ -23,7 +23,7 @@ void thread_3(void)
     char key;
     lcd_turn_backligh_on();
     while(1){
-        key = get_pressed_key();
+        key = keypad_get_pressed_key();
         switch(key)
         {
             case KEYPAD_0:
@@ -78,8 +78,17 @@ void thread_3(void)
     }
 }
 
+void thread_4(void)
+{
+    while(1){
+        toggle_led(LED2);
+        _delay_ms(201);
+    }
+}
+
 int main(void)
 {
+    
     uint8_t thread_1_stack[MIN_STACK_SIZE+4];
     kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+4);
     
@@ -89,7 +98,12 @@ int main(void)
     uint8_t thread_3_stack[MIN_STACK_SIZE+30];
     kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+30);
 
+    uint8_t thread_4_stack[MIN_STACK_SIZE + 2];
+    kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+2);
+
     kernel_init_os();
+    
+
 
     return 0;
 }
