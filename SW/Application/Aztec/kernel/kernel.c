@@ -231,6 +231,9 @@ uint8_t kernel_init_os(void)
 
     if(tcb.num_of_active_threads == 0 || tcb.num_of_active_threads > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
 
+    ret = init_system_ticking(SYSTEM_TICK_IN_MS);
+    if(ret != NO_ERROR) return ret;
+
     const Uart uart =
     {
         .baud_rate=9600,
@@ -247,14 +250,10 @@ uint8_t kernel_init_os(void)
     led_init_device();
     lcd_init_device();
 
-    ret |= init_system_ticking(SYSTEM_TICK_IN_MS);
-
-    if(ret != NO_ERROR) return ret;
-
     make_threadlist_circular();
 
     RESET_SYSTICK_TIMER();
-    TIFR |= 1<<OCF0;
+    if(TIFR & (1<<OCF0)) TIFR |= 1<<OCF0;
     sei();
     start_scheduling();
 
