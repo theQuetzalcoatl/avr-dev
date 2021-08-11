@@ -18,6 +18,6 @@
 #define KEYPAD_POUND    (11u)
 
 extern void keypad_init_device(void);
-extern char get_pressed_key(void);
+extern char keypad_get_pressed_key(void);
 
 #endif /* KEYPAD_H */

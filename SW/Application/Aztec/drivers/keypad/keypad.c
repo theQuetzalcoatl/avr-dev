@@ -38,7 +38,7 @@ static void init_columns_gpio(void)
 
 static void switch_to_column(uint8_t column);
 static uint8_t is_row_active(uint8_t row);
-char get_pressed_key(void)
+char keypad_get_pressed_key(void)
 {
     while(1){    
         switch_to_column(COL_1);
