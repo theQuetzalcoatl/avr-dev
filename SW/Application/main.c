@@ -88,7 +88,6 @@ void thread_4(void)
 
 int main(void)
 {
-    
     uint8_t thread_1_stack[MIN_STACK_SIZE+4];
     kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+4);
     
@@ -102,8 +101,8 @@ int main(void)
     kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+2);
 
     kernel_init_os();
-    
 
-
+    while(1){;} // just in case
+ 
     return 0;
 }

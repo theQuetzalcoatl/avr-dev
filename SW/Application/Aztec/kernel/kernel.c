@@ -31,7 +31,7 @@ typedef struct ThreadControlBlock
 
 static ThreadControlBlock tcb = {0};
 
-#define RESET_SYSTICK_TIMER() TCNT0 = 0
+#define RESET_SYSTICK_TIMER() TCNT2 = 0
 
 #define RESTORE_CONTEXT() \
     asm volatile(" \
@@ -126,34 +126,39 @@ extern void disable_systick(void);
 /*
     * OCRn = (F_CPU*T/(2*prescaler)) - 1
 
-    T should be in seconds and then it gets devided by 1000 to get ms.
+    T should be in microseconds, it gets devided by 1,000,000 to get us.
 */
 
-#define MAX_MS_TICK (32u) /* (2*1024*256)/(16*10^6) */
-#define PRESCALER (1024u)
+#define MAX_MS_TICK (4000u) /* (2*1024*256)/(16*10^6) */
+#define PRESCALER (256u)
 
-static uint8_t init_system_ticking(const uint8_t ms_tick)
+static uint8_t init_system_ticking(uint16_t us_tick)
 {
-    if(ms_tick > MAX_MS_TICK || ms_tick == 0u) return K_ERR_MS_TICK_OUT_OF_BOUNDS;
+    if(us_tick > MAX_MS_TICK || us_tick == 0u) return K_ERR_MS_TICK_OUT_OF_BOUNDS;
 
-    uint32_t val = (uint32_t)ms_tick*F_CPU;
+    us_tick *= 2u; // the formula calculates the period, but we want half of that so it gets multiplied
+
+    uint32_t val = F_CPU/100000u; // 10^5 is used insted of 10^6(to make sec to usec) but I keep the extra digit to be able to use rounding, after that, it is devided by 10, thus 10^6 in total
+    val *= (uint32_t)us_tick;
     val /= 2u;
-    val/= PRESCALER;
-    val/= 1000;
+    val /= PRESCALER;
+    val += 5u; // rounding
+    val /= 10u;
     val -= 1u;
-    if(val < 256u) OCR0 = val;
-    else return K_ERR_FAILED_INIT_SYSTICK;
+    if(val <= 255u) OCR2 = val;
 
-    /* CTC mode */
-    TCCR0 |= 1<<WGM01;
-    TCCR0 &= ~(1<<WGM01);
+    TCCR2 |= 1<<WGM21;
+    TCCR2 &= ~(1<<WGM20);
 
-    /* devide F_CLK by 1024 */
-    TCCR0 |= 1<<CS02 | 1<<CS01 | 1<<CS00;
+    TCCR2 &= ~(1<<COM21);
+    TCCR2 |= 1<<COM20;
 
-    /* enable compare output match interrupt */
-    TIMSK |= 1<<OCIE0; 
+    TCCR2 |= 1<<CS22;
+    TCCR2 &= ~(1<<CS21 | 1<<CS20);
+    
     /* NOTE: don't forget to clear the timer reg and interrupt flag before starting the OS */
+
+    TIMSK |= 1<<OCIE2;
     
     return NO_ERROR;
 }
@@ -226,12 +231,12 @@ static void start_scheduling(void)
 static void make_threadlist_circular(void);
 uint8_t kernel_init_os(void)
 {
-    cli();
+    KERNEL_ENTER_ATOMIC();
     uint8_t ret = NO_ERROR;
 
     if(tcb.num_of_active_threads == 0 || tcb.num_of_active_threads > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
 
-    ret = init_system_ticking(SYSTEM_TICK_IN_MS);
+    ret = init_system_ticking(SYSTEM_TICK_IN_US);
     if(ret != NO_ERROR) return ret;
 
     const Uart uart =
@@ -253,8 +258,8 @@ uint8_t kernel_init_os(void)
     make_threadlist_circular();
 
     RESET_SYSTICK_TIMER();
-    if(TIFR & (1<<OCF0)) TIFR |= 1<<OCF0;
-    sei();
+    if(TIFR & (1<<OCF2)) TIFR |= 1<<OCF2;
+    KERNEL_EXIT_ATOMIC();
     start_scheduling();
 
     return ret;
@@ -267,8 +272,8 @@ static void make_threadlist_circular(void)
 
 static void schedule_next_task(void);
 static uint8_t check_stack_for_overflow(void);
-void TIMER0_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
-void TIMER0_COMP_vect( void )
+void TIMER2_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
+void TIMER2_COMP_vect( void )
 {
     // global interrupt flag is disabled
     STORE_CONTEXT();
@@ -316,6 +321,6 @@ void kernel_exit(void)
 
 void disable_systick(void)
 {
-    TCCR0 &= ~(1<<CS02 | 1<<CS01 | 1<<CS00);
-    TIMSK &= ~(1<<OCIE0); 
+    TCCR2 &= ~(1<<CS22 | 1<<CS21 | 1<<CS20);
+    TIMSK &= ~(1<<OCIE2); 
 }
