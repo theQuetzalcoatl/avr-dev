@@ -80,10 +80,11 @@ void thread_3(void)
 
 void thread_4(void)
 {
-    while(1){
+    for(int i = 10; i; --i){
         toggle_led(LED2);
         _delay_ms(201);
     }
+    kernel_exit();
 }
 
 int main(void)

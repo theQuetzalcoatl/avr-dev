@@ -25,7 +25,7 @@ typedef struct ThreadControlBlock
 {
     Thread *current_thread;
     Thread *prev_thread;
-    uint8_t num_of_active_threads; /* = not deleted */
+    uint8_t active_thread_num; /* = not deleted */
     Thread thread[NUM_OF_THREADS];
 }ThreadControlBlock;
 
@@ -165,13 +165,13 @@ static uint8_t init_system_ticking(uint16_t us_tick)
 
 
 static void insert_stack_overflow_detection(void);
-static Register *init_stack(ThreadAddress thread_addr, Register *stack_start);
-uint8_t kernel_register_thread(ThreadAddress thread_addr, Register *stack_start, StackSize stack_size)
+static Register *init_stack(const ThreadAddress thread_addr, Register * const stack_start);
+uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * const stack_start, const StackSize stack_size)
 {
-    if(tcb.num_of_active_threads > NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(tcb.active_thread_num > NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
     if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
 
-    tcb.current_thread = &tcb.thread[tcb.num_of_active_threads];
+    tcb.current_thread = &tcb.thread[tcb.active_thread_num];
 
     /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is flipped here */
     *tcb.current_thread = \
@@ -179,12 +179,12 @@ uint8_t kernel_register_thread(ThreadAddress thread_addr, Register *stack_start,
         .stack_bottom = stack_start,
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
-        .next = &tcb.thread[tcb.num_of_active_threads + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
+        .next = &tcb.thread[tcb.active_thread_num + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
     (void)init_stack(thread_addr, tcb.current_thread->stack_pointer);
     
-    ++tcb.num_of_active_threads;
+    ++tcb.active_thread_num;
 
     return NO_ERROR;
 }
@@ -204,7 +204,7 @@ static void insert_stack_overflow_detection()
     R31
     SREG
 */
-static Register *init_stack(ThreadAddress thread_addr, Register *stack_start)
+static Register *init_stack(const ThreadAddress thread_addr, Register * const stack_start)
 {
     Register *stack_pointer = stack_start;
 
@@ -234,7 +234,7 @@ uint8_t kernel_init_os(void)
     KERNEL_ENTER_ATOMIC();
     uint8_t ret = NO_ERROR;
 
-    if(tcb.num_of_active_threads == 0 || tcb.num_of_active_threads > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(tcb.active_thread_num == 0 || tcb.active_thread_num > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
 
     ret = init_system_ticking(SYSTEM_TICK_IN_US);
     if(ret != NO_ERROR) return ret;
@@ -306,8 +306,8 @@ void kernel_exit(void)
 {
     KERNEL_ENTER_ATOMIC();
     tcb.current_thread->state = DELETED;
-    --tcb.num_of_active_threads;
-    if(tcb.num_of_active_threads == 0){
+    --tcb.active_thread_num;
+    if(tcb.active_thread_num == 0){
         disable_systick();
         while(1){;}
     }

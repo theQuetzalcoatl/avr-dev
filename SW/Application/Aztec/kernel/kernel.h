@@ -47,7 +47,7 @@ typedef void (*ThreadAddress)(void);
 
     /* SYSTEM CALLS */
 
-extern uint8_t kernel_register_thread(ThreadAddress addr, Register *stack_start, StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
+extern uint8_t kernel_register_thread(const ThreadAddress thread_addr, Register * const stack_start, const StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
 extern uint8_t kernel_init_os(void); // Last one to call in main, after all the thread registration
 extern void kernel_exit(void);  // Threads can exit from being scheduled and run again.
 
