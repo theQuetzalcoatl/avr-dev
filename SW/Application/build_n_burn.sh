@@ -24,12 +24,13 @@ done
 object_files=$(find . -type f -name "*.o");
 
 avr-gcc -mmcu=${uC} -o ${output_bin} ${object_files};
+did_compile=$?;
 
 avr-objdump --source ${output_bin} > app_disass.s;
 
 avr-size --format=avr --mcu=${uC} ${output_bin} && \
 avr-objcopy --only-section=.text --only-section=.data --only-section=.bss --only-section=.bootloader --only-section=.noinit --output-target=ihex $output_bin application.hex
 
-if [ "$1" == "upload" ]; then
+if [[ "$1" == "upload" && ${did_compile} == 0 ]]; then
 avrdude -p m128 -b 19200 -P /dev/ttyUSB0 -c arduino -U flash:w:application.hex:i;
 fi
