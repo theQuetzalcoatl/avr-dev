@@ -23,7 +23,7 @@
 * Rotary encoder
 
 
-### [Software](https://github.com/theQuetzalcoatl/avr-dev/blob/master/SW/README.md "Software"):
+### [Software](https://github.com/theQuetzalcoatl/avr-dev/tree/master/SW/Application "Software"):
 
 * A primitive, embedded OS
 * Device drivers for HAL
