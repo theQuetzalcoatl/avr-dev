@@ -25,7 +25,7 @@ static void init_timer(void)
 
     /* init GPIO */
     DDRB |= 1<<BUZZER_PIN;
-    PORTB &= 1<<BUZZER_PIN;
+    PORTB &= ~(1<<BUZZER_PIN); // when the buzzer is turned off it will pull the pin low
 }
 
 /* Device functionalities */
