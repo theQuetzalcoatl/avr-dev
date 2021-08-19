@@ -128,15 +128,23 @@ extern void disable_systick(void);
 
     T should be in microseconds, it gets devided by 1,000,000 to get us.
 */
-
-#define MAX_MS_TICK (4000u) /* (2*256*256)/(16*10^6) */
+#if   F_CPU == 8000000UL
+    #define MAX_MS_TICK (8000u)
+#elif F_CPU == 16000000UL
+    #define MAX_MS_TICK (4000u) /* (2*256*256)/(16*10^6) */
+#else
+    #error "MCU clock must be either 8MHz or 16MHz!"
+#endif
+#define MIN_MS_TICK (100u)
 #define PRESCALER (256u)
 
-static uint8_t init_system_ticking(uint16_t us_tick)
+static uint8_t init_system_ticking(void)
 {
-    if(us_tick > MAX_MS_TICK || us_tick == 0u) return K_ERR_MS_TICK_OUT_OF_BOUNDS;
+#if SYSTEM_TICK_IN_US > MAX_MS_TICK || SYSTEM_TICK_IN_US < MIN_MS_TICK
+    #error "OS's system tick period is out of bounds!"
+#endif
 
-    us_tick *= 2u; // the formula calculates the period, but we want half of that so it gets multiplied
+    uint16_t us_tick = SYSTEM_TICK_IN_US * 2u; // the formula calculates the period, but we want half of that so it gets multiplied
 
     uint32_t val = F_CPU/100000u; // 10^5 is used insted of 10^6(to make sec to usec) but I keep the extra digit to be able to use rounding, after that, it is devided by 10, thus 10^6 in total
     val *= (uint32_t)us_tick;
@@ -238,7 +246,7 @@ uint8_t kernel_init_os(void)
 
     if(tcb.active_thread_num == 0 || tcb.active_thread_num > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
 
-    ret = init_system_ticking(SYSTEM_TICK_IN_US);
+    ret = init_system_ticking();
     if(ret != NO_ERROR) return ret;
 
     const Uart uart =
