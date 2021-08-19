@@ -121,7 +121,7 @@ int main(void)
     uint8_t thread_4_stack[MIN_STACK_SIZE + 2];
     kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+2);
 
-    kernel_init_os();
+    kernel_start_os();
 
     while(1){;} // just in case
  

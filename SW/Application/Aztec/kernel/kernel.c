@@ -239,7 +239,7 @@ static void start_scheduling(void)
 }
 
 static void make_threadlist_circular(void);
-uint8_t kernel_init_os(void)
+uint8_t kernel_start_os(void)
 {
     KERNEL_ENTER_ATOMIC();
     uint8_t ret = NO_ERROR;
