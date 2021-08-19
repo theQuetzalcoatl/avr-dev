@@ -8,7 +8,7 @@
 
 typedef struct Thread
 {
-    Register *stack_pointer;
+    Register *stack_pointer; // must be first field
     Register *stack_bottom;
     uint8_t state;
     struct Thread *next;
@@ -23,7 +23,7 @@ typedef struct Thread
 
 typedef struct ThreadControlBlock
 {
-    Thread *current_thread;
+    Thread *current_thread;  // must be first field
     Thread *prev_thread;
     uint8_t active_thread_num; /* = not deleted */
     Thread thread[NUM_OF_THREADS];
@@ -129,7 +129,7 @@ extern void disable_systick(void);
     T should be in microseconds, it gets devided by 1,000,000 to get us.
 */
 
-#define MAX_MS_TICK (4000u) /* (2*1024*256)/(16*10^6) */
+#define MAX_MS_TICK (4000u) /* (2*256*256)/(16*10^6) */
 #define PRESCALER (256u)
 
 static uint8_t init_system_ticking(uint16_t us_tick)
@@ -150,6 +150,8 @@ static uint8_t init_system_ticking(uint16_t us_tick)
     TCCR2 |= 1<<WGM21;
     TCCR2 &= ~(1<<WGM20);
 
+    DDRB |= 1<<PINB7;
+    PORTB &= ~(1<<PINB7);
     TCCR2 &= ~(1<<COM21);
     TCCR2 |= 1<<COM20;
 

@@ -3,10 +3,7 @@
 void thread_1(void)
 {
     for(;;){
-        if(button_get_state(BUTTON_2) == PIN_LOW){
-            uart_send('U');
-            _delay_ms(120);
-        }
+        if(button_get_state(BUTTON_2) == PIN_LOW) uart_send('U');
     }
 }
 
