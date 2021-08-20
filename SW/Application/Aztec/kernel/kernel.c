@@ -1,7 +1,7 @@
 #include "../kernel/kernel.h"
 #include "../kernel/error_handling.h"
 
-#if (NUM_OF_THREADS > MAX_THREADS || NUM_OF_THREADS == 0)
+#if (CONFIG_NUM_OF_THREADS > CONFIG_MAX_THREADS || CONFIG_NUM_OF_THREADS == 0)
     #error "Number of maximum threads shall not exceed 255."
 #endif
 
@@ -26,7 +26,7 @@ typedef struct ThreadControlBlock
     Thread *current_thread;  // must be first field
     Thread *prev_thread;
     uint8_t active_thread_num; /* = not deleted */
-    Thread thread[NUM_OF_THREADS];
+    Thread thread[CONFIG_NUM_OF_THREADS];
 }ThreadControlBlock;
 
 static ThreadControlBlock tcb = {0};
@@ -140,11 +140,11 @@ extern void disable_systick(void);
 
 static uint8_t init_system_ticking(void)
 {
-#if SYSTEM_TICK_IN_US > MAX_MS_TICK || SYSTEM_TICK_IN_US < MIN_MS_TICK
+#if CONFIG_SYSTEM_TICK_IN_US > MAX_MS_TICK || CONFIG_SYSTEM_TICK_IN_US < MIN_MS_TICK
     #error "OS's system tick period is out of bounds!"
 #endif
 
-    uint16_t us_tick = SYSTEM_TICK_IN_US * 2u; // the formula calculates the period, but we want half of that so it gets multiplied
+    uint16_t us_tick = CONFIG_SYSTEM_TICK_IN_US * 2u; // the formula calculates the period, but we want half of that so it gets multiplied
 
     uint32_t val = F_CPU/100000u; // 10^5 is used insted of 10^6(to make sec to usec) but I keep the extra digit to be able to use rounding, after that, it is devided by 10, thus 10^6 in total
     val *= (uint32_t)us_tick;
@@ -178,8 +178,8 @@ static void insert_stack_overflow_detection(void);
 static Register *init_stack(const ThreadAddress thread_addr, Register * const stack_start);
 uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * const stack_start, const StackSize stack_size)
 {
-    if(tcb.active_thread_num > NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
-    if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
+    if(tcb.active_thread_num > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(stack_size > CONFIG_MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
 
     tcb.current_thread = &tcb.thread[tcb.active_thread_num];
 
@@ -244,7 +244,7 @@ uint8_t kernel_start_os(void)
     KERNEL_ENTER_ATOMIC();
     uint8_t ret = NO_ERROR;
 
-    if(tcb.active_thread_num == 0 || tcb.active_thread_num > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(tcb.active_thread_num == 0 || tcb.active_thread_num > CONFIG_NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
 
     ret = init_system_ticking();
     if(ret != NO_ERROR) return ret;
