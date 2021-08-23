@@ -9,10 +9,11 @@ void thread_1(void)
 
 void sys_alive_led(void)
 {
-    for(;;){
+    for(int i = 500; i; --i){
         toggle_led(LED1);
-        _delay_ms(100);
+        kernel_wait_us(100000);
     }
+    kernel_exit();
 }
 
 void thread_3(void)
@@ -89,7 +90,7 @@ void thread_3(void)
                 case KEYPAD_POUND:
                 break;
             }
-            _delay_ms(50);
+            kernel_wait_ms(120);
         }
         lcd_send_command(LCD_CLEAR);
         if(freq == 0)buzzer_off();
@@ -100,26 +101,26 @@ void thread_3(void)
 
 void thread_4(void)
 {
-    for(int i = 10; i; --i){
+    for(int i = 6; i; --i){
         toggle_led(LED2);
-        _delay_ms(201);
+        kernel_wait_ms(500);
     }
     kernel_exit();
 }
 
 int main(void)
 {
-    uint8_t thread_1_stack[MIN_STACK_SIZE+4];
-    kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+4);
+    uint8_t thread_1_stack[MIN_STACK_SIZE+6];
+    kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+6);
     
-    uint8_t thread_2_stack[MIN_STACK_SIZE+4];
-    kernel_register_thread(sys_alive_led, thread_2_stack, MIN_STACK_SIZE+4);
+    uint8_t thread_2_stack[MIN_STACK_SIZE+6];
+    kernel_register_thread(sys_alive_led, thread_2_stack, MIN_STACK_SIZE+6);
     
-    uint8_t thread_3_stack[MIN_STACK_SIZE+30];
-    kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+30);
+    uint8_t thread_3_stack[MIN_STACK_SIZE+6];
+    kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+6);
 
-    uint8_t thread_4_stack[MIN_STACK_SIZE + 2];
-    kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+2);
+    uint8_t thread_4_stack[MIN_STACK_SIZE + 6];
+    kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+6);
 
     kernel_start_os();
 
