@@ -5,15 +5,7 @@
     #error "Number of maximum threads shall not exceed 255."
 #endif
 
-
-typedef struct Thread
-{
-    Register *stack_pointer; // must be first field
-    Register *stack_bottom;
-    uint8_t state;
-    struct Thread *next;
-}Thread;
-
+#define SWITCH_THREAD() TIMER2_COMP_vect()
 
 /* THREAD STATES */
 #define RUNNING ('X')
@@ -21,11 +13,21 @@ typedef struct Thread
 #define READY   ('R')
 #define DELETED ('D')
 
+typedef struct Thread
+{
+    Register *stack_pointer; /* must be first field */
+    Register *stack_bottom;
+    uint8_t state;
+    uint16_t wait_roundabouts;
+    struct Thread *next;
+}Thread;
+
+
 typedef struct ThreadControlBlock
 {
-    Thread *current_thread;  // must be first field
+    Thread *current_thread;  /* must be first field */
     Thread *prev_thread;
-    uint8_t active_thread_num; /* = not deleted */
+    uint8_t active_threads; /* = not deleted */
     Thread thread[NUM_OF_THREADS];
 }ThreadControlBlock;
 
@@ -178,10 +180,10 @@ static void insert_stack_overflow_detection(void);
 static Register *init_stack(const ThreadAddress thread_addr, Register * const stack_start);
 uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * const stack_start, const StackSize stack_size)
 {
-    if(tcb.active_thread_num > NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(tcb.active_threads > NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
     if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
 
-    tcb.current_thread = &tcb.thread[tcb.active_thread_num];
+    tcb.current_thread = &tcb.thread[tcb.active_threads];
 
     /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is flipped here */
     *tcb.current_thread = \
@@ -189,12 +191,13 @@ uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * cons
         .stack_bottom = stack_start,
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
-        .next = &tcb.thread[tcb.active_thread_num + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
+        .wait_roundabouts = 0,
+        .next = &tcb.thread[tcb.active_threads + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
     (void)init_stack(thread_addr, tcb.current_thread->stack_pointer);
     
-    ++tcb.active_thread_num;
+    ++tcb.active_threads;
 
     return NO_ERROR;
 }
@@ -233,7 +236,9 @@ static Register *init_stack(const ThreadAddress thread_addr, Register * const st
 
 static void start_scheduling(void)
 {
-    tcb.current_thread = &tcb.thread[0];
+    tcb.current_thread = &tcb.thread[1];
+    tcb.current_thread->state = RUNNING;
+    tcb.prev_thread = &tcb.thread[0];
     RESTORE_CONTEXT();
     asm volatile("ret \n"); // Note : embedded assembly is needed because the compiler may optimize the function call out, thus not returning here
 }
@@ -244,7 +249,7 @@ uint8_t kernel_start_os(void)
     KERNEL_ENTER_ATOMIC();
     uint8_t ret = NO_ERROR;
 
-    if(tcb.active_thread_num == 0 || tcb.active_thread_num > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(tcb.active_threads == 0 || tcb.active_threads > NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
 
     ret = init_system_ticking();
     if(ret != NO_ERROR) return ret;
@@ -302,35 +307,77 @@ static uint8_t check_stack_for_overflow(void)
 
 static void schedule_next_task(void)
 {
-    tcb.current_thread->state = READY;
-    tcb.prev_thread = tcb.current_thread;
-    tcb.current_thread = tcb.current_thread->next;
+    Thread *curr = tcb.current_thread;
+    switch(tcb.current_thread->state){
+        case WAITING: // we are here because of a regular systick interrupt
+            --tcb.current_thread->wait_roundabouts;
+            tcb.prev_thread = tcb.current_thread;
+            if(tcb.current_thread->wait_roundabouts == 0) tcb.current_thread->state = READY;
+            break;
 
-    while(tcb.current_thread->state != READY){
-        tcb.current_thread = tcb.current_thread->next;
+        case RUNNING: // we are here because of a regular systick interrupt
+            tcb.current_thread->state = READY;
+            tcb.prev_thread = tcb.current_thread;
+            break;
+        
+        case DELETED: // we are here because of an exit syscall
+            break;
+
+        case READY:
+        default:
+            kernel_panic();
     }
-    tcb.current_thread->state = RUNNING;
+    tcb.current_thread = tcb.current_thread->next;
+    if(tcb.current_thread->state == READY) tcb.current_thread->state = RUNNING;
+    else if(tcb.current_thread->state == WAITING);
+    else kernel_panic();
 }
 
+static void remove_curr_thread_from_list(void);
 void kernel_exit(void)
 {
     KERNEL_ENTER_ATOMIC();
     tcb.current_thread->state = DELETED;
-    --tcb.active_thread_num;
-    if(tcb.active_thread_num == 0){
+    --tcb.active_threads;
+
+    if(tcb.active_threads == 0){
         disable_systick();
         while(1){;}
     }
+
+    remove_curr_thread_from_list();
+
+    SWITCH_THREAD();
+}
+
+static void remove_curr_thread_from_list(void)
+{
     tcb.prev_thread->next = tcb.current_thread->next;
-    tcb.current_thread = tcb.current_thread->next;
-    RESTORE_CONTEXT();
-    RESET_SYSTICK_TIMER();
-    KERNEL_EXIT_ATOMIC();
-    asm volatile("ret");
 }
 
 void disable_systick(void)
 {
     TCCR2 &= ~(1<<CS22 | 1<<CS21 | 1<<CS20);
-    TIMSK &= ~(1<<OCIE2); 
+    TIMSK &= ~(1<<OCIE2);
+}
+
+void kernel_wait_us(uint32_t us)
+{
+    KERNEL_ENTER_ATOMIC();
+    if(us != 0){
+        uint32_t tmp = us/(SYSTEM_TICK_IN_US*tcb.active_threads);
+        if(tmp == 0) tcb.current_thread->wait_roundabouts = 1;
+        else if(tmp < (uint16_t)~0) tcb.current_thread->wait_roundabouts = tmp;
+        else tcb.current_thread->wait_roundabouts = ~0;
+        tcb.current_thread->state = WAITING;
+    KERNEL_EXIT_ATOMIC();
+        
+        Thread volatile *curr = tcb.current_thread;
+        while(curr->state == WAITING){;}
+    }
+}
+
+void kernel_wait_ms(uint16_t ms)
+{
+    kernel_wait_us((uint32_t)ms*1000);
 }
