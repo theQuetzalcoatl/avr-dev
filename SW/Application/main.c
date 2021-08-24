@@ -104,11 +104,10 @@ void thread_3(void)
 Register thread_4_stack[MIN_STACK_SIZE + 6];
 void thread_4(void)
 {
-    for(int i = 6; i; --i){
-        toggle_led(LED2);
-        kernel_wait_ms(500);
+    for(;;){
+        if(WAITING  == kernel_get_thread_state(thread_3)) turn_led_on(LED2);
+        else turn_led_off(LED2);
     }
-    kernel_exit();
 }
 
 int main(void)

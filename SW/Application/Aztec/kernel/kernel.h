@@ -40,6 +40,12 @@ AVR stuff:
 #define KERNEL_ENTER_ATOMIC() cli() 
 #define KERNEL_EXIT_ATOMIC() sei()
 
+/* THREAD STATES */
+#define RUNNING ('X')
+#define WAITING ('W')
+#define READY   ('R')
+#define DELETED ('D')
+
 typedef uint16_t StackSize;
 typedef uint8_t Register;
 typedef void (*ThreadAddress)(void);
@@ -53,5 +59,8 @@ extern void kernel_exit(void);  // Threads can exit from being scheduled and run
 // maximum delay should safely be 1 minute
 extern void kernel_wait_us(const uint32_t us); // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
 extern void kernel_wait_ms(const uint16_t ms); // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
+#if CONFIG_THREADS_QUERY_STATE == TRUE
+uint8_t kernel_get_thread_state(const ThreadAddress th_addr);
+#endif
 
 #endif /* KERNEL_H */

@@ -25,12 +25,20 @@ static void turn_all_leds_off(void)
 
 void turn_led_on(uint8_t led)
 {
-    if(led >= LED1 || led <= LED4) PORTC |= 1<<led;
+    if(led >= LED1 || led <= LED4){
+        KERNEL_ENTER_ATOMIC();
+        PORTC |= 1<<led;
+        KERNEL_EXIT_ATOMIC();
+    }
 }
 
 void turn_led_off(uint8_t led)
 {
-    if(led >= LED1 || led <= LED4) PORTC &= ~(1<<led);  
+    if(led >= LED1 || led <= LED4){
+            KERNEL_ENTER_ATOMIC();
+        PORTC &= ~(1<<led);  
+        KERNEL_EXIT_ATOMIC();
+    }
 }
 
 void toggle_led(uint8_t led)

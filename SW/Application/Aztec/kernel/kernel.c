@@ -7,18 +7,15 @@
 
 #define SWITCH_THREAD() TIMER2_COMP_vect()
 
-/* THREAD STATES */
-#define RUNNING ('X')
-#define WAITING ('W')
-#define READY   ('R')
-#define DELETED ('D')
-
 typedef struct Thread
 {
     Register *stack_pointer; /* must be first field */
     Register *stack_bottom;
     uint8_t state;
     uint16_t wait_roundabouts;
+#if CONFIG_THREADS_QUERY_STATE == TRUE
+    ThreadAddress id;
+#endif
     struct Thread *next;
 }Thread;
 
@@ -345,6 +342,9 @@ uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * cons
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
         .wait_roundabouts = 0,
+#if CONFIG_THREADS_QUERY_STATE == TRUE
+        .id = thread_addr,
+#endif
         .next = &tcb.thread[tcb.active_threads + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
@@ -384,3 +384,14 @@ static void init_stack(const ThreadAddress thread_addr, Register * const stack_s
 
     insert_stack_overflow_detection();   
 }
+
+#if CONFIG_THREADS_QUERY_STATE == TRUE
+uint8_t kernel_get_thread_state(const ThreadAddress th_addr)
+{
+    for(uint8_t i = CONFIG_NUM_OF_THREADS-1; i >= 0; --i){
+        if(tcb.thread[i].id == th_addr){
+            return tcb.thread[i].state;}
+    }
+    return K_ERR_THREAD_NOT_FOUND;
+}
+#endif

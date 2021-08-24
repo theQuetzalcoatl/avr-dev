@@ -5,6 +5,7 @@
 #define K_ERR_STACK_OVERFLOW        (3u)
 #define K_ERR_INVALID_STACKSIZE     (4u)
 #define K_ERR_THREAD_NUM_OUT_OF_BOUNDS   (5u)
+#define K_ERR_THREAD_NOT_FOUND      (6u)
 
 extern void kernel_panic(void);
 
