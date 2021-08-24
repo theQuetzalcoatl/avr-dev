@@ -1,12 +1,24 @@
-#### Software
+**Versioning**: 
 
-This file is intended to keep track of and present the more detailed informations about the SW part of the project.
-Explanation of folder structure, compilation how to etc... will be discussed here.
----
-###### Versioning: *TBD*
+Right now somewhat arbitrary, but a **major.minor** is being used</br>
+*major*: The change forces the user to use the SW a different way. E.g. A feture is cut, an API has changed, new feature, new build environment etc.</br>
+*minor*: Changes may not directly affect the user. E.g. Bugfixes, efficiency improvement, internal restructuring etc.
 
-###### How to compile:
-
-######## known bugs, errors:
-
-###### Coding guideline:
+**How to compile**:</br>
+*  ./build_n_burn.sh        (only compilation)</br>
+*  ./build_n_burn.sh upload (for burning as well)
+___
+### Aztec</br>
+A super lightweight embedded OS for AVR chips.
+* Preemptive, using time slicing scheduling(Round Robin)
+* Dynamic stack size for each thread
+* Stack overflow detection
+* Device Drivers for the HW
+* Currently 3 system calls
+* (soon)Scripts for better, safer code quality
+* Relatively configurable
+#### Notice
+More threads and longer systick period lessen the wait syscalls' accuracy.</br>
+Due to required minimal stack usage the theoritical absolute maximum number of threads is about 89.</br>
+Each Thread's stack usage should be estimated by the user.</br>
+Threads should be exited with the proper syscall and not with a **return** statement.</br>
