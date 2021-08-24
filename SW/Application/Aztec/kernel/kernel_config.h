@@ -7,7 +7,7 @@
 
     /* THREADS */
 #define CONFIG_MAX_THREADS (255u)
-#define CONFIG_NUM_OF_THREADS (10u)
+#define CONFIG_NUM_OF_THREADS (4u)
 
 
     /* STACKS */

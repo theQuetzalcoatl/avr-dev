@@ -1,5 +1,6 @@
 #include "Aztec/kernel/kernel.h"
 
+Register thread_1_stack[MIN_STACK_SIZE+6];
 void thread_1(void)
 {
     for(;;){
@@ -7,15 +8,16 @@ void thread_1(void)
     }
 }
 
+Register thread_2_stack[MIN_STACK_SIZE+6];
 void sys_alive_led(void)
 {
-    for(int i = 500; i; --i){
+    for(;;){
         toggle_led(LED1);
-        kernel_wait_us(100000);
+        kernel_wait_us(500000);
     }
-    kernel_exit();
 }
 
+Register thread_3_stack[MIN_STACK_SIZE+6];
 void thread_3(void)
 {
     char key;
@@ -99,6 +101,7 @@ void thread_3(void)
     }
 }
 
+Register thread_4_stack[MIN_STACK_SIZE + 6];
 void thread_4(void)
 {
     for(int i = 6; i; --i){
@@ -110,16 +113,9 @@ void thread_4(void)
 
 int main(void)
 {
-    uint8_t thread_1_stack[MIN_STACK_SIZE+6];
     kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+6);
-    
-    uint8_t thread_2_stack[MIN_STACK_SIZE+6];
     kernel_register_thread(sys_alive_led, thread_2_stack, MIN_STACK_SIZE+6);
-    
-    uint8_t thread_3_stack[MIN_STACK_SIZE+6];
     kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+6);
-
-    uint8_t thread_4_stack[MIN_STACK_SIZE + 6];
     kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+6);
 
     kernel_start_os();

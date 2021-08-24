@@ -137,7 +137,7 @@ extern void disable_systick(void);
 #else
     #error "MCU clock must be either 8MHz or 16MHz!"
 #endif
-#define MIN_MS_TICK (100u)
+#define MIN_MS_TICK (100u) // this number is based on the fact that thread switching takes about 15 microsec
 #define PRESCALER (256u)
 
 static uint8_t init_system_ticking(void)
@@ -175,114 +175,13 @@ static uint8_t init_system_ticking(void)
     return NO_ERROR;
 }
 
-
-static void insert_stack_overflow_detection(void);
-static Register *init_stack(const ThreadAddress thread_addr, Register * const stack_start);
-uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * const stack_start, const StackSize stack_size)
-{
-    if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
-    if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
-
-    tcb.current_thread = &tcb.thread[tcb.active_threads];
-
-    /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is flipped here */
-    *tcb.current_thread = \
-        (Thread){
-        .stack_bottom = stack_start,
-        .stack_pointer = stack_start + stack_size - 1,
-        .state = READY,
-        .wait_roundabouts = 0,
-        .next = &tcb.thread[tcb.active_threads + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
-        };
-    
-    (void)init_stack(thread_addr, tcb.current_thread->stack_pointer);
-    
-    ++tcb.active_threads;
-
-    return NO_ERROR;
-}
-
-static void insert_stack_overflow_detection()
-{
-    *(tcb.current_thread->stack_bottom + 1) = 0xBE;
-    *(tcb.current_thread->stack_bottom) = 0xEF;
-}
-
-/*
-    PC[7:0]
-    PC[15:8]
-    R0
-    R1
-    ...
-    R31
-    SREG
-*/
-static Register *init_stack(const ThreadAddress thread_addr, Register * const stack_start)
-{
-    Register *stack_pointer = stack_start;
-
-    *stack_pointer = (uint16_t)thread_addr & (uint16_t)0x00ffu; --stack_pointer;
-    *stack_pointer = (uint16_t)thread_addr>>8u; --stack_pointer;
-    *stack_pointer = 0u; /* R0 */ --stack_pointer;
-    *stack_pointer = 0u; /* R1 */ --stack_pointer;
-    for(int i = 2; i < 32; ++i, --stack_pointer) *stack_pointer = i; /* R2 - R31 */
-    *stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --stack_pointer;
-    tcb.current_thread->stack_pointer = stack_pointer;
-
-    insert_stack_overflow_detection();
-    
-    return stack_pointer;
-}
-
 static void start_scheduling(void)
 {
     tcb.current_thread = &tcb.thread[1];
     tcb.current_thread->state = RUNNING;
     tcb.prev_thread = &tcb.thread[0];
     RESTORE_CONTEXT();
-    asm volatile("ret \n"); // Note : embedded assembly is needed because the compiler may optimize the function call out, thus not returning here
-}
-
-static void make_threadlist_circular(void);
-uint8_t kernel_start_os(void)
-{
-    KERNEL_ENTER_ATOMIC();
-    uint8_t ret = NO_ERROR;
-
-    if(tcb.active_threads == 0 || tcb.active_threads > CONFIG_NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
-
-    ret = init_system_ticking();
-    if(ret != NO_ERROR) return ret;
-
-    const Uart uart =
-    {
-        .baud_rate=9600,
-        .mode=NORMAL_MODE,
-        .num_of_bits=8,
-        .num_of_stop_bits=ONE_STOP_BIT,
-        .parity=NO_PARITY
-    };
-
-    (void)uart_init_device(&uart);
-    button_init_device();
-    buzzer_init_device();
-    keypad_init_device();
-    led_init_device();
-    lcd_init_device();
-
-    make_threadlist_circular();
-
-    RESET_SYSTICK_TIMER();
-    if(TIFR & (1<<OCF2)) TIFR |= 1<<OCF2;
-    KERNEL_EXIT_ATOMIC();
-    start_scheduling();
-
-    return ret;
-}
-
-static void make_threadlist_circular(void)
-{
-    tcb.current_thread->next = &tcb.thread[0];
+    asm volatile("ret \n"); // the compiler may optimize the function call out, thus we would not return here
 }
 
 static void schedule_next_task(void);
@@ -333,6 +232,14 @@ static void schedule_next_task(void)
     else kernel_panic();
 }
 
+void disable_systick(void)
+{
+    TCCR2 &= ~(1<<CS22 | 1<<CS21 | 1<<CS20);
+    TIMSK &= ~(1<<OCIE2);
+}
+
+    /******************* SYSTEM CALLS *******************/
+
 static void remove_curr_thread_from_list(void);
 void kernel_exit(void)
 {
@@ -346,7 +253,6 @@ void kernel_exit(void)
     }
 
     remove_curr_thread_from_list();
-
     SWITCH_THREAD();
 }
 
@@ -355,13 +261,7 @@ static void remove_curr_thread_from_list(void)
     tcb.prev_thread->next = tcb.current_thread->next;
 }
 
-void disable_systick(void)
-{
-    TCCR2 &= ~(1<<CS22 | 1<<CS21 | 1<<CS20);
-    TIMSK &= ~(1<<OCIE2);
-}
-
-void kernel_wait_us(uint32_t us)
+void kernel_wait_us(const uint32_t us)
 {
     KERNEL_ENTER_ATOMIC();
     if(us != 0){
@@ -377,7 +277,110 @@ void kernel_wait_us(uint32_t us)
     }
 }
 
-void kernel_wait_ms(uint16_t ms)
+void kernel_wait_ms(const uint16_t ms)
 {
     kernel_wait_us((uint32_t)ms*1000);
+}
+
+static void init_device_drivers(void);
+static void make_threadlist_circular(void);
+uint8_t kernel_start_os(void)
+{
+    KERNEL_ENTER_ATOMIC();
+    uint8_t ret = NO_ERROR;
+
+    if(tcb.active_threads == 0 || tcb.active_threads > CONFIG_NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+
+    ret = init_system_ticking();
+    if(ret != NO_ERROR) return ret;
+
+    init_device_drivers();
+    make_threadlist_circular();
+
+    RESET_SYSTICK_TIMER();
+    if(TIFR & (1<<OCF2)) TIFR |= 1<<OCF2;
+    KERNEL_EXIT_ATOMIC();
+    start_scheduling();
+
+    return ret;
+}
+
+static void make_threadlist_circular(void)
+{
+    tcb.current_thread->next = &tcb.thread[0];
+}
+
+static void init_device_drivers(void)
+{
+    const Uart uart =
+    {
+        .baud_rate=9600,
+        .mode=NORMAL_MODE,
+        .num_of_bits=8,
+        .num_of_stop_bits=ONE_STOP_BIT,
+        .parity=NO_PARITY
+    };
+
+    (void)uart_init_device(&uart);
+    button_init_device();
+    buzzer_init_device();
+    keypad_init_device();
+    led_init_device();
+    lcd_init_device();
+}
+
+static void insert_stack_overflow_detection(void);
+static void init_stack(const ThreadAddress thread_addr, Register * const stack_start);
+uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * const stack_start, const StackSize stack_size)
+{
+    if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
+
+    tcb.current_thread = &tcb.thread[tcb.active_threads];
+
+    /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is flipped here */
+    *tcb.current_thread = \
+        (Thread){
+        .stack_bottom = stack_start,
+        .stack_pointer = stack_start + stack_size - 1,
+        .state = READY,
+        .wait_roundabouts = 0,
+        .next = &tcb.thread[tcb.active_threads + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
+        };
+    
+    init_stack(thread_addr, tcb.current_thread->stack_pointer);
+    
+    ++tcb.active_threads;
+
+    return NO_ERROR;
+}
+
+static void insert_stack_overflow_detection()
+{
+    *(tcb.current_thread->stack_bottom + 1) = 0xBE;
+    *(tcb.current_thread->stack_bottom) = 0xEF;
+}
+
+/*
+    PC[7:0]
+    PC[15:8]
+    R0
+    R1
+    ...
+    R31
+    SREG
+*/
+static void init_stack(const ThreadAddress thread_addr, Register * const stack_start)
+{
+    Register *stack_pointer = stack_start;
+
+    *stack_pointer = (uint16_t)thread_addr & (uint16_t)0x00ffu; --stack_pointer;
+    *stack_pointer = (uint16_t)thread_addr>>8u; --stack_pointer;
+    *stack_pointer = 0u; /* R0 */ --stack_pointer;
+    *stack_pointer = 0u; /* R1 */ --stack_pointer;
+    for(int i = 2; i < 32; ++i, --stack_pointer) *stack_pointer = i; /* R2 - R31 */
+    *stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --stack_pointer;
+    tcb.current_thread->stack_pointer = stack_pointer;
+
+    insert_stack_overflow_detection();   
 }
