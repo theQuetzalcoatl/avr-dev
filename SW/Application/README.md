@@ -14,7 +14,7 @@ A super lightweight embedded OS for AVR chips.
 * Dynamic(compile time) stack size for each thread
 * Stack overflow detection
 * Device Drivers for the HW
-* Currently 3 system calls
+* Currently 4 system calls
 * (soon)Scripts for better, safer code quality
 * Relatively configurable
 #### Notice
