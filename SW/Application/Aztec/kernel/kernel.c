@@ -1,5 +1,5 @@
 #include "../kernel/kernel.h"
-#include "../kernel/error_handling.h"
+#include "../kernel/kernel_error_handling.h"
 
 #if (CONFIG_NUM_OF_THREADS > CONFIG_MAX_THREADS || CONFIG_NUM_OF_THREADS == 0)
     #error "Number of maximum threads shall not exceed 255."

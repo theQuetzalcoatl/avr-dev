@@ -50,11 +50,11 @@ typedef uint16_t StackSize;
 typedef uint8_t Register;
 typedef void (*ThreadAddress)(void);
 
+extern uint8_t kernel_start_os(void); // Last one to call in main, after all the thread registration
+extern uint8_t kernel_register_thread(const ThreadAddress thread_addr, Register * const stack_start, const StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
 
     /* SYSTEM CALLS */
 
-extern uint8_t kernel_register_thread(const ThreadAddress thread_addr, Register * const stack_start, const StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
-extern uint8_t kernel_start_os(void); // Last one to call in main, after all the thread registration
 extern void kernel_exit(void);  // Threads can exit from being scheduled and run again.
 // maximum delay should safely be 1 minute
 extern void kernel_wait_us(const uint32_t us); // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
