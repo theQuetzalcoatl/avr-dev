@@ -22,3 +22,4 @@ More threads and longer systick period lessen the wait syscalls' accuracy.</br>
 Due to required minimal stack usage the theoritical absolute maximum number of threads is about 89.</br>
 Each Thread's stack usage should be estimated by the user.</br>
 Threads should be exited with the proper syscall and not with a **return** statement.</br>
+Certain tasks can be 'emphasized' by registering them more than once, though doing it to much can a toll on performance
