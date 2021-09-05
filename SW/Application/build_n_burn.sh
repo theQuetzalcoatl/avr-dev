@@ -15,8 +15,6 @@ uC="atmega128";
 c_files=$(find . -type f -name "*.c");
 h_files=$(find . -type f -name "*.h");
 
-remove_binaries;
-
 for c_file in ${c_files}; do
 	avr-gcc -mmcu=${uC} ${warnings} -I /usr/lib/avr/include/ ${optimization} ${used_standard} ${debug} ${c_language} -c -o ${c_file/%.c/.o} ${c_file} ;
 done
@@ -25,6 +23,8 @@ object_files=$(find . -type f -name "*.o");
 
 avr-gcc -mmcu=${uC} -o ${output_bin} ${object_files};
 did_compile=$?;
+
+remove_binaries;
 
 avr-objdump --source ${output_bin} > app_disass.s;
 

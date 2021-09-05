@@ -105,7 +105,7 @@ Register thread_4_stack[MIN_STACK_SIZE + 6];
 void thread_4(void)
 {
     for(;;){
-        if(WAITING  == kernel_get_thread_state(thread_3)) turn_led_on(LED2);
+        if(WAITING == kernel_get_thread_state(thread_3)) turn_led_on(LED2);
         else turn_led_off(LED2);
     }
 }
