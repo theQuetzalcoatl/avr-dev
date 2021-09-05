@@ -8,7 +8,7 @@
 #define AVAILABLE_SRAM (4096u) /* bytes */
 
     /* THREADS */
-#define CONFIG_MAX_THREADS (255u)
+#define CONFIG_MAX_THREADS (25u)
 #define CONFIG_NUM_OF_THREADS (4u)
 #define CONFIG_THREADS_QUERY_STATE TRUE /* TRUE - every thread costs 2 additional bytes of RAM, but enables querying another thread's state */
 

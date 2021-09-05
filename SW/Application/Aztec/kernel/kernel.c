@@ -174,7 +174,7 @@ static uint8_t init_system_ticking(void)
 
 static void start_scheduling(void)
 {
-    tcb.current_thread = &tcb.thread[1];
+    tcb.current_thread = &tcb.thread[0];
     tcb.current_thread->state = RUNNING;
     tcb.prev_thread = &tcb.thread[0];
     RESTORE_CONTEXT();
@@ -281,6 +281,8 @@ void kernel_wait_ms(const uint16_t ms)
 
 static void init_device_drivers(void);
 static void make_threadlist_circular(void);
+static void sort_thread_list_descending(void);
+static void link_thread_list(void);
 uint8_t kernel_start_os(void)
 {
     KERNEL_ENTER_ATOMIC();
@@ -292,6 +294,11 @@ uint8_t kernel_start_os(void)
     if(ret != NO_ERROR) return ret;
 
     init_device_drivers();
+
+#if CONFIG_THREADS_QUERY_STATE == TRUE
+    sort_thread_list_descending();
+    link_thread_list();
+#endif
     make_threadlist_circular();
 
     RESET_SYSTICK_TIMER();
@@ -304,7 +311,7 @@ uint8_t kernel_start_os(void)
 
 static void make_threadlist_circular(void)
 {
-    tcb.current_thread->next = &tcb.thread[0];
+    tcb.thread[tcb.active_threads-1].next = &tcb.thread[0];
 }
 
 static void init_device_drivers(void)
@@ -326,6 +333,32 @@ static void init_device_drivers(void)
     lcd_init_device();
 }
 
+#if CONFIG_THREADS_QUERY_STATE == TRUE
+static void sort_thread_list_descending(void)
+{
+    Thread temp = {0};
+    if(tcb.active_threads > 1){
+        // for now it is a simple bubblesort 
+        for(uint8_t i = 0; i < tcb.active_threads; ++i){
+            for(uint8_t ii = 0; ii < tcb.active_threads - i -1; ++ii){
+                if(tcb.thread[ii].id < tcb.thread[ii+1].id){
+                    temp = tcb.thread[ii];
+                    tcb.thread[ii] = tcb.thread[ii+1];
+                    tcb.thread[ii+1] = temp;
+                }
+            }
+        }
+    }
+}
+
+static void link_thread_list(void)
+{
+    for(uint8_t i = 0; i < tcb.active_threads-1; ++i){
+        tcb.thread[i].next = &tcb.thread[i+1];
+    }
+}
+#endif
+
 static void insert_stack_overflow_detection(void);
 static void init_stack(const ThreadAddress thread_addr, Register * const stack_start);
 uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * const stack_start, const StackSize stack_size)
@@ -344,8 +377,10 @@ uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * cons
         .wait_roundabouts = 0,
 #if CONFIG_THREADS_QUERY_STATE == TRUE
         .id = thread_addr,
+        .next = 0 
+#else
+        .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
 #endif
-        .next = &tcb.thread[tcb.active_threads + 1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
     init_stack(thread_addr, tcb.current_thread->stack_pointer);
@@ -389,10 +424,25 @@ static void init_stack(const ThreadAddress thread_addr, Register * const stack_s
 #if CONFIG_THREADS_QUERY_STATE == TRUE
 uint8_t kernel_get_thread_state(const ThreadAddress th_addr)
 {
-    for(uint8_t i = CONFIG_NUM_OF_THREADS-1; i >= 0; --i){
-        if(tcb.thread[i].id == th_addr) return tcb.thread[i].state;
-    }
-    return K_ERR_THREAD_NOT_FOUND;
+#if (CONFIG_NUM_OF_THREADS > 1)
+        uint8_t max = 0;
+        uint8_t min = CONFIG_NUM_OF_THREADS-1;
+        uint8_t middle = CONFIG_NUM_OF_THREADS / 2;
+
+        if(tcb.thread[max].id == th_addr) return tcb.thread[max].state;
+        else if(tcb.thread[min].id == th_addr) return tcb.thread[min].state;
+
+        for(; middle != max && middle != min; middle = (max + min)/2){
+            if(tcb.thread[middle].id == th_addr) return tcb.thread[middle].state;
+            else if(tcb.thread[middle].id > th_addr) max = middle;
+            else min = middle;
+            middle = (min + max)/2;
+        }
+        return K_ERR_THREAD_NOT_FOUND;
+#else
+    return tcb.current_thread->state;
+#endif
+
 }
 #endif
 
