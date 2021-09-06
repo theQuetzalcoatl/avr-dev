@@ -11,7 +11,7 @@ ___
 ### Aztec</br>
 A super lightweight embedded OS for AVR chips.
 * Preemptive, using time slicing scheduling(Round Robin)
-* Dynamic(compile time) stack size for each thread
+* Configurable stack size for each thread
 * Stack overflow detection
 * Device Drivers for the HW
 * Currently 4 system calls
