@@ -15,7 +15,7 @@ A super lightweight embedded OS for AVR chips.
 * Stack overflow detection
 * Device Drivers for the HW
 * Currently 4 system calls
-* (soon)Scripts for better, safer code quality
+* Scripts for better, safer code quality
 * Relatively configurable
 #### Notice
 More threads and longer systick period lessen the wait syscalls' accuracy.</br>
