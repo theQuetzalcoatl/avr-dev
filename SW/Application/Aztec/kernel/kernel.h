@@ -34,6 +34,8 @@ AVR stuff:
 #include "../drivers/uart/uart.h"
 #include "../drivers/lcd/lcd.h"
 
+#define KERNEL_VERSION "v2.1"
+
 #define HAL_OK (0u)
 #define HAL_NOK (1u)
 
