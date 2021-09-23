@@ -183,6 +183,7 @@ static void start_scheduling(void)
 
 static void schedule_next_task(void);
 static uint8_t check_stack_for_overflow(void);
+
 void TIMER2_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
 void TIMER2_COMP_vect( void )
 {
@@ -238,6 +239,7 @@ void disable_systick(void)
     /******************* SYSTEM CALLS *******************/
 
 static void remove_curr_thread_from_list(void);
+
 void kernel_exit(void)
 {
     KERNEL_ENTER_ATOMIC();
@@ -260,8 +262,8 @@ static void remove_curr_thread_from_list(void)
 
 void kernel_wait_us(const uint32_t us)
 {
-    KERNEL_ENTER_ATOMIC();
     if(us != 0){
+    KERNEL_ENTER_ATOMIC();
         uint32_t tmp = us/(CONFIG_SYSTEM_TICK_IN_US*tcb.active_threads);
         if(tmp == 0) tcb.current_thread->wait_roundabouts = 1;
         else if(tmp < (uint16_t)~0) tcb.current_thread->wait_roundabouts = tmp;
@@ -283,6 +285,7 @@ static void init_device_drivers(void);
 static void make_threadlist_circular(void);
 static void sort_thread_list_descending(void);
 static void link_thread_list(void);
+
 uint8_t kernel_start_os(void)
 {
     KERNEL_ENTER_ATOMIC();
@@ -353,14 +356,13 @@ static void sort_thread_list_descending(void)
 
 static void link_thread_list(void)
 {
-    for(uint8_t i = 0; i < tcb.active_threads-1; ++i){
-        tcb.thread[i].next = &tcb.thread[i+1];
-    }
+    for(uint8_t i = 0; i < tcb.active_threads-1; ++i) tcb.thread[i].next = &tcb.thread[i+1];
 }
 #endif
 
-static void insert_stack_overflow_detection(void);
+static void insert_stack_overflow_detecting_bytes(void);
 static void init_stack(const ThreadAddress thread_addr, Register * const stack_start);
+
 uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * const stack_start, const StackSize stack_size)
 {
     if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
@@ -390,7 +392,7 @@ uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * cons
     return NO_ERROR;
 }
 
-static void insert_stack_overflow_detection(void)
+static void insert_stack_overflow_detecting_bytes(void)
 {
     *(tcb.current_thread->stack_bottom + 1) = 0xBE;
     *(tcb.current_thread->stack_bottom) = 0xEF;
@@ -418,7 +420,7 @@ static void init_stack(const ThreadAddress thread_addr, Register * const stack_s
     *stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --stack_pointer;
     tcb.current_thread->stack_pointer = stack_pointer;
 
-    insert_stack_overflow_detection();   
+    insert_stack_overflow_detecting_bytes();   
 }
 
 #if CONFIG_THREADS_QUERY_STATE == TRUE
