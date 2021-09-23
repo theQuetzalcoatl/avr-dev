@@ -1,6 +1,6 @@
 # avr-dev
 
-**Goal:** The project aims to develop a suitable SW architecture and a corresponding HW development board, which can be the foundation of learning and experimentation.
+The project aims to develop a suitable SW architecture and a corresponding HW development board, which can be the foundation of learning and experimentation.
 
 
 ### [Hardware](https://github.com/theQuetzalcoatl/avr-dev/blob/master/HW/README.md "Hardware"):
