@@ -1,6 +1,6 @@
 #include "Aztec/kernel/kernel.h"
 
-Register thread_1_stack[MIN_STACK_SIZE+6];
+register_t thread_1_stack[MIN_STACK_SIZE+6];
 void thread_1(void)
 {
     for(;;){
@@ -8,7 +8,7 @@ void thread_1(void)
     }
 }
 
-Register thread_2_stack[MIN_STACK_SIZE+6];
+register_t thread_2_stack[MIN_STACK_SIZE+6];
 void sys_alive_led(void)
 {
     for(;;){
@@ -17,7 +17,7 @@ void sys_alive_led(void)
     }
 }
 
-Register thread_3_stack[MIN_STACK_SIZE+6];
+register_t thread_3_stack[MIN_STACK_SIZE+6];
 void thread_3(void)
 {
     char key;
@@ -101,7 +101,7 @@ void thread_3(void)
     }
 }
 
-Register thread_4_stack[MIN_STACK_SIZE + 6];
+register_t thread_4_stack[MIN_STACK_SIZE + 6];
 void thread_4(void)
 {
     for(;;){

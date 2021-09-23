@@ -48,12 +48,12 @@ AVR stuff:
 #define READY   ('R')
 #define DELETED ('D')
 
-typedef uint16_t StackSize;
-typedef uint8_t Register;
-typedef void (*ThreadAddress)(void);
+typedef uint16_t stack_size_t;
+typedef uint8_t register_t;
+typedef void (*thread_address_t)(void);
 
 extern uint8_t kernel_start_os(void); // Last one to call in main, after all the thread registration
-extern uint8_t kernel_register_thread(const ThreadAddress thread_addr, Register * const stack_start, const StackSize stack_size); // Registers one thread in the kernel. Must be called before OS starts
+extern uint8_t kernel_register_thread(const thread_address_t thread_addr, register_t * const stack_start, const stack_size_t stack_size); // Registers one thread in the kernel. Must be called before OS starts
 
     /* SYSTEM CALLS */
 
@@ -62,7 +62,7 @@ extern void kernel_exit(void);  // Threads can exit from being scheduled and run
 extern void kernel_wait_us(const uint32_t us); // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
 extern void kernel_wait_ms(const uint16_t ms); // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
 #if CONFIG_THREADS_QUERY_STATE == TRUE
-uint8_t kernel_get_thread_state(const ThreadAddress th_addr);
+uint8_t kernel_get_thread_state(const thread_address_t th_addr);
 #endif
 
 #endif /* KERNEL_H */

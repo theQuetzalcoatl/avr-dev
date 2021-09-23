@@ -7,28 +7,28 @@
 
 #define SWITCH_THREAD() TIMER2_COMP_vect()
 
-typedef struct Thread
+typedef struct thread_t
 {
-    Register *stack_pointer; /* must be first field */
-    Register *stack_bottom;
+    register_t *stack_pointer; /* must be first field */
+    register_t *stack_bottom;
     uint8_t state;
     uint16_t wait_roundabouts;
 #if CONFIG_THREADS_QUERY_STATE == TRUE
-    ThreadAddress id;
+    thread_address_t id;
 #endif
-    struct Thread *next;
-}Thread;
+    struct thread_t *next;
+}thread_t;
 
 
-typedef struct ThreadControlBlock
+typedef struct thread_control_block_t
 {
-    Thread *current_thread;  /* must be first field */
-    Thread *prev_thread;
+    thread_t *current_thread;  /* must be first field */
+    thread_t *prev_thread;
     uint8_t active_threads; /* = not deleted */
-    Thread thread[CONFIG_NUM_OF_THREADS];
-}ThreadControlBlock;
+    thread_t thread[CONFIG_NUM_OF_THREADS];
+}thread_control_block_t;
 
-static ThreadControlBlock tcb = {0};
+static thread_control_block_t tcb = {0};
 
 #define RESET_SYSTICK_TIMER() TCNT2 = 0
 
@@ -204,7 +204,7 @@ static uint8_t check_stack_for_overflow(void)
 
 static void schedule_next_task(void)
 {
-    Thread *curr = tcb.current_thread;
+    thread_t *curr = tcb.current_thread;
     switch(tcb.current_thread->state){
         case WAITING: // we are here because of a regular systick interrupt
             --tcb.current_thread->wait_roundabouts;
@@ -271,7 +271,7 @@ void kernel_wait_us(const uint32_t us)
         tcb.current_thread->state = WAITING;
     KERNEL_EXIT_ATOMIC();
         
-        Thread volatile *curr = tcb.current_thread;
+        thread_t volatile *curr = tcb.current_thread;
         while(curr->state == WAITING){;}
     }
 }
@@ -339,7 +339,7 @@ static void init_device_drivers(void)
 #if CONFIG_THREADS_QUERY_STATE == TRUE
 static void sort_thread_list_descending(void)
 {
-    Thread temp = {0};
+    thread_t temp = {0};
     if(tcb.active_threads > 1){
         // for now it is a simple bubblesort 
         for(uint8_t i = 0; i < tcb.active_threads; ++i){
@@ -361,9 +361,9 @@ static void link_thread_list(void)
 #endif
 
 static void insert_stack_overflow_detecting_bytes(void);
-static void init_stack(const ThreadAddress thread_addr, Register * const stack_start);
+static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
 
-uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * const stack_start, const StackSize stack_size)
+uint8_t kernel_register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
 {
     if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
     if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
@@ -372,7 +372,7 @@ uint8_t kernel_register_thread(const ThreadAddress thread_addr,  Register * cons
 
     /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is flipped here */
     *tcb.current_thread = \
-        (Thread){
+        (thread_t){
         .stack_bottom = stack_start,
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
@@ -408,9 +408,9 @@ static void insert_stack_overflow_detecting_bytes(void)
     R31
     SREG
 */
-static void init_stack(const ThreadAddress thread_addr, Register * const stack_start)
+static void init_stack(const thread_address_t thread_addr, register_t * const stack_start)
 {
-    Register *stack_pointer = stack_start;
+    register_t *stack_pointer = stack_start;
 
     *stack_pointer = (uint16_t)thread_addr & (uint16_t)0x00ffu; --stack_pointer;
     *stack_pointer = (uint16_t)thread_addr>>8u; --stack_pointer;
@@ -424,7 +424,7 @@ static void init_stack(const ThreadAddress thread_addr, Register * const stack_s
 }
 
 #if CONFIG_THREADS_QUERY_STATE == TRUE
-uint8_t kernel_get_thread_state(const ThreadAddress th_addr)
+uint8_t kernel_get_thread_state(const thread_address_t th_addr)
 {
 #if (CONFIG_NUM_OF_THREADS > 1)
         uint8_t max = 0;
