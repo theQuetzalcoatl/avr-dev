@@ -62,7 +62,7 @@ extern void kernel_exit(void);  // Threads can exit from being scheduled and run
 extern void kernel_wait_us(const uint32_t us); // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
 extern void kernel_wait_ms(const uint16_t ms); // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
 #if CONFIG_THREADS_QUERY_STATE == TRUE
-uint8_t kernel_get_thread_state(const thread_address_t th_addr);
+uint8_t kernel_get_thread_state(const thread_address_t th_addr); // provides the state of the supplied thread or K_ERR_THREAD_NOT_FOUND if an invalid ID was given.
 #endif
 
 #endif /* KERNEL_H */

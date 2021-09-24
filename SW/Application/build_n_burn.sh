@@ -8,7 +8,7 @@ remove_binaries()
 }
 
 output_bin="application.bin";
-optimization="-O2";
+optimization="-O3";
 debug="";
 uC="atmega128";
 

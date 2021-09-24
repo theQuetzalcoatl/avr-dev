@@ -17,7 +17,7 @@
 #define MIN_STACK_SIZE (2u + 32u + 1u + 2u) /* required for context switching -> PC + R0->R31 + SREG + 2bytes stack overflow detection */ /* bytes */
 
     /* OTHER */
-#define CONFIG_SYSTEM_TICK_IN_US (650u)
+#define CONFIG_SYSTEM_TICK_IN_US (1000u)
 
 
 

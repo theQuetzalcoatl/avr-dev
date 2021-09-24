@@ -204,7 +204,6 @@ static uint8_t check_stack_for_overflow(void)
 
 static void schedule_next_task(void)
 {
-    thread_t *curr = tcb.current_thread;
     switch(tcb.current_thread->state){
         case WAITING: // we are here because of a regular systick interrupt
             --tcb.current_thread->wait_roundabouts;
@@ -225,6 +224,7 @@ static void schedule_next_task(void)
             kernel_panic();
     }
     tcb.current_thread = tcb.current_thread->next;
+
     if(tcb.current_thread->state == READY) tcb.current_thread->state = RUNNING;
     else if(tcb.current_thread->state == WAITING);
     else kernel_panic();
@@ -358,9 +358,31 @@ static void link_thread_list(void)
 {
     for(uint8_t i = 0; i < tcb.active_threads-1; ++i) tcb.thread[i].next = &tcb.thread[i+1];
 }
+
+uint8_t kernel_get_thread_state(const thread_address_t th_addr)
+{
+#if (CONFIG_NUM_OF_THREADS > 1)
+        uint8_t max = 0;
+        uint8_t min = CONFIG_NUM_OF_THREADS-1;
+        uint8_t middle = CONFIG_NUM_OF_THREADS / 2;
+
+        if(tcb.thread[max].id == th_addr) return tcb.thread[max].state;
+        else if(tcb.thread[min].id == th_addr) return tcb.thread[min].state;
+
+        for(; middle != max && middle != min; middle = (max + min)/2){
+            if(tcb.thread[middle].id == th_addr) return tcb.thread[middle].state;
+            else if(tcb.thread[middle].id > th_addr) max = middle;
+            else min = middle;
+            middle = (min + max)/2;
+        }
+        return K_ERR_THREAD_NOT_FOUND;
+#else
+    return tcb.current_thread->state;
+#endif
+}
+
 #endif
 
-static void insert_stack_overflow_detecting_bytes(void);
 static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
 
 uint8_t kernel_register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
@@ -392,12 +414,6 @@ uint8_t kernel_register_thread(const thread_address_t thread_addr,  register_t *
     return NO_ERROR;
 }
 
-static void insert_stack_overflow_detecting_bytes(void)
-{
-    *(tcb.current_thread->stack_bottom + 1) = 0xBE;
-    *(tcb.current_thread->stack_bottom) = 0xEF;
-}
-
 /* CONTEXT
 
     PC[7:0]
@@ -408,6 +424,8 @@ static void insert_stack_overflow_detecting_bytes(void)
     R31
     SREG
 */
+static void insert_stack_overflow_detection_bytes(void);
+
 static void init_stack(const thread_address_t thread_addr, register_t * const stack_start)
 {
     register_t *stack_pointer = stack_start;
@@ -420,33 +438,14 @@ static void init_stack(const thread_address_t thread_addr, register_t * const st
     *stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --stack_pointer;
     tcb.current_thread->stack_pointer = stack_pointer;
 
-    insert_stack_overflow_detecting_bytes();   
+    insert_stack_overflow_detection_bytes();   
 }
 
-#if CONFIG_THREADS_QUERY_STATE == TRUE
-uint8_t kernel_get_thread_state(const thread_address_t th_addr)
+static void insert_stack_overflow_detection_bytes(void)
 {
-#if (CONFIG_NUM_OF_THREADS > 1)
-        uint8_t max = 0;
-        uint8_t min = CONFIG_NUM_OF_THREADS-1;
-        uint8_t middle = CONFIG_NUM_OF_THREADS / 2;
-
-        if(tcb.thread[max].id == th_addr) return tcb.thread[max].state;
-        else if(tcb.thread[min].id == th_addr) return tcb.thread[min].state;
-
-        for(; middle != max && middle != min; middle = (max + min)/2){
-            if(tcb.thread[middle].id == th_addr) return tcb.thread[middle].state;
-            else if(tcb.thread[middle].id > th_addr) max = middle;
-            else min = middle;
-            middle = (min + max)/2;
-        }
-        return K_ERR_THREAD_NOT_FOUND;
-#else
-    return tcb.current_thread->state;
-#endif
-
+    *(tcb.current_thread->stack_bottom + 1) = 0xBE;
+    *(tcb.current_thread->stack_bottom) = 0xEF;
 }
-#endif
 
 
 /*
