@@ -3,7 +3,7 @@
 register_t thread_1_stack[MIN_STACK_SIZE+6];
 void thread_1(void)
 {
-    for(;;){
+    while(1){
         if(button_get_state(BUTTON_2) == PIN_LOW) uart_send('U');
     }
 }

@@ -31,6 +31,8 @@ avr-objdump --source ${output_bin} > app_disass.s;
 avr-size --format=avr --mcu=${uC} ${output_bin} && \
 avr-objcopy --only-section=.text --only-section=.data --only-section=.bss --only-section=.bootloader --only-section=.noinit --output-target=ihex $output_bin application.hex
 
+./ToolsAndScripts/header_guard_checker.sh ./Aztec/
+
 if [[ "$1" == "upload" && ${did_compile} == 0 ]]; then
 avrdude -p m128 -b 19200 -P /dev/ttyUSB0 -c arduino -U flash:w:application.hex:i;
 fi
