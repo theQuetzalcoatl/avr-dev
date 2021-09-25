@@ -1,13 +1,16 @@
 #ifndef KERNEL_ERROR_HANDLING_H
 #define KERNEL_ERROR_HANDLING_H
 
-#define K_ERR_FAILED_INIT_SYSTICK   (2u)
-#define K_ERR_STACK_OVERFLOW        (3u)
-#define K_ERR_INVALID_STACKSIZE     (4u)
-#define K_ERR_THREAD_NUM_OUT_OF_BOUNDS   (5u)
-#define K_ERR_THREAD_NOT_FOUND      (6u)
+#include <stdint.h>
 
-extern void kernel_panic(void);
+typedef uint8_t k_error_t;
+
+#define K_ERR_FAILED_INIT_SYSTICK       (2u | 0x80u)
+#define K_ERR_STACK_OVERFLOW            (3u | 0x80u)
+#define K_ERR_INVALID_STACKSIZE         (4u | 0x80u)
+#define K_ERR_THREAD_NUM_OUT_OF_BOUNDS  (5u | 0x80u)
+#define K_ERR_THREAD_NOT_FOUND          (6u | 0x80u)
+#define K_ERR_ALREADY_REGISTERED_STACK  (7u | 0x80u)
 
 #endif /* KERNEL_ERROR_HANDLING_H */
 

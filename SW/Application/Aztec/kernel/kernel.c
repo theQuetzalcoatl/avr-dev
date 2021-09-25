@@ -1,5 +1,4 @@
 #include "../kernel/kernel.h"
-#include "../kernel/kernel_error_handling.h"
 
 #if (CONFIG_NUM_OF_THREADS > CONFIG_MAX_THREADS || CONFIG_NUM_OF_THREADS == 0)
     #error "Number of maximum threads shall not exceed 255."
@@ -121,6 +120,7 @@ static thread_control_block_t tcb = {0};
                 ");
 
 extern void disable_systick(void);
+extern void kernel_panic(void);
 
 /*
     * OCRn = (F_CPU*T/(2*prescaler)) - 1
@@ -236,7 +236,7 @@ void disable_systick(void)
     TIMSK &= ~(1<<OCIE2);
 }
 
-    /******************* SYSTEM CALLS *******************/
+    /******************* SYSTEM CALLS, PUBLIC APIs *******************/
 
 static void remove_curr_thread_from_list(void);
 
@@ -286,7 +286,7 @@ static void make_threadlist_circular(void);
 static void sort_thread_list_descending(void);
 static void link_thread_list(void);
 
-uint8_t kernel_start_os(void)
+k_error_t kernel_start_os(void)
 {
     KERNEL_ENTER_ATOMIC();
     uint8_t ret = NO_ERROR;
@@ -359,7 +359,7 @@ static void link_thread_list(void)
     for(uint8_t i = 0; i < tcb.active_threads-1; ++i) tcb.thread[i].next = &tcb.thread[i+1];
 }
 
-uint8_t kernel_get_thread_state(const thread_address_t th_addr)
+k_error_t kernel_get_thread_state(const thread_address_t th_addr)
 {
 #if (CONFIG_NUM_OF_THREADS > 1)
         uint8_t max = 0;
@@ -384,11 +384,15 @@ uint8_t kernel_get_thread_state(const thread_address_t th_addr)
 #endif
 
 static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
+static k_error_t check_if_stack_is_already_registered(register_t * const stack_start);
 
-uint8_t kernel_register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
+k_error_t kernel_register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
 {
     if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
     if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
+    if(tcb.active_threads > 0){
+        if(check_if_stack_is_already_registered(stack_start) == K_ERR_ALREADY_REGISTERED_STACK) return K_ERR_ALREADY_REGISTERED_STACK;
+    }
 
     tcb.current_thread = &tcb.thread[tcb.active_threads];
 
@@ -445,6 +449,14 @@ static void insert_stack_overflow_detection_bytes(void)
 {
     *(tcb.current_thread->stack_bottom + 1) = 0xBE;
     *(tcb.current_thread->stack_bottom) = 0xEF;
+}
+
+static k_error_t check_if_stack_is_already_registered(register_t * const stack_start)
+{
+    for(int8_t i = tcb.active_threads-1; i >= 0; --i){  
+        if(tcb.thread[i].stack_bottom == stack_start) return K_ERR_ALREADY_REGISTERED_STACK;
+    }
+    return NO_ERROR;
 }
 
 

@@ -16,10 +16,12 @@ AVR stuff:
 
     array in memory goes from lower to higher
 */
+
 #include <stdint.h>
 
 #include "../utils.h"
 #include "../kernel/kernel_config.h"
+#include "kernel_error_handling.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -34,7 +36,8 @@ AVR stuff:
 #include "../drivers/uart/uart.h"
 #include "../drivers/lcd/lcd.h"
 
-#define KERNEL_VERSION "v2.1"
+
+#define KERNEL_VERSION "v2.3"
 
 #define HAL_OK (0u)
 #define HAL_NOK (1u)
@@ -52,8 +55,8 @@ typedef uint16_t stack_size_t;
 typedef uint8_t register_t;
 typedef void (*thread_address_t)(void);
 
-extern uint8_t kernel_start_os(void); // Last one to call in main, after all the thread registration
-extern uint8_t kernel_register_thread(const thread_address_t thread_addr, register_t * const stack_start, const stack_size_t stack_size); // Registers one thread in the kernel. Must be called before OS starts
+extern k_error_t kernel_start_os(void); // Last one to call in main, after all the thread registration
+extern k_error_t kernel_register_thread(const thread_address_t thread_addr, register_t * const stack_start, const stack_size_t stack_size); // Registers one thread in the kernel. Must be called before OS starts
 
     /* SYSTEM CALLS */
 
