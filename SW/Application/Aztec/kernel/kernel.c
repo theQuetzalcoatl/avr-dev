@@ -128,18 +128,18 @@ extern void kernel_panic(void);
     T should be in microseconds, it gets devided by 1,000,000 to get us.
 */
 #if   F_CPU == 8000000UL
-    #define MAX_MS_TICK (8000u)
+    #define MAX_US_TICK (8000u)
 #elif F_CPU == 16000000UL
-    #define MAX_MS_TICK (4000u) /* (2*256*256)/(16*10^6) */
+    #define MAX_US_TICK (4000u) /* (2*256*256)/(16*10^6) */
 #else
     #error "MCU clock must be either 8MHz or 16MHz!"
 #endif
-#define MIN_MS_TICK (100u) // this number is based on the fact that thread switching takes about 15 microsec
+#define MIN_US_TICK (100u) // this number is based on the fact that thread switching takes about 15 microsec
 #define PRESCALER (256u)
 
 static uint8_t init_system_ticking(void)
 {
-#if CONFIG_SYSTEM_TICK_IN_US > MAX_MS_TICK || CONFIG_SYSTEM_TICK_IN_US < MIN_MS_TICK
+#if CONFIG_SYSTEM_TICK_IN_US > MAX_US_TICK || CONFIG_SYSTEM_TICK_IN_US < MIN_US_TICK
     #error "OS's system tick period is out of bounds!"
 #endif
 

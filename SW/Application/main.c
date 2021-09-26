@@ -9,7 +9,7 @@ void thread_1(void)
 }
 
 register_t thread_2_stack[MIN_STACK_SIZE+6];
-void sys_alive_led(void)
+void heartbeat(void)
 {
     for(;;){
         toggle_led(LED1);
@@ -113,7 +113,7 @@ void thread_4(void)
 int main(void)
 {
     kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+6);
-    kernel_register_thread(sys_alive_led, thread_2_stack, MIN_STACK_SIZE+6);
+    kernel_register_thread(heartbeat, thread_2_stack, MIN_STACK_SIZE+6);
     kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+6);
     kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+6);
 
