@@ -132,7 +132,7 @@ extern void kernel_panic(void);
 #elif F_CPU == 16000000UL
     #define MAX_US_TICK (4000u) /* (2*256*256)/(16*10^6) */
 #else
-    #error "MCU clock must be either 8MHz or 16MHz!"
+    #error "MCU clock frequency must be either 8MHz or 16MHz!"
 #endif
 #define MIN_US_TICK (100u) // this number is based on the fact that thread switching takes about 15 microsec
 #define PRESCALER (256u)
@@ -145,7 +145,7 @@ static uint8_t init_system_ticking(void)
 
     uint16_t us_tick = CONFIG_SYSTEM_TICK_IN_US * 2u; // the formula calculates the period, but we want half of that so it gets multiplied
 
-    uint32_t val = F_CPU/100000u; // 10^5 is used insted of 10^6(to make sec to usec) but I keep the extra digit to be able to use rounding, after that, it is devided by 10, thus 10^6 in total
+    uint32_t val = F_CPU/100000u; // 10^5 is used instead of 10^6(to make sec to usec) but I keep the extra digit to be able to use rounding, after that, it is devided by 10, thus 10^6 in total
     val *= (uint32_t)us_tick;
     val /= 2u;
     val /= PRESCALER;
@@ -178,7 +178,7 @@ static void start_scheduling(void)
     tcb.current_thread->state = RUNNING;
     tcb.prev_thread = &tcb.thread[0];
     RESTORE_CONTEXT();
-    asm volatile("ret \n"); // the compiler may optimize the function call out, thus we would not return here
+    asm volatile("ret"); // the compiler may optimize the function call out, thus we would not return here
 }
 
 static void schedule_next_task(void);
@@ -388,6 +388,7 @@ static k_error_t check_if_stack_is_already_registered(register_t * const stack_s
 
 k_error_t kernel_register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
 {
+    /* error checking */
     if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
     if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
     if(tcb.active_threads > 0){
@@ -438,7 +439,7 @@ static void init_stack(const thread_address_t thread_addr, register_t * const st
     *stack_pointer = (uint16_t)thread_addr>>8u; --stack_pointer;
     *stack_pointer = 0u; /* R0 */ --stack_pointer;
     *stack_pointer = 0u; /* R1 */ --stack_pointer;
-    for(int i = 2; i < 32; ++i, --stack_pointer) *stack_pointer = i; /* R2 - R31 */
+    for(int i = 2; i <= 31; ++i, --stack_pointer) *stack_pointer = i; /* R2 - R31 */
     *stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --stack_pointer;
     tcb.current_thread->stack_pointer = stack_pointer;
 

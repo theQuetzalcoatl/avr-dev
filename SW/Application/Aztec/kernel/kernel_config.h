@@ -20,7 +20,6 @@
 #define CONFIG_SYSTEM_TICK_IN_US (1000u)
 
 
-
 #endif /* KERNEL_CONFIG_H */
 
 /*

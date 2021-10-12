@@ -27,16 +27,6 @@ AVR stuff:
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-        /* DRIVERS */
-#include "../drivers/button/button.h"
-#include "../drivers/buzzer/buzzer.h"
-#include "../drivers/dac/dac.h"
-#include "../drivers/keypad/keypad.h"
-#include "../drivers/led/led.h"
-#include "../drivers/uart/uart.h"
-#include "../drivers/lcd/lcd.h"
-
-
 #define KERNEL_VERSION "v2.3"
 
 #define HAL_OK (0u)
@@ -54,6 +44,7 @@ AVR stuff:
 typedef uint16_t stack_size_t;
 typedef uint8_t register_t;
 typedef void (*thread_address_t)(void);
+typedef uint8_t device_id_t;
 
 extern k_error_t kernel_start_os(void); // Last one to call in main, after all the thread registration
 extern k_error_t kernel_register_thread(const thread_address_t thread_addr, register_t * const stack_start, const stack_size_t stack_size); // Registers one thread in the kernel. Must be called before OS starts
@@ -67,6 +58,27 @@ extern void kernel_wait_ms(const uint16_t ms); // If there is a huge (~1min) del
 #if CONFIG_THREADS_QUERY_STATE == TRUE
 uint8_t kernel_get_thread_state(const thread_address_t th_addr); // provides the state of the supplied thread or K_ERR_THREAD_NOT_FOUND if an invalid ID was given.
 #endif
+
+        /* DRIVERS */
+
+enum DEVIDCE_IDS
+{
+    INVALID_ID,
+    BUTTON_ID,
+    LED1_ID,
+    LED2_ID,
+    LED3_ID,
+    LED4_ID,
+    ID_COUNT
+};
+
+#include "../drivers/button/button.h"
+#include "../drivers/buzzer/buzzer.h"
+#include "../drivers/dac/dac.h"
+#include "../drivers/keypad/keypad.h"
+#include "../drivers/led/led.h"
+#include "../drivers/uart/uart.h"
+#include "../drivers/lcd/lcd.h"
 
 #endif /* KERNEL_H */
 
