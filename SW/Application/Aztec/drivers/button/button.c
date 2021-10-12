@@ -1,5 +1,8 @@
 #include "./button.h"
 
+/**** DEIVCE ID ****/
+static uint8_t leased = FALSE;
+
 /* Device initialization */
 
 static void set_gpio_to_input(void);
@@ -23,21 +26,39 @@ static void activate_pullup_resistors()
 
 /* Device functionalities */
 
+device_id_t button_lease(void)
+{
+    if(leased == FALSE){
+        leased = TRUE;
+        return BUTTON_ID;
+    }
+    else return INVALID_ID;
+}
+
+void button_release(void)
+{
+    leased = FALSE;
+}
+
 uint8_t button_get_state(uint8_t button)
 {
     if(button == BUTTON_2 || button == BUTTON_3) return (PINC & (uint8_t)((1<<button))>>button);
     else return ERR_INVALID_BUTTON;
 }
 
-static void deactive_pullup_resistors(void);
+static void deactivate_pullup_resistors(void);
 static void set_gpio_to_output_low(void);
-void button_deactive_buttons(void)
+k_error_t button_deactivate_buttons(device_id_t id)
 {
-    deactive_pullup_resistors();
-    set_gpio_to_output_low();
+    if(BUTTON_ID == id){
+        deactivate_pullup_resistors();
+        set_gpio_to_output_low();
+        return NO_ERROR;
+    }
+    else K_ERR_INVALID_DEVICE_ACCESS;
 }
 
-static void deactive_pullup_resistors(void)
+static void deactivate_pullup_resistors(void)
 {
     PORTC &= ~(1<<BUTTON_2 | 1<<BUTTON_3);
 }
@@ -48,10 +69,14 @@ static void set_gpio_to_output_low(void)
     PORTC &= ~(1<<BUTTON_2 | 1<<BUTTON_3);
 }
 
-void button_activate_buttons(void)
+k_error_t button_activate_buttons(device_id_t id)
 {
-    set_gpio_to_input();
-    activate_pullup_resistors();
+    if(BUTTON_ID == id){
+        set_gpio_to_input();
+        activate_pullup_resistors();
+        return NO_ERROR;
+    }
+    else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
 /*
