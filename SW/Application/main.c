@@ -11,10 +11,12 @@ void thread_1(void)
 register_t thread_2_stack[MIN_STACK_SIZE+6];
 void heartbeat(void)
 {
+    device_id_t id = led_1_lease();
     for(;;){
-        toggle_led(LED1);
+        led_1_toggle(id);
         kernel_wait_us(500000);
     }
+    led_1_release();
 }
 
 register_t thread_3_stack[MIN_STACK_SIZE+6];
@@ -104,10 +106,17 @@ void thread_3(void)
 register_t thread_4_stack[MIN_STACK_SIZE + 6];
 void thread_4(void)
 {
+    device_id_t id = led_2_lease();
     for(;;){
-        if(WAITING == kernel_get_thread_state(thread_3)) turn_led_on(LED2);
-        else turn_led_off(LED2);
+#if CONFIG_THREADS_QUERY_STATE == TRUE
+        if(WAITING == kernel_get_thread_state(thread_3)) led_2_on(id);
+        else led_2_off(id);
+#else
+        toggle_led(LED4);
+        kernel_wait_ms(200);
+#endif
     }
+    led_2_release();
 }
 
 int main(void)
