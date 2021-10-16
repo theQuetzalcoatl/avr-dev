@@ -29,7 +29,9 @@ static void activate_pullup_resistors()
 device_id_t button_lease(void)
 {
     if(leased == FALSE){
+        KERNEL_ENTER_ATOMIC();
         leased = TRUE;
+        KERNEL_EXIT_ATOMIC();
         return BUTTON_ID;
     }
     else return INVALID_ID;
@@ -50,7 +52,7 @@ static void deactivate_pullup_resistors(void);
 static void set_gpio_to_output_low(void);
 k_error_t button_deactivate_buttons(device_id_t id)
 {
-    if(BUTTON_ID == id){
+    if(BUTTON_ID == id && leased == TRUE){
         deactivate_pullup_resistors();
         set_gpio_to_output_low();
         return NO_ERROR;
@@ -71,7 +73,7 @@ static void set_gpio_to_output_low(void)
 
 k_error_t button_activate_buttons(device_id_t id)
 {
-    if(BUTTON_ID == id){
+    if(BUTTON_ID == id && leased == TRUE){
         set_gpio_to_input();
         activate_pullup_resistors();
         return NO_ERROR;
