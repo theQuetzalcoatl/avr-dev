@@ -69,6 +69,7 @@ enum DEVIDCE_IDS
     LED2_ID,
     LED3_ID,
     LED4_ID,
+    LCD_ID,
     ID_COUNT
 };
 
