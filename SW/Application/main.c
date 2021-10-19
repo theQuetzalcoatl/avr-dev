@@ -1,6 +1,6 @@
 #include "Aztec/kernel/kernel.h"
 
-register_t thread_1_stack[MIN_STACK_SIZE+6];
+register_t thread_1_stack[MIN_STACK_SIZE+100];
 void thread_1(void)
 {
     while(1){
@@ -8,24 +8,24 @@ void thread_1(void)
     }
 }
 
-register_t thread_2_stack[MIN_STACK_SIZE+6];
+register_t thread_2_stack[MIN_STACK_SIZE+100];
 void heartbeat(void)
 {
-    device_id_t id = led_1_lease();
+    kernel_lease(DEV_LED1);
     for(;;){
-        led_1_toggle(id);
+        led_1_toggle();
         kernel_wait_us(500000);
     }
-    led_1_release();
+    kernel_release(DEV_LED1);
 }
 
-register_t thread_3_stack[MIN_STACK_SIZE+6];
+register_t thread_3_stack[MIN_STACK_SIZE+100];
 void thread_3(void)
 {
     char key;
     volatile uint16_t freq = 0;
-    device_id_t id = lcd_lease();
-    lcd_turn_backligh_on(id);
+    kernel_lease(DEV_LCD);
+    lcd_turn_backligh_on();
 
     while(1){
         for(int i = 4; i; --i){
@@ -33,60 +33,60 @@ void thread_3(void)
             switch(key)
             {
                 case KEYPAD_0:
-                    lcd_write(id, '0');
+                    lcd_write('0');
                     freq = freq*10;
                 break;
 
                 case KEYPAD_1:
-                    lcd_write(id, '1');
+                    lcd_write('1');
                     freq = freq*10;
                     freq += 1;
                 break;
 
                 case KEYPAD_2:
-                    lcd_write(id, '2');
+                    lcd_write('2');
                     freq = freq*10;
                     freq += 2;
                 break;
 
                 case KEYPAD_3:
-                    lcd_write(id, '3');
+                    lcd_write('3');
                     freq = freq*10;
                     freq += 3;
                 break;
 
                 case KEYPAD_4:
-                    lcd_write(id, '4');
+                    lcd_write('4');
                     freq = freq*10;
                     freq += 4;
                 break;
 
                 case KEYPAD_5:
-                    lcd_write(id, '5');
+                    lcd_write('5');
                     freq = freq*10;
                     freq += 5;
                 break;
 
                 case KEYPAD_6:
-                    lcd_write(id, '6');
+                    lcd_write('6');
                     freq = freq*10;
                     freq += 6;
                 break;
 
                 case KEYPAD_7:
-                    lcd_write(id, '7');
+                    lcd_write('7');
                     freq = freq*10;
                     freq += 7;
                 break;
 
                 case KEYPAD_8:
-                    lcd_write(id, '8');
+                    lcd_write('8');
                     freq = freq*10;
                     freq += 8;
                 break;
 
                 case KEYPAD_9:
-                    lcd_write(id, '9');
+                    lcd_write('9');
                     freq = freq*10;
                     freq += 9;
                 break;
@@ -97,36 +97,36 @@ void thread_3(void)
             }
             kernel_wait_ms(120);
         }
-        lcd_send_command(id, LCD_CLEAR);
+        lcd_send_command(LCD_CLEAR);
         if(freq == 0)buzzer_off();
         else buzzer_buzz(freq);
         freq = 0;
     }
-    lcd_release();
+    kernel_release(DEV_LCD);
 }
 
-register_t thread_4_stack[MIN_STACK_SIZE + 6];
+register_t thread_4_stack[MIN_STACK_SIZE + 100];
 void thread_4(void)
 {
-    device_id_t id = led_2_lease();
+    kernel_lease(DEV_LED2);
     for(;;){
 #if CONFIG_THREADS_QUERY_STATE == TRUE
-        if(WAITING == kernel_get_thread_state(thread_3)) led_2_on(id);
-        else led_2_off(id);
+        if(WAITING == kernel_get_thread_state(thread_3)) led_2_on();
+        else led_2_off();
 #else
         toggle_led(LED4);
         kernel_wait_ms(200);
 #endif
     }
-    led_2_release();
+    kernel_release(DEV_LED2);
 }
 
 int main(void)
 {
-    kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+6);
-    kernel_register_thread(heartbeat, thread_2_stack, MIN_STACK_SIZE+6);
-    kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+6);
-    kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+6);
+    kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+100);
+    kernel_register_thread(heartbeat, thread_2_stack, MIN_STACK_SIZE+100);
+    kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+100);
+    kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+100);
 
     kernel_start_os();
 
