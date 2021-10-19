@@ -10,12 +10,10 @@
 #define NOT_PRESSED PIN_HIGH
 #define ERR_INVALID_BUTTON (0xffu)
 
-extern device_id_t button_lease(void);
-extern void button_release(void);
 extern void button_init_device(void);
 extern uint8_t button_get_state(uint8_t button);
-extern k_error_t button_activate_buttons(device_id_t id);
-extern k_error_t button_deactivate_buttons(device_id_t id);
+extern k_error_t button_activate_buttons(void);
+extern k_error_t button_deactivate_buttons(void);
 
 #endif /* BUTTON_H */
 

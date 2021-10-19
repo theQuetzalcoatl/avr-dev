@@ -1,7 +1,5 @@
 #include "./button.h"
 
-/**** DEIVCE ID ****/
-static uint8_t leased = FALSE;
 
 /* Device initialization */
 
@@ -26,22 +24,6 @@ static void activate_pullup_resistors()
 
 /* Device functionalities */
 
-device_id_t button_lease(void)
-{
-    if(leased == FALSE){
-        KERNEL_ENTER_ATOMIC();
-        leased = TRUE;
-        KERNEL_EXIT_ATOMIC();
-        return BUTTON_ID;
-    }
-    else return INVALID_ID;
-}
-
-void button_release(void)
-{
-    leased = FALSE;
-}
-
 uint8_t button_get_state(uint8_t button)
 {
     if(button == BUTTON_2 || button == BUTTON_3) return (PINC & (uint8_t)((1<<button))>>button);
@@ -50,9 +32,9 @@ uint8_t button_get_state(uint8_t button)
 
 static void deactivate_pullup_resistors(void);
 static void set_gpio_to_output_low(void);
-k_error_t button_deactivate_buttons(device_id_t id)
+k_error_t button_deactivate_buttons(void)
 {
-    if(BUTTON_ID == id && leased == TRUE){
+    if(kernel_check_device_ownership(DEV_BUTTON) == SAME_OWNER){
         deactivate_pullup_resistors();
         set_gpio_to_output_low();
         return NO_ERROR;
@@ -71,9 +53,9 @@ static void set_gpio_to_output_low(void)
     PORTC &= ~(1<<BUTTON_2 | 1<<BUTTON_3);
 }
 
-k_error_t button_activate_buttons(device_id_t id)
+k_error_t button_activate_buttons(void)
 {
-    if(BUTTON_ID == id && leased == TRUE){
+    if(kernel_check_device_ownership(DEV_BUTTON) == SAME_OWNER){
         set_gpio_to_input();
         activate_pullup_resistors();
         return NO_ERROR;
