@@ -1,5 +1,6 @@
 # avr-dev
 
+A self made and designed embedded development board with several peripherals/devices to use. On top of that is an embedded kernel with several device drivers, forming an OS.</br>
 The project aims to develop a suitable SW architecture and a corresponding HW development board, which can be the foundation of learning and experimentation.
 
 
