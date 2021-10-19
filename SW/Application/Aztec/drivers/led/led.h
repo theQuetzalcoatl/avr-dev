@@ -10,25 +10,17 @@
 
 
 extern void led_init_device(void);
-extern device_id_t led_1_lease(void);
-extern device_id_t led_2_lease(void);
-extern device_id_t led_3_lease(void);
-extern device_id_t led_4_lease(void);
-extern void led_1_release(void);
-extern void led_2_release(void);
-extern void led_3_release(void);
-extern void led_4_release(void);
-extern k_error_t led_1_on(device_id_t id);
-extern k_error_t led_2_on(device_id_t id);
-extern k_error_t led_3_on(device_id_t id);
-extern k_error_t led_4_on(device_id_t id);
-extern k_error_t led_1_off(device_id_t id);
-extern k_error_t led_2_off(device_id_t id);
-extern k_error_t led_3_off(device_id_t id);
-extern k_error_t led_4_off(device_id_t id);
-extern k_error_t led_1_toggle(device_id_t id);
-extern k_error_t led_2_toggle(device_id_t id);
-extern k_error_t led_3_toggle(device_id_t id);
-extern k_error_t led_4_toggle(device_id_t id);
+extern k_error_t led_1_on(void);
+extern k_error_t led_2_on(void);
+extern k_error_t led_3_on(void);
+extern k_error_t led_4_on(void);
+extern k_error_t led_1_off(void);
+extern k_error_t led_2_off(void);
+extern k_error_t led_3_off(void);
+extern k_error_t led_4_off(void);
+extern k_error_t led_1_toggle(void);
+extern k_error_t led_2_toggle(void);
+extern k_error_t led_3_toggle(void);
+extern k_error_t led_4_toggle(void);
 
 #endif /* LED_H */
