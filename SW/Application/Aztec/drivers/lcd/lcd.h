@@ -6,13 +6,11 @@
     /* COMMANDS */
 #define LCD_CLEAR       (0b00000001u)
 
-extern device_id_t lcd_lease(void);
-extern void lcd_release(void);
 extern void lcd_init_device(void);
-extern k_error_t lcd_send_command(device_id_t id, uint8_t command);
-extern k_error_t lcd_write(device_id_t id, uint8_t data);
-extern k_error_t lcd_turn_backligh_off(device_id_t id);
-extern k_error_t lcd_turn_backligh_on(device_id_t id);
+extern k_error_t lcd_send_command(uint8_t command);
+extern k_error_t lcd_write(uint8_t data);
+extern k_error_t lcd_turn_backligh_off(void);
+extern k_error_t lcd_turn_backligh_on(void);
 
 #endif  /* LCD_H */
 

@@ -1,7 +1,5 @@
 #include "lcd.h"
 
-static uint8_t leased = FALSE;
-
 #define LCD_D7		PINA7
 #define LCD_D6		PINA6
 #define LCD_D5		PINA5
@@ -15,25 +13,9 @@ static uint8_t leased = FALSE;
 #define COMMAND_MODE()	LCD_PORT &= ~(1<<RS)
 #define DATA_MODE()	    LCD_PORT |= (1<<RS)
 
+
 static void flash(void);
-
-
-device_id_t lcd_lease(void)
-{
-	if(leased == FALSE){
-        KERNEL_ENTER_ATOMIC();
-        leased = TRUE;
-        KERNEL_EXIT_ATOMIC();
-        return LCD_ID;
-    }
-    else return INVALID_ID;
-}
-
-
-void lcd_release(void)
-{
-	leased = FALSE;
-}
+static void lcd_internal_send_command(uint8_t command);
 
 static void init_gpio(void);
 static void execute_lcd_init_sequence(void);
@@ -50,7 +32,6 @@ static void init_gpio()
 
 static void execute_lcd_init_sequence(void)
 {
-	leased = TRUE;
     COMMAND_MODE();
 	LCD_PORT |= (1<<LCD_D5) | (1<<LCD_D4);
 	LCD_PORT &= ~((1<<LCD_D6) | (1<<LCD_D7));	// 0b0011xxxx
@@ -72,14 +53,11 @@ static void execute_lcd_init_sequence(void)
 	// 5)
 	_delay_ms(5);
 
-	lcd_send_command(LCD_ID, 0b00101000);	// N=1(2 rows), F=0 (5*8 matrix)
-	lcd_send_command(LCD_ID, 0b00001000);	// display off, cursor&blinking off
-	lcd_send_command(LCD_ID, LCD_CLEAR);	// clear screen, return cursor home
-	lcd_send_command(LCD_ID, 0b00000110);	// inc cursor right when writing, don't shift screen
-
-	lcd_send_command(LCD_ID, 0b00001100);	// display back on
-
-	leased = FALSE;
+	lcd_internal_send_command(0b00101000);	// N=1(2 rows), F=0 (5*8 matrix)
+	lcd_internal_send_command(0b00001000);	// display off, cursor&blinking off
+	lcd_internal_send_command(LCD_CLEAR);	// clear screen, return cursor home
+	lcd_internal_send_command(0b00000110);	// inc cursor right when writing, don't shift screen
+	lcd_internal_send_command(0b00001100);	// display back on
 }
 
 static void flash(void)
@@ -91,9 +69,25 @@ static void flash(void)
 	LCD_PORT &= ~(1<<EN);
 }
 
-k_error_t lcd_send_command(device_id_t id, uint8_t command)
+static void lcd_internal_send_command(uint8_t command)
 {
-	if(id == LCD_ID && leased == TRUE){
+	COMMAND_MODE();
+	LCD_PORT &= 0x0f;
+	LCD_PORT |= (command & 0xf0);
+	flash();
+	
+	LCD_PORT &= 0x0f;
+	LCD_PORT |= ((command<<4) & 0xf0);
+	flash();
+	
+	_delay_ms(1);
+
+	return NO_ERROR;
+}
+
+k_error_t lcd_send_command(uint8_t command)
+{
+	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
 		COMMAND_MODE();
 		LCD_PORT &= 0x0f;
 		LCD_PORT |= (command & 0xf0);
@@ -110,9 +104,9 @@ k_error_t lcd_send_command(device_id_t id, uint8_t command)
 	else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
-k_error_t lcd_write(device_id_t id, uint8_t data)
+k_error_t lcd_write(uint8_t data)
 {
-	if(id == LCD_ID && leased == TRUE){
+	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
 		DATA_MODE();
 		LCD_PORT &= 0x0f;
 		LCD_PORT |= (data & 0xf0);
@@ -129,19 +123,18 @@ k_error_t lcd_write(device_id_t id, uint8_t data)
 	else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
-k_error_t lcd_turn_backligh_on(device_id_t id)
+k_error_t lcd_turn_backligh_on(void)
 {
-	if(id == LCD_ID && leased == TRUE){
+	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
 		LCD_PORT |= 1<<BACK_LIGHT;
 		return NO_ERROR;
 	}
 	else return K_ERR_INVALID_DEVICE_ACCESS;
-
 }
 
-k_error_t lcd_turn_backligh_off(device_id_t id)
+k_error_t lcd_turn_backligh_off(void)
 {
-	if(id == LCD_ID && leased == TRUE){
+	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
 		LCD_PORT &= ~(1<<BACK_LIGHT);
 		return NO_ERROR;
 	}
