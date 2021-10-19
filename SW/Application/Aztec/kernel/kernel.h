@@ -58,19 +58,26 @@ extern void kernel_wait_ms(const uint16_t ms); // If there is a huge (~1min) del
 #if CONFIG_THREADS_QUERY_STATE == TRUE
 uint8_t kernel_get_thread_state(const thread_address_t th_addr); // provides the state of the supplied thread or K_ERR_THREAD_NOT_FOUND if an invalid ID was given.
 #endif
+extern k_error_t kernel_release(const uint8_t requested_device);
+extern k_error_t kernel_lease(const uint8_t requested_device);
+extern uint8_t kernel_check_device_ownership(const uint8_t requested_device);
 
         /* DRIVERS */
 
-enum DEVIDCE_IDS
+
+#define NO_OWNER ((thread_t *)0)
+#define SAME_OWNER      (1u)
+#define DIFFERENT_OWNER (2u)
+
+enum DEVICES
 {
-    INVALID_ID,
-    BUTTON_ID,
-    LED1_ID,
-    LED2_ID,
-    LED3_ID,
-    LED4_ID,
-    LCD_ID,
-    ID_COUNT
+    DEV_BUTTON,
+    DEV_LED1,
+    DEV_LED2,
+    DEV_LED3,
+    DEV_LED4,
+    DEV_LCD,
+    DEVICE_COUNT,
 };
 
 #include "../drivers/button/button.h"

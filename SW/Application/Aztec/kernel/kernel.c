@@ -263,15 +263,17 @@ static void remove_curr_thread_from_list(void)
 void kernel_wait_us(const uint32_t us)
 {
     if(us != 0){
-    KERNEL_ENTER_ATOMIC();
+        KERNEL_ENTER_ATOMIC();
+
         uint32_t tmp = us/(CONFIG_SYSTEM_TICK_IN_US*tcb.active_threads);
         if(tmp == 0) tcb.current_thread->wait_roundabouts = 1;
         else if(tmp < (uint16_t)~0) tcb.current_thread->wait_roundabouts = tmp;
         else tcb.current_thread->wait_roundabouts = ~0;
         tcb.current_thread->state = WAITING;
-    KERNEL_EXIT_ATOMIC();
-        
         thread_t volatile *curr = tcb.current_thread;
+
+        KERNEL_EXIT_ATOMIC();
+        
         while(curr->state == WAITING){;}
     }
 }
@@ -281,6 +283,7 @@ void kernel_wait_ms(const uint16_t ms)
     kernel_wait_us((uint32_t)ms*1000);
 }
 
+static void init_device_data(void);
 static void init_device_drivers(void);
 static void make_threadlist_circular(void);
 static void sort_thread_list_descending(void);
@@ -296,6 +299,7 @@ k_error_t kernel_start_os(void)
     ret = init_system_ticking();
     if(ret != NO_ERROR) return ret;
 
+    init_device_data();
     init_device_drivers();
 
 #if CONFIG_THREADS_QUERY_STATE == TRUE
@@ -317,24 +321,6 @@ static void make_threadlist_circular(void)
     tcb.thread[tcb.active_threads-1].next = &tcb.thread[0];
 }
 
-static void init_device_drivers(void)
-{
-    const Uart uart =
-    {
-        .baud_rate=9600,
-        .mode=NORMAL_MODE,
-        .num_of_bits=8,
-        .num_of_stop_bits=ONE_STOP_BIT,
-        .parity=NO_PARITY
-    };
-
-    (void)uart_init_device(&uart);
-    button_init_device();
-    buzzer_init_device();
-    keypad_init_device();
-    led_init_device();
-    lcd_init_device();
-}
 
 #if CONFIG_THREADS_QUERY_STATE == TRUE
 static void sort_thread_list_descending(void)
@@ -406,10 +392,8 @@ k_error_t kernel_register_thread(const thread_address_t thread_addr,  register_t
         .wait_roundabouts = 0,
 #if CONFIG_THREADS_QUERY_STATE == TRUE
         .id = thread_addr,
-        .next = 0 
-#else
-        .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. hread_number=NUM_OF_THREADS case is cought by at the start of function
 #endif
+        .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. thread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
     init_stack(thread_addr, tcb.current_thread->stack_pointer);
@@ -459,6 +443,86 @@ static k_error_t check_if_stack_is_already_registered(register_t * const stack_s
     }
     return NO_ERROR;
 }
+
+
+/**************************
+ ** DRIVERS, DEVICES
+ *************************/
+
+typedef struct device_t
+{
+    thread_t *owner;
+}device_t;
+
+device_t device[DEVICE_COUNT] = {0};
+
+
+
+static void init_device_data(void)
+{
+    for(int8_t dev = 0; dev < DEVICE_COUNT; ++dev) device[dev].owner = NO_OWNER;
+}
+
+k_error_t kernel_lease(const uint8_t requested_device)
+{
+    KERNEL_ENTER_ATOMIC();
+    k_error_t ret = NO_ERROR;
+
+    if(requested_device >= DEVICE_COUNT || device[requested_device].owner != NO_OWNER) ret = K_ERR_INVALID_DEVICE_ACCESS;
+    else device[requested_device].owner = tcb.current_thread;
+
+    KERNEL_EXIT_ATOMIC();
+    return ret;
+}
+
+k_error_t kernel_release(const uint8_t requested_device)
+{
+    KERNEL_ENTER_ATOMIC();
+    k_error_t ret = NO_ERROR;
+
+    if(requested_device >= DEVICE_COUNT) ret = K_ERR_INVALID_DEVICE_ACCESS;
+    else if(device[requested_device].owner == NO_OWNER) ret = K_ERR_INVALID_DEVICE_ACCESS;
+    else if(device[requested_device].owner == tcb.current_thread) device[requested_device].owner = NO_OWNER;
+    else ret = K_ERR_INVALID_DEVICE_ACCESS;
+
+    KERNEL_EXIT_ATOMIC();
+    return ret;
+}
+
+uint8_t kernel_check_device_ownership(const uint8_t requested_device)
+{
+    KERNEL_ENTER_ATOMIC();
+    uint8_t ret = 0;
+
+    if(requested_device >= DEVICE_COUNT)ret = K_ERR_INVALID_DEVICE_ACCESS;
+    if(device[requested_device].owner == NO_OWNER) ret = (uint8_t)0;
+    else if(device[requested_device].owner == tcb.current_thread) ret = SAME_OWNER;
+    else ret = DIFFERENT_OWNER;
+
+    KERNEL_EXIT_ATOMIC();
+    return ret;
+}
+
+static void init_device_drivers(void)
+{
+    const Uart uart =
+    {
+        .baud_rate=9600,
+        .mode=NORMAL_MODE,
+        .num_of_bits=8,
+        .num_of_stop_bits=ONE_STOP_BIT,
+        .parity=NO_PARITY
+    };
+
+    (void)uart_init_device(&uart);
+    button_init_device();
+    buzzer_init_device();
+    keypad_init_device();
+    led_init_device();
+    lcd_init_device();
+}
+
+
 
 
 /*
