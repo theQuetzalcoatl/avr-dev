@@ -27,7 +27,7 @@ AVR stuff:
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#define KERNEL_VERSION "v2.3"
+#define KERNEL_VERSION "v3.0"
 
 #define HAL_OK (0u)
 #define HAL_NOK (1u)
@@ -60,10 +60,10 @@ uint8_t kernel_get_thread_state(const thread_address_t th_addr); // provides the
 #endif
 extern k_error_t kernel_release(const uint8_t requested_device);
 extern k_error_t kernel_lease(const uint8_t requested_device);
-extern uint8_t kernel_check_device_ownership(const uint8_t requested_device);
+extern uint8_t kernel_check_device_ownership(const uint8_t requested_device); // does not return the owner, only a true/false value
+
 
         /* DRIVERS */
-
 
 #define NO_OWNER ((thread_t *)0)
 #define SAME_OWNER      (1u)
