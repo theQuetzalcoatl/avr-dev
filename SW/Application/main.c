@@ -24,7 +24,9 @@ void thread_3(void)
 {
     char key;
     volatile uint16_t freq = 0;
-    kernel_lease(DEV_LCD);
+    kernel_wait_ms(10);
+    while(kernel_lease(DEV_LCD) == K_ERR_INVALID_DEVICE_ACCESS){;}
+    
     lcd_turn_backligh_on();
 
     while(1){
@@ -121,12 +123,27 @@ void thread_4(void)
     kernel_release(DEV_LED2);
 }
 
+register_t kv_stack[MIN_STACK_SIZE + 100];
+void display_kernel_version(void)
+{
+    kernel_lease(DEV_LCD);
+    lcd_turn_backligh_on();
+    lcd_print("     ");
+    lcd_print(KERNEL_VERSION);
+    kernel_wait_ms(2000);
+    lcd_send_command(LCD_CLEAR);
+    kernel_release(DEV_LCD);
+    kernel_exit();
+}
+
+
 int main(void)
 {
-    kernel_register_thread(thread_1, thread_1_stack, MIN_STACK_SIZE+100);
-    kernel_register_thread(heartbeat, thread_2_stack, MIN_STACK_SIZE+100);
-    kernel_register_thread(thread_3, thread_3_stack, MIN_STACK_SIZE+100);
-    kernel_register_thread(thread_4, thread_4_stack, MIN_STACK_SIZE+100);
+    kernel_register_thread(thread_1, thread_1_stack, sizeof(thread_1_stack));
+    kernel_register_thread(heartbeat, thread_2_stack, sizeof(thread_2_stack));
+    kernel_register_thread(thread_3, thread_3_stack, sizeof(thread_3_stack));
+    kernel_register_thread(thread_4, thread_4_stack, sizeof(thread_4_stack));
+    kernel_register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
 
     kernel_start_os();
 
