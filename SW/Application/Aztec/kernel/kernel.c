@@ -176,7 +176,7 @@ static void start_scheduling(void)
 {
     tcb.current_thread = &tcb.thread[0];
     tcb.current_thread->state = RUNNING;
-    tcb.prev_thread = &tcb.thread[0];
+    tcb.prev_thread = &tcb.thread[tcb.active_threads-1];
     RESTORE_CONTEXT();
     asm volatile("ret"); // the compiler may optimize the function call out, thus we would not return here
 }
@@ -248,7 +248,7 @@ void kernel_exit(void)
 
     if(tcb.active_threads == 0){
         disable_systick();
-        while(1){;}
+        while(1){;} // halting the system
     }
 
     remove_curr_thread_from_list();

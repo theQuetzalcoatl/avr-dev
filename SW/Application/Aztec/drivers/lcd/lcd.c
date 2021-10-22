@@ -81,8 +81,6 @@ static void lcd_internal_send_command(uint8_t command)
 	flash();
 	
 	_delay_ms(1);
-
-	return NO_ERROR;
 }
 
 k_error_t lcd_send_command(uint8_t command)
@@ -136,6 +134,33 @@ k_error_t lcd_turn_backligh_off(void)
 {
 	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
 		LCD_PORT &= ~(1<<BACK_LIGHT);
+		return NO_ERROR;
+	}
+	else return K_ERR_INVALID_DEVICE_ACCESS;
+}
+
+static void lcd_internal_write(uint8_t data)
+{
+	DATA_MODE();
+	LCD_PORT &= 0x0f;
+	LCD_PORT |= (data & 0xf0);
+	flash();
+	
+	LCD_PORT &= 0x0f;
+	LCD_PORT |= ((data<<4) & 0xf0);
+	flash();
+	
+	_delay_us(50);
+}
+
+
+k_error_t lcd_print(const char *string)
+{
+	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
+		while(*string){
+			lcd_internal_write(*string);
+			++string;
+		}
 		return NO_ERROR;
 	}
 	else return K_ERR_INVALID_DEVICE_ACCESS;

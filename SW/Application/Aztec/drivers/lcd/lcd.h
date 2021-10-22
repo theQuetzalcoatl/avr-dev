@@ -11,6 +11,7 @@ extern k_error_t lcd_send_command(uint8_t command);
 extern k_error_t lcd_write(uint8_t data);
 extern k_error_t lcd_turn_backligh_off(void);
 extern k_error_t lcd_turn_backligh_on(void);
+extern k_error_t lcd_print(const char *string);
 
 #endif  /* LCD_H */
 
