@@ -9,9 +9,9 @@
 echo -e "--- HEADER FILE GUARD START ---\n\n";
 
 header_files="";
-if [ $# -eq 1 ]; then # abs or relative path is given
+if [[ $# -eq 1 ]]; then # abs or relative path is given
 	header_files=$(find "$1" -type f -name "*.h");
-elif [ $# -eq 0 ]; then # no path given, using relative path
+elif [[ $# -eq 0 ]]; then # no path given, using relative path
 	header_files=$(find . -type f -name "*.h");
 else
 	echo -e "Wrong number of arguments supplied.\nUsage: <script_name> <starting folder>(optional)"
@@ -38,7 +38,7 @@ done
 
 echo -e "\n--- HEADER FILE GUARD END ---\n\n";
 
-if [ $found_bad_files -eq 0 ]; then
+if [[ $found_bad_files -eq 0 ]]; then
   exit 0;
 else 
   exit 1;
