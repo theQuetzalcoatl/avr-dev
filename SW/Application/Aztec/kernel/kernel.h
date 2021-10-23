@@ -27,7 +27,7 @@ AVR stuff:
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#define KERNEL_VERSION "v3.1"
+#define KERNEL_VERSION "v3.2"
 
 #define HAL_OK (0u)
 #define HAL_NOK (1u)
