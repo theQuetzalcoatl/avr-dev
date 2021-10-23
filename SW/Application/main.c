@@ -132,8 +132,7 @@ void display_kernel_version(void)
     lcd_print(KERNEL_VERSION);
     kernel_wait_ms(2000);
     lcd_send_command(LCD_CLEAR);
-    kernel_release(DEV_LCD);
-    kernel_exit();
+    kernel_exit(); //testing for handling when not releasing device before exiting
 }
 
 

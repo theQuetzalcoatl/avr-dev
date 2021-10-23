@@ -239,9 +239,12 @@ void disable_systick(void)
     /******************* SYSTEM CALLS, PUBLIC APIs *******************/
 
 static void remove_curr_thread_from_list(void);
+static void release_owned_devices(void);
 
 void kernel_exit(void)
 {
+    release_owned_devices();
+
     KERNEL_ENTER_ATOMIC();
     tcb.current_thread->state = DELETED;
     --tcb.active_threads;
@@ -258,6 +261,13 @@ void kernel_exit(void)
 static void remove_curr_thread_from_list(void)
 {
     tcb.prev_thread->next = tcb.current_thread->next;
+}
+
+static void release_owned_devices(void)
+{
+    for(uint8_t dev = DEVICE_COUNT-1; dev >= 0; --dev){
+        if(kernel_check_device_ownership(dev) == SAME_OWNER) kernel_release(dev);
+    }
 }
 
 void kernel_wait_us(const uint32_t us)
