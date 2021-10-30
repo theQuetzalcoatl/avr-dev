@@ -253,7 +253,7 @@ void kernel_exit(void)
         disable_systick();
         while(1){;} // halting the system
     }
-
+ 
     remove_curr_thread_from_list();
     SWITCH_THREAD();
 }
@@ -515,16 +515,7 @@ uint8_t kernel_check_device_ownership(const uint8_t requested_device)
 
 static void init_device_drivers(void)
 {
-    const Uart uart =
-    {
-        .baud_rate=9600,
-        .mode=NORMAL_MODE,
-        .num_of_bits=8,
-        .num_of_stop_bits=ONE_STOP_BIT,
-        .parity=NO_PARITY
-    };
-
-    (void)uart_init_device(&uart);
+    uart_init_device();
     button_init_device();
     buzzer_init_device();
     keypad_init_device();

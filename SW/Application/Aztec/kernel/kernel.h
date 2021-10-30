@@ -77,6 +77,7 @@ enum DEVICES
     DEV_LED3,
     DEV_LED4,
     DEV_LCD,
+    DEV_UART,
     DEVICE_COUNT,
 };
 
@@ -89,6 +90,10 @@ enum DEVICES
 #include "../drivers/lcd/lcd.h"
 
 #endif /* KERNEL_H */
+
+
+
+
 
 /*
  * kernel.h
