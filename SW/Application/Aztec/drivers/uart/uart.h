@@ -15,8 +15,8 @@ typedef struct Uart
 
 
 /* MODES */
-#define NORMAL_MODE         (0u)
-#define DOUBLE_SPEED_MODE   (1u)
+#define UART_NORMAL_SPEED_MODE   (0u)
+#define UART_DOUBLE_SPEED_MODE   (1u)
 
 #define BIT_5               (2u)
 #define BIT_6               (3u)
@@ -24,9 +24,9 @@ typedef struct Uart
 #define BIT_8               (5u)
 #define BIT_9               (6u)
 
-#define NO_PARITY           (7u)
-#define EVEN_PARITY         (8u)
-#define ODD_PARITY          (9u)
+#define UART_NO_PARITY      (7u)
+#define UART_EVEN_PARITY    (8u)
+#define UART_ODD_PARITY     (9u)
 
 #define ONE_STOP_BIT        (10u)
 #define TWO_STOP_BITS       (11u)
@@ -37,9 +37,14 @@ typedef struct Uart
 #define ERR_UART_OUT_OF_LIMIT_BAUD_RATE (2u | 0x80)
 #define ERR_UART_INVALID_PARITY         (3U | 0x80)
 #define ERR_UART_INVALID_STOP_BITS      (4u | 0x80)
+#define ERR_UART_INVALID_BITS           (5u | 0x80)
 
-extern uint8_t uart_init_device(const Uart * const uart);
-extern void uart_send(char c);
+extern void uart_init_device(void);
+extern k_error_t uart_set_baud_rate(const uint32_t baud_rate);
+extern k_error_t uart_set_speed_mode(const uint8_t mode);
+extern k_error_t uart_set_stop_bits(const uint8_t stop_bits);
+extern k_error_t uart_set_data_bits(const uint8_t data_b);
+extern k_error_t uart_putc(const char c);
 
 #endif /* UART_H */
 
