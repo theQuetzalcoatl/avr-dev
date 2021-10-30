@@ -3,8 +3,9 @@
 register_t thread_1_stack[MIN_STACK_SIZE+100];
 void thread_1(void)
 {
+    kernel_lease(DEV_UART);
     while(1){
-        if(button_get_state(BUTTON_2) == PIN_LOW) uart_send('U');
+        if(button_get_state(BUTTON_2) == PIN_LOW) uart_putc('U');
     }
 }
 
