@@ -7,8 +7,8 @@
 #define BUZZER_ERR_OUT_OF_BOUNDS_FREQ_REQUEST (2u)
 
 extern void buzzer_init_device(void);
-extern uint8_t buzzer_buzz(uint16_t frequency_Hz);
-extern void buzzer_off(void);
+extern k_error_t buzzer_buzz(uint16_t frequency_Hz);
+extern k_error_t buzzer_off(void);
 
 #endif /* BUZZER_H */
 

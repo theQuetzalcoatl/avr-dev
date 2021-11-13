@@ -31,27 +31,31 @@ static void init_timer(void)
 /* Device functionalities */
 
 static uint8_t check_frequency_boundaries(const uint16_t frequency_Hz);
-uint8_t buzzer_buzz(const uint16_t frequency_Hz)
+k_error_t buzzer_buzz(const uint16_t frequency_Hz)
 {   
-    uint8_t ret = check_frequency_boundaries(frequency_Hz);
-    if(ret == BUZZER_ERR_OUT_OF_BOUNDS_FREQ_REQUEST) return ret;
+    if(kernel_check_device_ownership(DEV_BUZZER) == SAME_OWNER){
 
-    /* set timer treshold */
+        uint8_t ret = check_frequency_boundaries(frequency_Hz);
+        if(ret == BUZZER_ERR_OUT_OF_BOUNDS_FREQ_REQUEST) return ret;
 
-    /* Fout = F_CPU/(2*PRESCALER(treshold_reg + 1)) */
-    uint32_t val = 0;
-    val = F_CPU/2;
-    val /= prescaler;
-    val /= frequency_Hz;
-    val -= 1;
-    if(val <= 255) OCR0 = val;
-    else return BUZZER_ERR_INVALID_REGISTER_VAL;
+        /* set timer treshold */
 
-    /* output toggle on Compare Match Output */
-    TCCR0 |= 1<<COM00;
-    TCCR0 &= ~(1<<COM01);
+        /* Fout = F_CPU/(2*PRESCALER(treshold_reg + 1)) */
+        uint32_t val = 0;
+        val = F_CPU/2;
+        val /= prescaler;
+        val /= frequency_Hz;
+        val -= 1;
+        if(val <= 255) OCR0 = val;
+        else return BUZZER_ERR_INVALID_REGISTER_VAL;
 
-    return NO_ERROR;
+        /* output toggle on Compare Match Output */
+        TCCR0 |= 1<<COM00;
+        TCCR0 &= ~(1<<COM01);
+
+        return NO_ERROR;
+    }
+    else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
 static uint8_t check_frequency_boundaries(const uint16_t frequency_Hz)
@@ -69,9 +73,13 @@ static uint8_t check_frequency_boundaries(const uint16_t frequency_Hz)
     else return NO_ERROR;
 }
 
-void buzzer_off(void)
+k_error_t buzzer_off(void)
 {
-    TCCR0 &= ~(1<<COM01 | 1<<COM00);
+    if(kernel_check_device_ownership(DEV_BUZZER) == SAME_OWNER){
+        TCCR0 &= ~(1<<COM01 | 1<<COM00);
+        return NO_ERROR;
+    }
+    else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
 
