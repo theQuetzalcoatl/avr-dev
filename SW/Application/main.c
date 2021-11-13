@@ -1,6 +1,6 @@
 #include "Aztec/kernel/kernel.h"
 
-register_t thread_1_stack[MIN_STACK_SIZE+100];
+register_t thread_1_stack[MIN_STACK_SIZE+10];
 void thread_1(void)
 {
     kernel_lease(DEV_UART);
@@ -9,7 +9,7 @@ void thread_1(void)
     }
 }
 
-register_t thread_2_stack[MIN_STACK_SIZE+100];
+register_t thread_2_stack[MIN_STACK_SIZE+10];
 void heartbeat(void)
 {
     kernel_lease(DEV_LED1);
@@ -20,13 +20,14 @@ void heartbeat(void)
     kernel_release(DEV_LED1);
 }
 
-register_t thread_3_stack[MIN_STACK_SIZE+100];
+register_t thread_3_stack[MIN_STACK_SIZE+10];
 void thread_3(void)
 {
     char key;
     volatile uint16_t freq = 0;
     kernel_wait_ms(10);
     while(kernel_lease(DEV_LCD) == K_ERR_INVALID_DEVICE_ACCESS){;}
+    kernel_lease(DEV_BUZZER);
     
     lcd_turn_backligh_on();
 
@@ -108,7 +109,7 @@ void thread_3(void)
     kernel_release(DEV_LCD);
 }
 
-register_t thread_4_stack[MIN_STACK_SIZE + 100];
+register_t thread_4_stack[MIN_STACK_SIZE + 10];
 void thread_4(void)
 {
     kernel_lease(DEV_LED2);
@@ -124,16 +125,16 @@ void thread_4(void)
     kernel_release(DEV_LED2);
 }
 
-register_t kv_stack[MIN_STACK_SIZE + 100];
+register_t kv_stack[MIN_STACK_SIZE + 10];
 void display_kernel_version(void)
 {
     kernel_lease(DEV_LCD);
     lcd_turn_backligh_on();
-    lcd_print("     ");
-    lcd_print(KERNEL_VERSION);
+    lcd_print("  ");
+    lcd_print("Aztec "KERNEL_VERSION);
     kernel_wait_ms(2000);
     lcd_send_command(LCD_CLEAR);
-    kernel_exit(); //testing for handling when not releasing device before exiting
+    kernel_exit(); // TEST: not releasing device before exiting
 }
 
 
