@@ -78,7 +78,8 @@ enum DEVICES
     DEV_LED4,
     DEV_LCD,
     DEV_UART,
-    DEVICE_COUNT,
+    DEV_BUZZER,
+    DEVICE_COUNT
 };
 
 #include "../drivers/button/button.h"

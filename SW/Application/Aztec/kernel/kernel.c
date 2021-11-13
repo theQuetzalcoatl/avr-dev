@@ -236,7 +236,9 @@ void disable_systick(void)
     TIMSK &= ~(1<<OCIE2);
 }
 
-    /******************* SYSTEM CALLS, PUBLIC APIs *******************/
+/******************************* 
+ ** SYSTEM CALLS, PUBLIC APIs
+ ******************************/
 
 static void remove_curr_thread_from_list(void);
 static void release_owned_devices(void);
@@ -522,7 +524,6 @@ static void init_device_drivers(void)
     led_init_device();
     lcd_init_device();
 }
-
 
 
 
