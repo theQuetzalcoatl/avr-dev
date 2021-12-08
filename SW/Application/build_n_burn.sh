@@ -9,8 +9,9 @@ function remove_binaries()
 
 output_bin="application.bin";
 optimization="-O3";
-debug="";
+debug="-g1";
 uC="atmega128";
+warnings="-Wall -Wextra"
 
 did_compile=0;
 
