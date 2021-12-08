@@ -33,7 +33,7 @@ static void init_timer(void)
 static uint8_t check_frequency_boundaries(const uint16_t frequency_Hz);
 k_error_t buzzer_buzz(const uint16_t frequency_Hz)
 {   
-    if(kernel_check_device_ownership(DEV_BUZZER) == SAME_OWNER){
+    if(check_device_ownership(DEV_BUZZER) == SAME_OWNER){
 
         uint8_t ret = check_frequency_boundaries(frequency_Hz);
         if(ret == BUZZER_ERR_OUT_OF_BOUNDS_FREQ_REQUEST) return ret;
@@ -75,7 +75,7 @@ static uint8_t check_frequency_boundaries(const uint16_t frequency_Hz)
 
 k_error_t buzzer_off(void)
 {
-    if(kernel_check_device_ownership(DEV_BUZZER) == SAME_OWNER){
+    if(check_device_ownership(DEV_BUZZER) == SAME_OWNER){
         TCCR0 &= ~(1<<COM01 | 1<<COM00);
         return NO_ERROR;
     }

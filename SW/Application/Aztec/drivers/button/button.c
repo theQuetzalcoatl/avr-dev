@@ -34,7 +34,7 @@ static void deactivate_pullup_resistors(void);
 static void set_gpio_to_output_low(void);
 k_error_t button_deactivate_buttons(void)
 {
-    if(kernel_check_device_ownership(DEV_BUTTON) == SAME_OWNER){
+    if(check_device_ownership(DEV_BUTTON) == SAME_OWNER){
         deactivate_pullup_resistors();
         set_gpio_to_output_low();
         return NO_ERROR;
@@ -55,7 +55,7 @@ static void set_gpio_to_output_low(void)
 
 k_error_t button_activate_buttons(void)
 {
-    if(kernel_check_device_ownership(DEV_BUTTON) == SAME_OWNER){
+    if(check_device_ownership(DEV_BUTTON) == SAME_OWNER){
         set_gpio_to_input();
         activate_pullup_resistors();
         return NO_ERROR;

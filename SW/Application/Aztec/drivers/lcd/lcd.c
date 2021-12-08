@@ -85,7 +85,7 @@ static void lcd_internal_send_command(uint8_t command)
 
 k_error_t lcd_send_command(uint8_t command)
 {
-	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
+	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
 		COMMAND_MODE();
 		LCD_PORT &= 0x0f;
 		LCD_PORT |= (command & 0xf0);
@@ -104,7 +104,7 @@ k_error_t lcd_send_command(uint8_t command)
 
 k_error_t lcd_write(uint8_t data)
 {
-	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
+	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
 		DATA_MODE();
 		LCD_PORT &= 0x0f;
 		LCD_PORT |= (data & 0xf0);
@@ -123,7 +123,7 @@ k_error_t lcd_write(uint8_t data)
 
 k_error_t lcd_turn_backligh_on(void)
 {
-	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
+	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
 		LCD_PORT |= 1<<BACK_LIGHT;
 		return NO_ERROR;
 	}
@@ -132,7 +132,7 @@ k_error_t lcd_turn_backligh_on(void)
 
 k_error_t lcd_turn_backligh_off(void)
 {
-	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
+	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
 		LCD_PORT &= ~(1<<BACK_LIGHT);
 		return NO_ERROR;
 	}
@@ -156,7 +156,7 @@ static void lcd_internal_write(uint8_t data)
 
 k_error_t lcd_print(const char *string)
 {
-	if(kernel_check_device_ownership(DEV_LCD) == SAME_OWNER){
+	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
 		while(*string){
 			lcd_internal_write(*string);
 			++string;

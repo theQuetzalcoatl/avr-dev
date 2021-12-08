@@ -44,7 +44,7 @@ static void wait_till_changing_is_safe(void);
 
 k_error_t uart_set_baud_rate(const uint32_t baud_rate)
 {
-    if(kernel_check_device_ownership(DEV_UART) == SAME_OWNER){
+    if(check_device_ownership(DEV_UART) == SAME_OWNER){
         if(baud_rate > MIN_BAUDRATE && baud_rate < MAX_BAUDREATE){
             wait_till_changing_is_safe();
 
@@ -68,7 +68,7 @@ k_error_t uart_set_baud_rate(const uint32_t baud_rate)
 
 k_error_t uart_set_speed_mode(const uint8_t mode)
 {
-    if( kernel_check_device_ownership(DEV_UART) == SAME_OWNER ){
+    if( check_device_ownership(DEV_UART) == SAME_OWNER ){
         if(mode != uart.mode){
             wait_till_changing_is_safe();
 
@@ -86,7 +86,7 @@ k_error_t uart_set_speed_mode(const uint8_t mode)
 
 k_error_t uart_set_parity(const uint8_t parity)
 {
-    if( kernel_check_device_ownership(DEV_UART) == SAME_OWNER ){
+    if( check_device_ownership(DEV_UART) == SAME_OWNER ){
         switch(parity)
         {
             case UART_NO_PARITY: UCSR0C &= ~(1<<UPM00 | 1<<UPM01);
@@ -107,7 +107,7 @@ k_error_t uart_set_parity(const uint8_t parity)
 
 k_error_t uart_set_stop_bits(const uint8_t stop_bits)
 {
-    if( kernel_check_device_ownership(DEV_UART) == SAME_OWNER ){
+    if( check_device_ownership(DEV_UART) == SAME_OWNER ){
         wait_till_changing_is_safe();
         if(stop_bits == ONE_STOP_BIT) UCSR0C &= ~(1<<USBS0);
         else if(stop_bits == TWO_STOP_BITS) UCSR0C |= 1<<USBS0;
@@ -121,7 +121,7 @@ k_error_t uart_set_stop_bits(const uint8_t stop_bits)
 
 k_error_t uart_set_data_bits(uint8_t data_b)
 {
-    if( kernel_check_device_ownership(DEV_UART) == SAME_OWNER ){
+    if( check_device_ownership(DEV_UART) == SAME_OWNER ){
         wait_till_changing_is_safe();
         switch(data_b)
         {
@@ -161,7 +161,7 @@ k_error_t uart_set_data_bits(uint8_t data_b)
 
 k_error_t uart_putc(const char c)
 {
-    if( kernel_check_device_ownership(DEV_UART) == SAME_OWNER ){
+    if( check_device_ownership(DEV_UART) == SAME_OWNER ){
         while ( !( UCSR0A & (1<<UDRE0)) );
         UDR0 = c;
     }
@@ -175,7 +175,7 @@ char uart_getc(void)
 
 k_error_t uart_puts(const char *s)
 {
-    if(kernel_check_device_ownership(DEV_UART) == SAME_OWNER){
+    if(check_device_ownership(DEV_UART) == SAME_OWNER){
         while(*s){
             uart_putc(*s);
             ++s;
