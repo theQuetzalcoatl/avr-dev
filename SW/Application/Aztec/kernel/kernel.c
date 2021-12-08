@@ -1,14 +1,14 @@
 #include "../kernel/kernel.h"
 
 #if (CONFIG_NUM_OF_THREADS > CONFIG_MAX_THREADS || CONFIG_NUM_OF_THREADS == 0)
-    #error "Number of maximum threads shall not exceed 255."
+    #error "Number of maximum threads shall not exceed 255. Also, there should be at least one thread."
 #endif
 
 #define SWITCH_THREAD() TIMER2_COMP_vect()
 
 typedef struct thread_t
 {
-    register_t *stack_pointer; /* must be first field */
+    register_t *stack_pointer; /* must be first field because of embedded assembly */
     register_t *stack_bottom;
     uint8_t state;
     uint16_t wait_roundabouts;
@@ -21,13 +21,21 @@ typedef struct thread_t
 
 typedef struct thread_control_block_t
 {
-    thread_t *current_thread;  /* must be first field */
+    thread_t *current_thread;  /* must be first field because of embedded assembly */
     thread_t *prev_thread;
     uint8_t active_threads; /* = not deleted */
     thread_t thread[CONFIG_NUM_OF_THREADS];
 }thread_control_block_t;
 
 static thread_control_block_t tcb = {0};
+
+
+typedef struct device_t
+{
+    thread_t *owner;
+}device_t;
+
+device_t device[DEVICE_COUNT] = {0};
 
 #define RESET_SYSTICK_TIMER() TCNT2 = 0
 
@@ -134,7 +142,7 @@ extern void kernel_panic(void);
 #else
     #error "MCU clock frequency must be either 8MHz or 16MHz!"
 #endif
-#define MIN_US_TICK (100u) // this number is based on the fact that thread switching takes about 15 microsec
+#define MIN_US_TICK (300u) // this number is based on the fact that thread switching takes about 15 microsec(at 16 MHz)
 #define PRESCALER (256u)
 
 static uint8_t init_system_ticking(void)
@@ -243,7 +251,7 @@ void disable_systick(void)
 static void remove_curr_thread_from_list(void);
 static void release_owned_devices(void);
 
-void kernel_exit(void)
+void exit_(void)
 {
     release_owned_devices();
 
@@ -267,12 +275,14 @@ static void remove_curr_thread_from_list(void)
 
 static void release_owned_devices(void)
 {
-    for(uint8_t dev = DEVICE_COUNT-1; dev >= 0; --dev){
-        if(kernel_check_device_ownership(dev) == SAME_OWNER) kernel_release(dev);
+    for(int8_t requested_device = DEVICE_COUNT-1; requested_device >= 0; --requested_device){
+        KERNEL_ENTER_ATOMIC();
+        if(device[requested_device].owner == tcb.current_thread)  device[requested_device].owner = NO_OWNER;
+        KERNEL_EXIT_ATOMIC();
     }
 }
 
-void kernel_wait_us(const uint32_t us)
+void wait_us(const uint32_t us)
 {
     if(us != 0){
         KERNEL_ENTER_ATOMIC();
@@ -290,18 +300,18 @@ void kernel_wait_us(const uint32_t us)
     }
 }
 
-void kernel_wait_ms(const uint16_t ms)
+void wait_ms(const uint16_t ms)
 {
-    kernel_wait_us((uint32_t)ms*1000);
+    wait_us((uint32_t)ms*1000);
 }
 
-static void init_device_data(void);
+static void init_device_ownerships(void);
 static void init_device_drivers(void);
 static void make_threadlist_circular(void);
 static void sort_thread_list_descending(void);
 static void link_thread_list(void);
 
-k_error_t kernel_start_os(void)
+k_error_t start_os(void)
 {
     KERNEL_ENTER_ATOMIC();
     uint8_t ret = NO_ERROR;
@@ -311,7 +321,7 @@ k_error_t kernel_start_os(void)
     ret = init_system_ticking();
     if(ret != NO_ERROR) return ret;
 
-    init_device_data();
+    init_device_ownerships();
     init_device_drivers();
 
 #if CONFIG_THREADS_QUERY_STATE == TRUE
@@ -357,7 +367,7 @@ static void link_thread_list(void)
     for(uint8_t i = 0; i < tcb.active_threads-1; ++i) tcb.thread[i].next = &tcb.thread[i+1];
 }
 
-k_error_t kernel_get_thread_state(const thread_address_t th_addr)
+k_error_t get_thread_state(const thread_address_t th_addr)
 {
 #if (CONFIG_NUM_OF_THREADS > 1)
         uint8_t max = 0;
@@ -382,9 +392,9 @@ k_error_t kernel_get_thread_state(const thread_address_t th_addr)
 #endif
 
 static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
-static k_error_t check_if_stack_is_already_registered(register_t * const stack_start);
+static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom);
 
-k_error_t kernel_register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
+k_error_t register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
 {
     /* error checking */
     if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
@@ -448,10 +458,10 @@ static void insert_stack_overflow_detection_bytes(void)
     *(tcb.current_thread->stack_bottom) = 0xEF;
 }
 
-static k_error_t check_if_stack_is_already_registered(register_t * const stack_start)
+static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom)
 {
     for(int8_t i = tcb.active_threads-1; i >= 0; --i){  
-        if(tcb.thread[i].stack_bottom == stack_start) return K_ERR_ALREADY_REGISTERED_STACK;
+        if(tcb.thread[i].stack_bottom == stack_bottom) return K_ERR_ALREADY_REGISTERED_STACK;
     }
     return NO_ERROR;
 }
@@ -461,21 +471,12 @@ static k_error_t check_if_stack_is_already_registered(register_t * const stack_s
  ** DRIVERS, DEVICES
  *************************/
 
-typedef struct device_t
-{
-    thread_t *owner;
-}device_t;
-
-device_t device[DEVICE_COUNT] = {0};
-
-
-
-static void init_device_data(void)
+static void init_device_ownerships(void)
 {
     for(int8_t dev = 0; dev < DEVICE_COUNT; ++dev) device[dev].owner = NO_OWNER;
 }
 
-k_error_t kernel_lease(const uint8_t requested_device)
+k_error_t lease(const uint8_t requested_device)
 {
     KERNEL_ENTER_ATOMIC();
     k_error_t ret = NO_ERROR;
@@ -487,7 +488,7 @@ k_error_t kernel_lease(const uint8_t requested_device)
     return ret;
 }
 
-k_error_t kernel_release(const uint8_t requested_device)
+k_error_t release(const uint8_t requested_device)
 {
     KERNEL_ENTER_ATOMIC();
     k_error_t ret = NO_ERROR;
@@ -501,12 +502,12 @@ k_error_t kernel_release(const uint8_t requested_device)
     return ret;
 }
 
-uint8_t kernel_check_device_ownership(const uint8_t requested_device)
+uint8_t check_device_ownership(const uint8_t requested_device)
 {
     KERNEL_ENTER_ATOMIC();
     uint8_t ret = 0;
 
-    if(requested_device >= DEVICE_COUNT)ret = K_ERR_INVALID_DEVICE_ACCESS;
+    if(requested_device >= DEVICE_COUNT) ret = K_ERR_INVALID_DEVICE_ACCESS;
     if(device[requested_device].owner == NO_OWNER) ret = (uint8_t)0;
     else if(device[requested_device].owner == tcb.current_thread) ret = SAME_OWNER;
     else ret = DIFFERENT_OWNER;

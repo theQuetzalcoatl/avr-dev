@@ -27,7 +27,7 @@ AVR stuff:
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#define KERNEL_VERSION "v4.0"
+#define KERNEL_VERSION "v5.0"
 
 #define HAL_OK (0u)
 #define HAL_NOK (1u)
@@ -46,21 +46,20 @@ typedef uint8_t register_t;
 typedef void (*thread_address_t)(void);
 typedef uint8_t device_id_t;
 
-extern k_error_t kernel_start_os(void); // Last one to call in main, after all the thread registration
-extern k_error_t kernel_register_thread(const thread_address_t thread_addr, register_t * const stack_start, const stack_size_t stack_size); // Registers one thread in the kernel. Must be called before OS starts
+extern k_error_t start_os(void); // Last one to call in main, after all the thread registration
+extern k_error_t register_thread(const thread_address_t thread_addr, register_t * const stack_start, const stack_size_t stack_size); // Registers one thread in the kernel. Must be called before OS starts
 
     /* SYSTEM CALLS */
 
-extern void kernel_exit(void);  // Threads can exit from being scheduled and run again.
-// maximum delay should safely be 1 minute
-extern void kernel_wait_us(const uint32_t us); // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
-extern void kernel_wait_ms(const uint16_t ms); // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
+extern void exit_(void);  // Threads can exit from being scheduled and run again.
+extern void wait_us(const uint32_t us); // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
+extern void wait_ms(const uint16_t ms); // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
 #if CONFIG_THREADS_QUERY_STATE == TRUE
-uint8_t kernel_get_thread_state(const thread_address_t th_addr); // provides the state of the supplied thread or K_ERR_THREAD_NOT_FOUND if an invalid ID was given.
+extern uint8_t get_thread_state(const thread_address_t th_addr); // provides the state of the supplied thread or K_ERR_THREAD_NOT_FOUND if an invalid ID was given.
 #endif
-extern k_error_t kernel_release(const uint8_t requested_device);
-extern k_error_t kernel_lease(const uint8_t requested_device);
-extern uint8_t kernel_check_device_ownership(const uint8_t requested_device); // does not return the owner, only a true/false value
+extern k_error_t release(const uint8_t requested_device);
+extern k_error_t lease(const uint8_t requested_device);
+extern uint8_t check_device_ownership(const uint8_t requested_device); // does not return the owner, only a true/false value
 
 
         /* DRIVERS */
