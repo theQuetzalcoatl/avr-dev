@@ -20,6 +20,12 @@ A super lightweight embedded OS for AVR chips.
 * Mistake-proof</br>
   * stack sizes are checked for minimum & maximum
   * cannot register multiple threads using the same stack
+  * min. max. system tick check, based on pysical calculations
+
+#### Driver system</br>
+
+TODO
+
 #### Notice
 More threads and longer systick period lessen the wait syscalls' accuracy.</br>
 Due to required minimal stack usage the theoritical absolute maximum number of threads is about 89.</br>
