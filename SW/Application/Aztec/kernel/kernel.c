@@ -462,7 +462,7 @@ typedef struct device_t
 
 device_t device[DEVICE_COUNT] = {0}; /* initialized data field is initialzed here implicitly to FALSE */
 
-k_error_t register_driver(void (*driver_func) (void), uint8_t dev)
+k_error_t init_device(void (*driver_func) (void), uint8_t dev)
 {
     if(dev >= DEVICE_COUNT || device[dev].initialized == TRUE) return K_ERR_INVALID_DEVICE_ACCESS;
     else{

@@ -82,14 +82,14 @@ void display_kernel_version(void)
 
 int main(void)
 {
-    register_driver(button_init_device, DEV_BUTTON);
-    register_driver(led_init_device, DEV_LED1); /* TEST: many devices can have the same init function */
-    register_driver(led_init_device, DEV_LED2);
-    register_driver(led_init_device, DEV_LED3);
-    register_driver(led_init_device, DEV_LED4);
-    register_driver(lcd_init_device, DEV_LCD);
-    register_driver(uart_init_device, DEV_UART);
-    register_driver(buzzer_init_device, DEV_BUZZER);
+    init_device(button_init_device, DEV_BUTTON);
+    init_device(led_init_device, DEV_LED1); /* TEST: many devices can have the same init function */
+    init_device(led_init_device, DEV_LED2);
+    init_device(led_init_device, DEV_LED3);
+    init_device(led_init_device, DEV_LED4);
+    init_device(lcd_init_device, DEV_LCD);
+    init_device(uart_init_device, DEV_UART);
+    init_device(buzzer_init_device, DEV_BUZZER);
     keypad_init_device(); /* TEST: devices can be handled outside of the kernels supervision */
 
     register_thread(thread_1, thread_1_stack, sizeof(thread_1_stack));
