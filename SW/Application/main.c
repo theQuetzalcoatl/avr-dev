@@ -9,7 +9,7 @@ void thread_1(void)
     }
 }
 
-register_t thread_2_stack[MIN_STACK_SIZE+10];
+register_t heartbeat_stack[MIN_STACK_SIZE+10];
 void heartbeat(void)
 {
     lease(DEV_LED1);
@@ -75,15 +75,25 @@ void display_kernel_version(void)
     lcd_print("Aztec "KERNEL_VERSION);
     wait_ms(2000);
     lcd_send_command(LCD_CLEAR);
-    exit_(); // TEST: not releasing device before exiting
+    exit_(); // TEST: not releasing device before exiting, OS does it
 }
 
 
 
 int main(void)
 {
+    register_driver(button_init_device, DEV_BUTTON);
+    register_driver(led_init_device, DEV_LED1); /* TEST: many devices can have the same init function */
+    register_driver(led_init_device, DEV_LED2);
+    register_driver(led_init_device, DEV_LED3);
+    register_driver(led_init_device, DEV_LED4);
+    register_driver(lcd_init_device, DEV_LCD);
+    register_driver(uart_init_device, DEV_UART);
+    register_driver(buzzer_init_device, DEV_BUZZER);
+    keypad_init_device(); /* TEST: devices can be handled outside of the kernels supervision */
+
     register_thread(thread_1, thread_1_stack, sizeof(thread_1_stack));
-    register_thread(heartbeat, thread_2_stack, sizeof(thread_2_stack));
+    register_thread(heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
     register_thread(thread_3, thread_3_stack, sizeof(thread_3_stack));
     register_thread(thread_4, thread_4_stack, sizeof(thread_4_stack));
     register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
