@@ -48,6 +48,7 @@ typedef uint8_t device_id_t;
 
 extern k_error_t start_os(void); // Last one to call in main, after all the thread registration
 extern k_error_t register_thread(const thread_address_t thread_addr, register_t * const stack_start, const stack_size_t stack_size); // Registers one thread in the kernel. Must be called before OS starts
+extern k_error_t register_driver(void (*driver_func) (void), uint8_t dev);
 
     /* SYSTEM CALLS */
 
@@ -80,6 +81,7 @@ enum DEVICES
     DEV_BUZZER,
     DEVICE_COUNT
 };
+
 
 #include "../drivers/button/button.h"
 #include "../drivers/buzzer/buzzer.h"

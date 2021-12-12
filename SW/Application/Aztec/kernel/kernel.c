@@ -30,13 +30,6 @@ typedef struct thread_control_block_t
 static thread_control_block_t tcb = {0};
 
 
-typedef struct device_t
-{
-    thread_t *owner;
-}device_t;
-
-device_t device[DEVICE_COUNT] = {0};
-
 #define RESET_SYSTICK_TIMER() TCNT2 = 0
 
 #define RESTORE_CONTEXT() \
@@ -273,14 +266,6 @@ static void remove_curr_thread_from_list(void)
     tcb.prev_thread->next = tcb.current_thread->next;
 }
 
-static void release_owned_devices(void)
-{
-    for(int8_t requested_device = DEVICE_COUNT-1; requested_device >= 0; --requested_device){
-        KERNEL_ENTER_ATOMIC();
-        if(device[requested_device].owner == tcb.current_thread)  device[requested_device].owner = NO_OWNER;
-        KERNEL_EXIT_ATOMIC();
-    }
-}
 
 void wait_us(const uint32_t us)
 {
@@ -306,7 +291,6 @@ void wait_ms(const uint16_t ms)
 }
 
 static void init_device_ownerships(void);
-static void init_device_drivers(void);
 static void make_threadlist_circular(void);
 static void sort_thread_list_descending(void);
 static void link_thread_list(void);
@@ -322,7 +306,6 @@ k_error_t start_os(void)
     if(ret != NO_ERROR) return ret;
 
     init_device_ownerships();
-    init_device_drivers();
 
 #if CONFIG_THREADS_QUERY_STATE == TRUE
     sort_thread_list_descending();
@@ -471,6 +454,33 @@ static k_error_t check_if_stack_is_already_registered(register_t * const stack_b
  ** DRIVERS, DEVICES
  *************************/
 
+typedef struct device_t
+{
+    thread_t *owner;
+    uint8_t initialized;
+}device_t;
+
+device_t device[DEVICE_COUNT] = {0}; /* initialized data field is initialzed here implicitly to FALSE */
+
+k_error_t register_driver(void (*driver_func) (void), uint8_t dev)
+{
+    if(dev >= DEVICE_COUNT || device[dev].initialized == TRUE) return K_ERR_INVALID_DEVICE_ACCESS;
+    else{
+        driver_func();
+        device[dev].initialized = TRUE;
+        return NO_ERROR;
+    }
+}
+
+static void release_owned_devices(void)
+{
+    for(int8_t requested_device = DEVICE_COUNT-1; requested_device >= 0; --requested_device){
+        KERNEL_ENTER_ATOMIC();
+        if(device[requested_device].owner == tcb.current_thread) device[requested_device].owner = NO_OWNER;
+        KERNEL_EXIT_ATOMIC();
+    }
+}
+
 static void init_device_ownerships(void)
 {
     for(int8_t dev = 0; dev < DEVICE_COUNT; ++dev) device[dev].owner = NO_OWNER;
@@ -481,7 +491,8 @@ k_error_t lease(const uint8_t requested_device)
     KERNEL_ENTER_ATOMIC();
     k_error_t ret = NO_ERROR;
 
-    if(requested_device >= DEVICE_COUNT || device[requested_device].owner != NO_OWNER) ret = K_ERR_INVALID_DEVICE_ACCESS;
+    if(requested_device >= DEVICE_COUNT) ret = K_ERR_INVALID_DEVICE_ACCESS;
+    if(device[requested_device].initialized == FALSE || device[requested_device].owner != NO_OWNER) ret = K_ERR_INVALID_DEVICE_ACCESS;
     else device[requested_device].owner = tcb.current_thread;
 
     KERNEL_EXIT_ATOMIC();
@@ -515,18 +526,6 @@ uint8_t check_device_ownership(const uint8_t requested_device)
     KERNEL_EXIT_ATOMIC();
     return ret;
 }
-
-static void init_device_drivers(void)
-{
-    uart_init_device();
-    button_init_device();
-    buzzer_init_device();
-    keypad_init_device();
-    led_init_device();
-    lcd_init_device();
-}
-
-
 
 /*
  * kernel.c
