@@ -381,7 +381,7 @@ k_error_t register_thread(const thread_address_t thread_addr,  register_t * cons
 {
     /* error checking */
     if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
-    if(stack_size > MAX_STACK_SIZE || stack_size < MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
+    if(stack_size < CONFIG_MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
     if(tcb.active_threads > 0){
         if(check_if_stack_is_already_registered(stack_start) == K_ERR_ALREADY_REGISTERED_STACK) return K_ERR_ALREADY_REGISTERED_STACK;
     }
