@@ -54,5 +54,4 @@ function main()
 	fi
 }
 
-
 main $1;

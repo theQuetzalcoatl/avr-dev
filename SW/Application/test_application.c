@@ -1,6 +1,6 @@
 #include "Aztec/kernel/kernel.h"
 
-register_t thread_1_stack[MIN_STACK_SIZE+10];
+register_t thread_1_stack[CONFIG_MIN_STACK_SIZE+10];
 void thread_1(void)
 {
     lease(DEV_UART);
@@ -9,7 +9,7 @@ void thread_1(void)
     }
 }
 
-register_t heartbeat_stack[MIN_STACK_SIZE+10];
+register_t heartbeat_stack[CONFIG_MIN_STACK_SIZE+10];
 void heartbeat(void)
 {
     lease(DEV_LED1);
@@ -20,7 +20,7 @@ void heartbeat(void)
     release(DEV_LED1);
 }
 
-register_t thread_3_stack[MIN_STACK_SIZE+10];
+register_t thread_3_stack[CONFIG_MIN_STACK_SIZE+10];
 void thread_3(void)
 {
     char key;
@@ -49,7 +49,7 @@ void thread_3(void)
     release(DEV_LCD);
 }
 
-register_t thread_4_stack[MIN_STACK_SIZE + 10];
+register_t thread_4_stack[CONFIG_MIN_STACK_SIZE + 10];
 void thread_4(void)
 {
     lease(DEV_LED2);
@@ -66,7 +66,7 @@ void thread_4(void)
     release(DEV_LED2);
 }
 
-register_t kv_stack[MIN_STACK_SIZE + 10];
+register_t kv_stack[CONFIG_MIN_STACK_SIZE + 10];
 void display_kernel_version(void)
 {
     lease(DEV_LCD);
