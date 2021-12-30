@@ -39,7 +39,7 @@ k_error_t button_deactivate_buttons(void)
         set_gpio_to_output_low();
         return NO_ERROR;
     }
-    else K_ERR_INVALID_DEVICE_ACCESS;
+    else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
 static void deactivate_pullup_resistors(void)

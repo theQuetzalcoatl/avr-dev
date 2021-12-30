@@ -164,14 +164,16 @@ k_error_t uart_putc(const char c)
     if( check_device_ownership(DEV_UART) == SAME_OWNER ){
         while ( !( UCSR0A & (1<<UDRE0)) );
         UDR0 = c;
+        return NO_ERROR;
     }
     else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
+/*
 char uart_getc(void)
 {
     // TODO
-}
+}*/
 
 k_error_t uart_puts(const char *s)
 {
