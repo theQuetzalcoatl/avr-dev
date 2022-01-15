@@ -527,6 +527,8 @@ uint8_t check_device_ownership(const uint8_t requested_device)
     return ret;
 }
 
+
+
 /*
  * kernel.c
  * This file is part of Aztec

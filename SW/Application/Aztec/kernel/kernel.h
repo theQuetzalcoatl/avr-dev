@@ -83,6 +83,7 @@ enum DEVICES
     DEV_LCD,
     DEV_UART,
     DEV_BUZZER,
+    DEV_ADC,
     DEVICE_COUNT
 };
 
@@ -94,6 +95,7 @@ enum DEVICES
 #include "../drivers/led/led.h"
 #include "../drivers/uart/uart.h"
 #include "../drivers/lcd/lcd.h"
+#include "../drivers/adc/adc.h"
 
 #endif /* KERNEL_H */
 
