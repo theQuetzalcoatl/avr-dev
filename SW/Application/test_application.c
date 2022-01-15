@@ -20,31 +20,24 @@ void heartbeat(void)
     release(DEV_LED1);
 }
 
-register_t thread_3_stack[CONFIG_MIN_STACK_SIZE+10];
+register_t thread_3_stack[CONFIG_MIN_STACK_SIZE+20];
 void thread_3(void)
 {
-    char key;
-    uint16_t freq = 0;
     wait_ms(10);
     while(lease(DEV_LCD) == K_ERR_INVALID_DEVICE_ACCESS){;}
-    lease(DEV_BUZZER);
+    lease(DEV_ADC);
+    
+    char buff[5] = {0};
+    adc_t val = 0;
     
     lcd_turn_backligh_on();
 
     while(1){
-        for(int i = 4; i; --i){
-            key = keypad_get_pressed_key();
-
-            lcd_write(key + '0');
-            freq = freq*10;
-            freq += key;
-            
-            wait_ms(120);
-        }
+        adc_convert(&val);
+        itoa(val, buff, 10);
+        lcd_print(buff);
+        wait_ms(20);
         lcd_send_command(LCD_CLEAR);
-        if(freq == 0)buzzer_off();
-        else buzzer_buzz(freq);
-        freq = 0;
     }
     release(DEV_LCD);
 }
@@ -90,6 +83,7 @@ int main(void)
     init_device(lcd_init_device, DEV_LCD);
     init_device(uart_init_device, DEV_UART);
     init_device(buzzer_init_device, DEV_BUZZER);
+    init_device(adc_init_device, DEV_ADC);
     keypad_init_device(); /* TEST: devices can be handled outside of the kernels supervision */
 
     register_thread(thread_1, thread_1_stack, sizeof(thread_1_stack));
