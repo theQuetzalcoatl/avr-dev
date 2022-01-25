@@ -241,6 +241,11 @@ void disable_systick(void)
  ** SYSTEM CALLS, PUBLIC APIs
  ******************************/
 
+uint8_t get_num_of_threads(void)
+{
+    return tcb.active_threads;
+}
+
 static void remove_curr_thread_from_list(void);
 static void release_owned_devices(void);
 
