@@ -36,7 +36,7 @@ void thread_3(void)
         adc_convert(&val);
         itoa(val, buff, 10);
         lcd_print(buff);
-        wait_ms(20);
+        wait_ms(200);
         lcd_send_command(LCD_CLEAR);
     }
     release(DEV_LCD);
@@ -65,7 +65,8 @@ void display_kernel_version(void)
     lease(DEV_LCD);
     lcd_turn_backligh_on();
     lcd_print("  ");
-    lcd_print("Aztec "KERNEL_VERSION);
+    lcd_print("Aztec "KERNEL_VERSION " ");
+    lcd_write(get_num_of_threads() + '0');
     wait_ms(2000);
     lcd_send_command(LCD_CLEAR);
     exit_(); // TEST: not releasing device before exiting, OS does it
