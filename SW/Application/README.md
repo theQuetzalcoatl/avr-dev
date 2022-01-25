@@ -9,7 +9,7 @@ Right now somewhat arbitrary, but a **major.minor** is being used</br>
 *  ./build_n_burn.sh upload (for burning as well)
 ___
 ### Aztec</br>
-A super lightweight embedded OS for AVR chips.
+A lightweight, monolithic, real time embedded OS for AVR chips.
 * Preemptive, using time slicing scheduling(Round Robin)
 * Configurable stack size for each thread
 * Stack overflow detection
