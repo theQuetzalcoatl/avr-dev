@@ -241,6 +241,12 @@ void disable_systick(void)
  ** SYSTEM CALLS, PUBLIC APIs
  ******************************/
 
+void halt_system(void)
+{
+    KERNEL_ENTER_ATOMIC();
+    while(1){;}
+}
+
 uint8_t get_num_of_threads(void)
 {
     return tcb.active_threads;

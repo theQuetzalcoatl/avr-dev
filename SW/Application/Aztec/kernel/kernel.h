@@ -61,6 +61,7 @@ extern k_error_t release(const uint8_t requested_device);
 extern k_error_t lease(const uint8_t requested_device);
 extern uint8_t check_device_ownership(const uint8_t requested_device); // does not return the owner, only a true/false value
 extern uint8_t get_num_of_threads(void);
+extern void halt_system(void);
 #if CONFIG_THREADS_QUERY_STATE == TRUE
 extern uint8_t get_thread_state(const thread_address_t th_addr); // provides the state of the supplied thread or K_ERR_THREAD_NOT_FOUND if an invalid ID was given.
 #endif
