@@ -1,5 +1,13 @@
 #include "Aztec/kernel/kernel.h"
 
+register_t halt_thread_stack[CONFIG_MIN_STACK_SIZE + 10];
+void halt_thread(void)
+{
+    while(1){
+        if(button_get_state(BUTTON_3) == PRESSED) halt_system();
+    }
+}
+
 register_t thread_1_stack[CONFIG_MIN_STACK_SIZE+10];
 void thread_1(void)
 {
@@ -92,6 +100,7 @@ int main(void)
     register_thread(thread_3, thread_3_stack, sizeof(thread_3_stack));
     register_thread(thread_4, thread_4_stack, sizeof(thread_4_stack));
     register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
+    register_thread(halt_thread, halt_thread_stack, sizeof(halt_thread_stack));
 
     start_os();
 
