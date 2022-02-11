@@ -4,7 +4,8 @@ register_t halt_thread_stack[CONFIG_MIN_STACK_SIZE + 10];
 void halt_thread(void)
 {
     while(1){
-        if(button_get_state(BUTTON_3) == PRESSED) halt_system();
+        if(button_get_state(BUTTON_3) == PRESSED) reboot();
+        //if(button_get_state(BUTTON_3) == PRESSED) halt_system();
     }
 }
 
