@@ -241,6 +241,12 @@ void disable_systick(void)
  ** SYSTEM CALLS, PUBLIC APIs
  ******************************/
 
+void reboot(void)
+{
+    void (*func)(void) = RESET_VECTOR_ADDRESS;
+    func();
+}
+
 void halt_system(void)
 {
     KERNEL_ENTER_ATOMIC();
@@ -263,10 +269,7 @@ void exit_(void)
     tcb.current_thread->state = DELETED;
     --tcb.active_threads;
 
-    if(tcb.active_threads == 0){
-        disable_systick();
-        while(1){;} // halting the system
-    }
+    if(tcb.active_threads == 0) halt_system();
  
     remove_curr_thread_from_list();
     SWITCH_THREAD();
