@@ -13,7 +13,7 @@ A lightweight, monolithic, real time embedded OS for AVR chips.
 * Preemptive, using time slicing scheduling(Round Robin)
 * Configurable stack size for each thread
 * Stack overflow detection
-* Device Drivers for the HW
+* Device driver integration for the HW
 * Currently 10 system calls
 * Scripts for better, safer code quality
 * Relatively configurable
