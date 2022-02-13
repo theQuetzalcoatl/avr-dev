@@ -44,6 +44,9 @@ void thread_3(void)
     while(1){
         adc_convert(&val);
         itoa(val, buff, 10);
+        lcd_move_cursor(1,1);
+        lcd_print(buff);
+        lcd_move_cursor(5,2);
         lcd_print(buff);
         wait_ms(200);
         lcd_send_command(LCD_CLEAR);

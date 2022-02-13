@@ -138,6 +138,8 @@ extern void kernel_panic(void);
 #define MIN_US_TICK (300u) // this number is based on the fact that thread switching takes about 15 microsec(at 16 MHz)
 #define PRESCALER (256u)
 
+
+
 static uint8_t init_system_ticking(void)
 {
 #if CONFIG_SYSTEM_TICK_IN_US > MAX_US_TICK || CONFIG_SYSTEM_TICK_IN_US < MIN_US_TICK
@@ -173,6 +175,7 @@ static uint8_t init_system_ticking(void)
     return NO_ERROR;
 }
 
+
 static void start_scheduling(void)
 {
     tcb.current_thread = &tcb.thread[0];
@@ -181,6 +184,7 @@ static void start_scheduling(void)
     RESTORE_CONTEXT();
     asm volatile("ret"); // the compiler may optimize the function call out, thus we would not return here
 }
+
 
 static void schedule_next_task(void);
 static uint8_t check_stack_for_overflow(void);
@@ -197,11 +201,13 @@ void TIMER2_COMP_vect( void )
     asm volatile ("reti"); // enables global interrupt flag
 }
 
+
 static uint8_t check_stack_for_overflow(void)
 {
     if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return K_ERR_STACK_OVERFLOW;
     else return NO_ERROR;
 }
+
 
 static void schedule_next_task(void)
 {
@@ -231,15 +237,17 @@ static void schedule_next_task(void)
     else kernel_panic();
 }
 
+
 void disable_systick(void)
 {
     TCCR2 &= ~(1<<CS22 | 1<<CS21 | 1<<CS20);
     TIMSK &= ~(1<<OCIE2);
 }
 
-/******************************* 
- ** SYSTEM CALLS, PUBLIC APIs
- ******************************/
+/*************************************************
+ **             SYSTEM CALLS 
+ ************************************************/
+
 
 void reboot(void)
 {
@@ -247,16 +255,19 @@ void reboot(void)
     func();
 }
 
+
 void halt_system(void)
 {
     KERNEL_ENTER_ATOMIC();
     while(1){;}
 }
 
+
 uint8_t get_num_of_threads(void)
 {
     return tcb.active_threads;
 }
+
 
 static void remove_curr_thread_from_list(void);
 static void release_owned_devices(void);
@@ -274,6 +285,7 @@ void exit_(void)
     remove_curr_thread_from_list();
     SWITCH_THREAD();
 }
+
 
 static void remove_curr_thread_from_list(void)
 {
@@ -299,10 +311,12 @@ void wait_us(const uint32_t us)
     }
 }
 
+
 void wait_ms(const uint16_t ms)
 {
     wait_us((uint32_t)ms*1000);
 }
+
 
 static void init_device_ownerships(void);
 static void make_threadlist_circular(void);
@@ -335,6 +349,7 @@ k_error_t start_os(void)
     return ret;
 }
 
+
 static void make_threadlist_circular(void)
 {
     tcb.thread[tcb.active_threads-1].next = &tcb.thread[0];
@@ -359,10 +374,12 @@ static void sort_thread_list_descending(void)
     }
 }
 
+
 static void link_thread_list(void)
 {
     for(uint8_t i = 0; i < tcb.active_threads-1; ++i) tcb.thread[i].next = &tcb.thread[i+1];
 }
+
 
 k_error_t get_thread_state(const thread_address_t th_addr)
 {
@@ -449,11 +466,13 @@ static void init_stack(const thread_address_t thread_addr, register_t * const st
     insert_stack_overflow_detection_bytes();   
 }
 
+
 static void insert_stack_overflow_detection_bytes(void)
 {
     *(tcb.current_thread->stack_bottom + 1) = 0xBE;
     *(tcb.current_thread->stack_bottom) = 0xEF;
 }
+
 
 static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom)
 {
@@ -464,9 +483,9 @@ static k_error_t check_if_stack_is_already_registered(register_t * const stack_b
 }
 
 
-/**************************
- ** DRIVERS, DEVICES
- *************************/
+/*************************************************
+ **             DRIVERS
+ ************************************************/
 
 typedef struct device_t
 {
@@ -475,6 +494,7 @@ typedef struct device_t
 }device_t;
 
 device_t device[DEVICE_COUNT] = {0}; /* initialized data field is initialzed here implicitly to FALSE */
+
 
 k_error_t init_device(void (*driver_func) (void), uint8_t dev)
 {
@@ -486,6 +506,7 @@ k_error_t init_device(void (*driver_func) (void), uint8_t dev)
     }
 }
 
+
 static void release_owned_devices(void)
 {
     for(int8_t requested_device = DEVICE_COUNT-1; requested_device >= 0; --requested_device){
@@ -495,10 +516,12 @@ static void release_owned_devices(void)
     }
 }
 
+
 static void init_device_ownerships(void)
 {
     for(int8_t dev = 0; dev < DEVICE_COUNT; ++dev) device[dev].owner = NO_OWNER;
 }
+
 
 k_error_t lease(const uint8_t requested_device)
 {
@@ -513,6 +536,7 @@ k_error_t lease(const uint8_t requested_device)
     return ret;
 }
 
+
 k_error_t release(const uint8_t requested_device)
 {
     KERNEL_ENTER_ATOMIC();
@@ -526,6 +550,7 @@ k_error_t release(const uint8_t requested_device)
     KERNEL_EXIT_ATOMIC();
     return ret;
 }
+
 
 uint8_t check_device_ownership(const uint8_t requested_device)
 {
