@@ -8,10 +8,10 @@
 
 extern void lcd_init_device(void);
 extern k_error_t lcd_send_command(uint8_t command);
-extern k_error_t lcd_write(uint8_t data);
 extern k_error_t lcd_turn_backligh_off(void);
 extern k_error_t lcd_turn_backligh_on(void);
 extern k_error_t lcd_print(const char *string);
+extern k_error_t lcd_move_cursor(uint8_t x, uint8_t y); // first row is 1, so is first column
 
 #endif  /* LCD_H */
 

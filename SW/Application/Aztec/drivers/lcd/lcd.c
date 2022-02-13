@@ -14,8 +14,16 @@
 #define DATA_MODE()	    LCD_PORT |= (1<<RS)
 
 
+#define FIRST_ROW_OFFSET  (0x00)
+#define SECOND_ROW_OFFSET (0x40)
+
+#define COLUMNS (16u)
+#define ROWS 	(2u)
+
+
 static void flash(void);
 static void lcd_internal_send_command(uint8_t command);
+
 
 static void init_gpio(void);
 static void execute_lcd_init_sequence(void);
@@ -25,10 +33,12 @@ void lcd_init_device(void)
     execute_lcd_init_sequence();
 }
 
+
 static void init_gpio()
 {
     DDRA = 0xff;
 }
+
 
 static void execute_lcd_init_sequence(void)
 {
@@ -60,6 +70,7 @@ static void execute_lcd_init_sequence(void)
 	lcd_internal_send_command(0b00001100);	// display back on
 }
 
+
 static void flash(void)
 {
 	LCD_PORT |= (1<<EN);
@@ -68,6 +79,7 @@ static void flash(void)
                 nop \n");
 	LCD_PORT &= ~(1<<EN);
 }
+
 
 static void lcd_internal_send_command(uint8_t command)
 {
@@ -82,6 +94,7 @@ static void lcd_internal_send_command(uint8_t command)
 	
 	_delay_ms(1);
 }
+
 
 k_error_t lcd_send_command(uint8_t command)
 {
@@ -102,24 +115,6 @@ k_error_t lcd_send_command(uint8_t command)
 	else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
-k_error_t lcd_write(uint8_t data)
-{
-	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
-		DATA_MODE();
-		LCD_PORT &= 0x0f;
-		LCD_PORT |= (data & 0xf0);
-		flash();
-		
-		LCD_PORT &= 0x0f;
-		LCD_PORT |= ((data<<4) & 0xf0);
-		flash();
-		
-		_delay_us(50);
-
-		return NO_ERROR;
-	}
-	else return K_ERR_INVALID_DEVICE_ACCESS;
-}
 
 k_error_t lcd_turn_backligh_on(void)
 {
@@ -130,6 +125,7 @@ k_error_t lcd_turn_backligh_on(void)
 	else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
+
 k_error_t lcd_turn_backligh_off(void)
 {
 	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
@@ -138,6 +134,7 @@ k_error_t lcd_turn_backligh_off(void)
 	}
 	else return K_ERR_INVALID_DEVICE_ACCESS;
 }
+
 
 static void lcd_internal_write(uint8_t data)
 {
@@ -165,6 +162,20 @@ k_error_t lcd_print(const char *string)
 	}
 	else return K_ERR_INVALID_DEVICE_ACCESS;
 }
+
+
+k_error_t lcd_move_cursor(uint8_t x, uint8_t y)
+{
+	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
+		if(x > COLUMNS || y > ROWS) return NO_ERROR;
+		else{
+			lcd_internal_send_command(0x80 + SECOND_ROW_OFFSET*(y-1) + (x-1));
+			return NO_ERROR;
+		}
+	}
+	else return K_ERR_INVALID_DEVICE_ACCESS;
+}
+
 
 /*
  * lcd.c
