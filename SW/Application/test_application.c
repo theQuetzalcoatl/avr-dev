@@ -76,9 +76,11 @@ void display_kernel_version(void)
 {
     lease(DEV_LCD);
     lcd_turn_backligh_on();
-    lcd_print("  ");
+    lcd_move_cursor(4,1);
     lcd_print("Aztec "KERNEL_VERSION " ");
-    lcd_write(get_num_of_threads() + '0');
+    lcd_move_cursor(4, 2);
+    lcd_print("threads: ");
+    lcd_print((char[]){get_num_of_threads() + '0', '\0'});
     wait_ms(2000);
     lcd_send_command(LCD_CLEAR);
     exit_(); // TEST: not releasing device before exiting, OS does it
