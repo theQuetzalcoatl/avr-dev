@@ -42,12 +42,30 @@ void thread_3(void)
     lcd_turn_backligh_on();
 
     while(1){
+        /* adc conversion print */
         adc_convert(&val);
         itoa(val, buff, 10);
-        lcd_move_cursor(1,1);
+        lcd_move_cursor(1, 1);
         lcd_print(buff);
-        lcd_move_cursor(5,2);
-        lcd_print(buff);
+        
+        /* lcd params print */
+        char lcd_buff[3] = {0};
+        uint8_t rows = lcd_get_row_num();
+        uint8_t cols = lcd_get_column_num();
+        lcd_move_cursor(1, 2);
+
+        lcd_buff[0] = rows/10 + '0';
+        lcd_buff[1] = rows%10 + '0';
+
+        lcd_print("rows:");
+        lcd_print( lcd_buff );
+
+        lcd_buff[0] = cols/10 + '0';
+        lcd_buff[1] = cols%10 + '0';
+
+        lcd_print(" cols:");
+        lcd_print( lcd_buff );
+
         wait_ms(200);
         lcd_send_command(LCD_CLEAR);
     }
