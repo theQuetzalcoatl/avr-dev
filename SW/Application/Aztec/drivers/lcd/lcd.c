@@ -176,6 +176,16 @@ k_error_t lcd_move_cursor(uint8_t x, uint8_t y)
 	else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
+uint8_t lcd_get_row_num(void)
+{
+	return ROWS;
+}
+
+uint8_t lcd_get_column_num(void)
+{
+	return COLUMNS;
+}
+
 
 /*
  * lcd.c
