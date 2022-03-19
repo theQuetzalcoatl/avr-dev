@@ -92,7 +92,7 @@ enum DEVICES
 
 
 #include "../drivers/button/button.h"
-#include "../drivers/buzzer/buzzer.h"
+#include "../drivers/sound/buzzer.h"
 #include "../drivers/dac/dac.h"
 #include "../drivers/keypad/keypad.h"
 #include "../drivers/led/led.h"
