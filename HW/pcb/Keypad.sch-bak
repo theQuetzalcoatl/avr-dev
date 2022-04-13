@@ -19,7 +19,7 @@ U 1 1 5E58355D
 P 3350 2600
 F 0 "R26" V 3430 2600 50  0000 C CNN
 F 1 "2.2k" V 3350 2600 50  0000 C CNN
-F 2 "Resistors_SMD:R_1206_HandSoldering" V 3280 2600 50  0001 C CNN
+F 2 "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder" V 3280 2600 50  0001 C CNN
 F 3 "" H 3350 2600 50  0001 C CNN
 	1    3350 2600
 	0    1    1    0   
@@ -30,7 +30,7 @@ U 1 1 5E58356B
 P 3350 2200
 F 0 "R24" V 3430 2200 50  0000 C CNN
 F 1 "2.2k" V 3350 2200 50  0000 C CNN
-F 2 "Resistors_SMD:R_1206_HandSoldering" V 3280 2200 50  0001 C CNN
+F 2 "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder" V 3280 2200 50  0001 C CNN
 F 3 "" H 3350 2200 50  0001 C CNN
 	1    3350 2200
 	0    1    1    0   
@@ -41,7 +41,7 @@ U 1 1 5E583572
 P 3350 2400
 F 0 "R25" V 3430 2400 50  0000 C CNN
 F 1 "2.2k" V 3350 2400 50  0000 C CNN
-F 2 "Resistors_SMD:R_1206_HandSoldering" V 3280 2400 50  0001 C CNN
+F 2 "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder" V 3280 2400 50  0001 C CNN
 F 3 "" H 3350 2400 50  0001 C CNN
 	1    3350 2400
 	0    1    1    0   
@@ -60,7 +60,7 @@ U 1 1 5E587FD5
 P 4350 2500
 F 0 "J15" H 4350 2900 50  0000 C CNN
 F 1 "Conn_01x07_Female" H 4350 2100 50  0000 C CNN
-F 2 "Socket_Strips:Socket_Strip_Straight_1x07_Pitch2.54mm" H 4350 2500 50  0001 C CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical" H 4350 2500 50  0001 C CNN
 F 3 "" H 4350 2500 50  0001 C CNN
 	1    4350 2500
 	1    0    0    -1  
@@ -123,7 +123,7 @@ U 1 1 5EDF74E8
 P 6675 2275
 F 0 "J19" H 6800 2275 50  0000 C CNN
 F 1 "Conn_01x01" H 6675 2175 50  0000 C CNN
-F 2 "Mounting_Holes:MountingHole_2.5mm" H 6675 2275 50  0001 C CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 6675 2275 50  0001 C CNN
 F 3 "" H 6675 2275 50  0001 C CNN
 	1    6675 2275
 	1    0    0    -1  
@@ -134,7 +134,7 @@ U 1 1 5EDF7524
 P 6675 2500
 F 0 "J23" H 6800 2500 50  0000 C CNN
 F 1 "Conn_01x01" H 6675 2400 50  0000 C CNN
-F 2 "Mounting_Holes:MountingHole_2.5mm" H 6675 2500 50  0001 C CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 6675 2500 50  0001 C CNN
 F 3 "" H 6675 2500 50  0001 C CNN
 	1    6675 2500
 	1    0    0    -1  
@@ -145,7 +145,7 @@ U 1 1 5EDF7568
 P 6675 2725
 F 0 "J28" H 6800 2725 50  0000 C CNN
 F 1 "Conn_01x01" H 6675 2625 50  0000 C CNN
-F 2 "Mounting_Holes:MountingHole_2.5mm" H 6675 2725 50  0001 C CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 6675 2725 50  0001 C CNN
 F 3 "" H 6675 2725 50  0001 C CNN
 	1    6675 2725
 	1    0    0    -1  
@@ -156,7 +156,7 @@ U 1 1 5EDF759F
 P 6675 2950
 F 0 "J29" H 6800 2950 50  0000 C CNN
 F 1 "Conn_01x01" H 6675 2850 50  0000 C CNN
-F 2 "Mounting_Holes:MountingHole_2.5mm" H 6675 2950 50  0001 C CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 6675 2950 50  0001 C CNN
 F 3 "" H 6675 2950 50  0001 C CNN
 	1    6675 2950
 	1    0    0    -1  

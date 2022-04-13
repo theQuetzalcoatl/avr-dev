@@ -19,7 +19,7 @@ U 1 1 5E7D4238
 P 5300 2725
 F 0 "J16" H 5300 3525 50  0000 C CNN
 F 1 "Conn_01x16" H 5625 2075 50  0000 C CNN
-F 2 "Socket_Strips:Socket_Strip_Straight_1x16_Pitch2.54mm" H 5300 2725 50  0001 C CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_1x16_P2.54mm_Vertical" H 5300 2725 50  0001 C CNN
 F 3 "" H 5300 2725 50  0001 C CNN
 	1    5300 2725
 	1    0    0    -1  
@@ -30,7 +30,7 @@ U 1 1 5E7D423F
 P 4025 2225
 F 0 "RV4" V 3925 2225 50  0000 C CNN
 F 1 "10k" V 4025 2225 50  0000 C CNN
-F 2 "Potentiometers:Potentiometer_Trimmer_ACP_CA9v_Horizontal_Px10.0mm_Py5.0mm" H 4025 2225 50  0001 C CNN
+F 2 "Potentiometer_THT:Potentiometer_ACP_CA9-V10_Vertical" H 4025 2225 50  0001 C CNN
 F 3 "" H 4025 2225 50  0001 C CNN
 	1    4025 2225
 	1    0    0    -1  
@@ -41,7 +41,7 @@ U 1 1 5E7D4246
 P 4225 3725
 F 0 "Q4" H 4425 3775 50  0000 L CNN
 F 1 "Q_NMOS_GSD" H 4425 3675 50  0000 L CNN
-F 2 "TO_SOT_Packages_SMD:SOT-23_Handsoldering" H 4425 3825 50  0001 C CNN
+F 2 "Package_TO_SOT_SMD:SOT-23_Handsoldering" H 4425 3825 50  0001 C CNN
 F 3 "" H 4225 3725 50  0001 C CNN
 	1    4225 3725
 	1    0    0    -1  
@@ -52,7 +52,7 @@ U 1 1 5E7D424D
 P 4825 3525
 F 0 "R29" V 4905 3525 50  0000 C CNN
 F 1 "91" V 4825 3525 50  0000 C CNN
-F 2 "Resistors_SMD:R_1206_HandSoldering" V 4755 3525 50  0001 C CNN
+F 2 "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder" V 4755 3525 50  0001 C CNN
 F 3 "" H 4825 3525 50  0001 C CNN
 	1    4825 3525
 	0    1    1    0   
@@ -63,7 +63,7 @@ U 1 1 5E7D4254
 P 3950 3925
 F 0 "R28" V 4030 3925 50  0000 C CNN
 F 1 "100k" V 3950 3925 50  0000 C CNN
-F 2 "Resistors_SMD:R_1206_HandSoldering" V 3880 3925 50  0001 C CNN
+F 2 "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder" V 3880 3925 50  0001 C CNN
 F 3 "" H 3950 3925 50  0001 C CNN
 	1    3950 3925
 	1    0    0    -1  
@@ -74,7 +74,7 @@ U 1 1 5E7D425B
 P 3700 3725
 F 0 "R27" V 3780 3725 50  0000 C CNN
 F 1 "100" V 3700 3725 50  0000 C CNN
-F 2 "Resistors_SMD:R_1206_HandSoldering" V 3630 3725 50  0001 C CNN
+F 2 "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder" V 3630 3725 50  0001 C CNN
 F 3 "" H 3700 3725 50  0001 C CNN
 	1    3700 3725
 	0    1    1    0   
@@ -258,7 +258,7 @@ U 1 1 5EDF5D6D
 P 2775 2150
 F 0 "J30" H 2900 2150 50  0000 C CNN
 F 1 "Conn_01x01" H 2775 2050 50  0000 C CNN
-F 2 "Mounting_Holes:MountingHole_2.5mm" H 2775 2150 50  0001 C CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 2775 2150 50  0001 C CNN
 F 3 "" H 2775 2150 50  0001 C CNN
 	1    2775 2150
 	1    0    0    -1  
@@ -269,7 +269,7 @@ U 1 1 5EDF5DAB
 P 2775 2425
 F 0 "J31" H 2900 2425 50  0000 C CNN
 F 1 "Conn_01x01" H 2775 2325 50  0000 C CNN
-F 2 "Mounting_Holes:MountingHole_2.5mm" H 2775 2425 50  0001 C CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 2775 2425 50  0001 C CNN
 F 3 "" H 2775 2425 50  0001 C CNN
 	1    2775 2425
 	1    0    0    -1  

@@ -27,9 +27,11 @@
 
 ---------------- v3.0 ----------------------
 
-* [ ] Shrink the ground connection to the PT1000 in order to make it able to represent the *air's* temperature
-* [ ] Male headers in series with DC jack input to be able to measure input current.
-* [ ] Create a proper footprint for the UART 90° connector.
-* [ ] Push buttons shall be SMD
-* [ ] Insert LED1..LED4 for leds instead of D4..D7
-* [ ] Add a 4 pin male header connected to GND for easier access to GND.
+* [-] Shrink the ground connection to the PT1000 in order to make it able to represent the *air's* temperature - not so critical, besides, PCB temp is much more stable
+* [x] Male headers in series with DC jack input to be able to measure input current.
+* [x] Create a proper footprint for the UART 90° connector.
+* [-] Push buttons shall be SMD
+* [X] Insert LED1..LED4 for leds instead of D4..D7
+* [x] Add a 4 pin male header connected to GND for easier access to GND.
+* [x] Remove D9 Zener diode because it is eesentially not needed when it comes to negative input voltage
+* [x] Replace input DC jack connector with an USB one.
