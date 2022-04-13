@@ -117,7 +117,7 @@ int main(void)
     init_device(uart_init_device, DEV_UART);
     init_device(buzzer_init_device, DEV_BUZZER);
     init_device(adc_init_device, DEV_ADC);
-    keypad_init_device(); /* TEST: devices can be handled outside of the kernels supervision */
+    keypad_init_device(); /* TEST: devices can be handled outside of the kernel's supervision */
 
     register_thread(thread_1, thread_1_stack, sizeof(thread_1_stack));
     register_thread(heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
