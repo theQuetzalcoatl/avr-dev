@@ -9,12 +9,12 @@
  */
 
 
-static adc_t amp_offset = 0;
+static int16_t amp_offset = 0;
 
 
 /************** Device initialization **************/
 static void set_adc_freq_to_125khz(void);
-static adc_t acquire_amplifier_offset(void);
+static adc_t acquire_amplifier_offset(int64_t *offset);
 
 void adc_init_device(void)
 {
@@ -27,7 +27,7 @@ void adc_init_device(void)
     ADMUX &= ~(1<<MUX4 | 1<<MUX3 | 1<<MUX2 | 1<<MUX1 | 1<<MUX0); // adc0 channel is selected by default
 
     ADCSRA |= 1<<ADEN;      // enable adc
-    //amp_offset = acquire_amplifier_offset();
+    acquire_amplifier_offset(&amp_offset);
 }
 
 static void set_adc_freq_to_125khz(void)
@@ -40,13 +40,20 @@ static void set_adc_freq_to_125khz(void)
 #endif
 }
 
-static adc_t acquire_amplifier_offset(void)
+static adc_t acquire_amplifier_offset(int64_t *offset)
 {
-    // both inputs of the amplifier is on ADC0 pin
-    ADMUX |= 1<<MUX3;
-    ADMUX &= ~(1<<MUX4 | 1<<MUX2 | 1<<MUX1 | 1<<MUX0);
+    adc_t tmp= 0;
+    adc_change_channels(ADC1_ADC1_1x);
+    _delay_us(500);
+    adc_convert(&tmp);
 
-    _delay_us(126);
+    if(tmp & (1<<9)){
+        tmp = ~tmp + 1; // two's complement 
+        *offset = -1*tmp;
+    }
+    else{
+        *offset = tmp;
+    }
 }
 
 
@@ -59,17 +66,17 @@ k_error_t adc_convert(adc_t * const result)
         while(ADCSRA & (1<<ADSC)){;}
         *result = (adc_t)ADCL;
         *result += (adc_t)ADCH<<8;
+        *result += amp_offset; // NOTE: buggy, because in single channel it is irrelevant --> create channel type variable
         return NO_ERROR;
     }
     else return K_ERR_INVALID_DEVICE_ACCESS;
 }
 
-k_error_t change_channels(uint8_t channel_conf)
+k_error_t adc_change_channels(uint8_t channel_conf)
 {
     if(check_device_ownership(DEV_ADC) == SAME_OWNER){
+        ADMUX &= 0b11100000;
         ADMUX |= channel_conf;
-        channel_conf |= 0b11100000;
-        ADMUX &= channel_conf;
         return NO_ERROR;
     }
     else return K_ERR_INVALID_DEVICE_ACCESS;

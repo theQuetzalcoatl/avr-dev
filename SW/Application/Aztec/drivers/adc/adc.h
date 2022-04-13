@@ -8,7 +8,7 @@ typedef uint16_t adc_t;
 
 extern void adc_init_device(void);
 extern k_error_t adc_convert(adc_t * const result);
-extern k_error_t change_channels(uint8_t channel_conf);
+extern k_error_t adc_change_channels(uint8_t channel_conf);
 
 /******** signal configuration table ********/
 #define ADC0            0b00000
