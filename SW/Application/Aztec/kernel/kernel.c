@@ -242,6 +242,7 @@ void disable_systick(void)
 {
     TCCR2 &= ~(1<<CS22 | 1<<CS21 | 1<<CS20);
     TIMSK &= ~(1<<OCIE2);
+    RESET_SYSTICK_TIMER();
 }
 
 
@@ -252,14 +253,16 @@ void disable_systick(void)
 
 void reboot(void)
 {
-    void (*func)(void) = RESET_VECTOR_ADDRESS;
-    func();
+    KERNEL_ENTER_ATOMIC();
+    disable_systick();
+    asm volatile("jmp 0x00"); // 0x00 is the reset vector
 }
 
 
 void halt_system(void)
 {
     KERNEL_ENTER_ATOMIC();
+    disable_systick();
     while(1){;}
 }
 

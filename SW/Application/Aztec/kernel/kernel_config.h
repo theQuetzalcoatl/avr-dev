@@ -5,7 +5,6 @@
 
     /* HW */
 #define F_CPU (16000000UL) /* Hz */
-#define RESET_VECTOR_ADDRESS (0x00u)
 
     /* THREADS */
 #define CONFIG_MAX_THREADS (25u)
