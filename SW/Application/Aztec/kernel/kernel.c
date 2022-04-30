@@ -29,6 +29,20 @@ typedef struct thread_control_block_t
 
 static thread_control_block_t tcb = {0};
 
+/******************************
+ ** STATIC FUNCTIONS
+ *****************************/
+static void schedule_next_task(void);
+static uint8_t check_stack_for_overflow(void);
+static void remove_curr_thread_from_list(void);
+static void release_owned_devices(void);
+static void init_device_ownerships(void);
+static void make_threadlist_circular(void);
+static void sort_thread_list_descending(void);
+static void link_thread_list(void);
+static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
+static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom);
+static void insert_stack_overflow_detection_bytes(void);
 
 #define RESET_SYSTICK_TIMER() TCNT2 = 0
 
@@ -120,7 +134,6 @@ static thread_control_block_t tcb = {0};
                 st X, R31 \n\
                 ");
 
-extern void disable_systick(void);
 extern void kernel_panic(void);
 
 /*
@@ -186,9 +199,6 @@ static void start_scheduling(void)
 }
 
 
-static void schedule_next_task(void);
-static uint8_t check_stack_for_overflow(void);
-
 void TIMER2_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
 void TIMER2_COMP_vect( void )
 {
@@ -242,7 +252,7 @@ void disable_systick(void)
 {
     TCCR2 &= ~(1<<CS22 | 1<<CS21 | 1<<CS20);
     TIMSK &= ~(1<<OCIE2);
-    RESET_SYSTICK_TIMER();
+    RESET_SYSTICK_TIMER(); // just in case of a sw reset
 }
 
 
@@ -272,9 +282,6 @@ uint8_t get_num_of_threads(void)
     return tcb.active_threads;
 }
 
-
-static void remove_curr_thread_from_list(void);
-static void release_owned_devices(void);
 
 void exit_(void)
 {
@@ -321,11 +328,6 @@ void wait_ms(const uint16_t ms)
     wait_us((uint32_t)ms*1000);
 }
 
-
-static void init_device_ownerships(void);
-static void make_threadlist_circular(void);
-static void sort_thread_list_descending(void);
-static void link_thread_list(void);
 
 k_error_t start_os(void)
 {
@@ -409,8 +411,6 @@ k_error_t get_thread_state(const thread_address_t th_addr)
 
 #endif
 
-static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
-static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom);
 
 k_error_t register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
 {
@@ -453,7 +453,6 @@ k_error_t register_thread(const thread_address_t thread_addr,  register_t * cons
     R31
     SREG
 */
-static void insert_stack_overflow_detection_bytes(void);
 
 static void init_stack(const thread_address_t thread_addr, register_t * const stack_start)
 {
