@@ -5,9 +5,9 @@ void halt_thread(void)
 {
     while(1){
         if(button_get_state(BUTTON_3) == PRESSED) reboot();
-        //if(button_get_state(BUTTON_3) == PRESSED) halt_system();
     }
 }
+
 
 register_t thread_1_stack[CONFIG_MIN_STACK_SIZE+10];
 void thread_1(void)
@@ -32,6 +32,7 @@ void heartbeat(void)
 register_t thread_3_stack[CONFIG_MIN_STACK_SIZE+20];
 void thread_3(void)
 {
+    
     wait_ms(10);
     while(lease(DEV_LCD) == K_ERR_INVALID_DEVICE_ACCESS){;}
     lease(DEV_ADC);
@@ -66,10 +67,11 @@ void thread_3(void)
         lcd_print(" cols:");
         lcd_print( lcd_buff );
 
-        wait_ms(200);
+        wait_ms(750);
         lcd_send_command(LCD_CLEAR);
     }
     release(DEV_LCD);
+    
 }
 
 register_t thread_4_stack[CONFIG_MIN_STACK_SIZE + 10];
