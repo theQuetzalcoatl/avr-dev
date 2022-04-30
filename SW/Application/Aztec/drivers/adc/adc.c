@@ -14,7 +14,7 @@ static int16_t amp_offset = 0;
 
 /************** Device initialization **************/
 static void set_adc_freq_to_125khz(void);
-static adc_t acquire_amplifier_offset(int64_t *offset);
+static void acquire_amplifier_offset(int16_t *offset);
 
 void adc_init_device(void)
 {
@@ -40,7 +40,7 @@ static void set_adc_freq_to_125khz(void)
 #endif
 }
 
-static adc_t acquire_amplifier_offset(int64_t *offset)
+static void acquire_amplifier_offset(int16_t *offset)
 {
     adc_t tmp= 0;
     adc_change_channels(ADC1_ADC1_1x);
