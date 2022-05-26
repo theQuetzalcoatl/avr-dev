@@ -102,7 +102,7 @@ k_error_t uart_set_parity(const uint8_t parity)
     }
     else return K_ERR_INVALID_DEVICE_ACCESS;
 
-    return HAL_OK;
+    return NO_ERROR;
 }
 
 k_error_t uart_set_stop_bits(const uint8_t stop_bits)
@@ -116,7 +116,7 @@ k_error_t uart_set_stop_bits(const uint8_t stop_bits)
     }
     else return K_ERR_INVALID_DEVICE_ACCESS;
 
-    return HAL_OK;
+    return NO_ERROR;
 }
 
 k_error_t uart_set_data_bits(uint8_t data_b)

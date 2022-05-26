@@ -4,8 +4,6 @@
     #error "Number of maximum threads shall not exceed 255. Also, there should be at least one thread."
 #endif
 
-#define SWITCH_THREAD() TIMER2_COMP_vect()
-
 typedef struct thread_t
 {
     register_t *stack_pointer; /* must be first field because of embedded assembly */
@@ -30,8 +28,9 @@ typedef struct thread_control_block_t
 static thread_control_block_t tcb = {0};
 
 /******************************
- ** STATIC FUNCTIONS
+ ** LOCAL FUNCTIONS
  *****************************/
+
 static void schedule_next_task(void);
 static uint8_t check_stack_for_overflow(void);
 static void remove_curr_thread_from_list(void);
@@ -44,7 +43,13 @@ static void init_stack(const thread_address_t thread_addr, register_t * const st
 static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom);
 static void insert_stack_overflow_detection_bytes(void);
 
+#if TIMER_USED == T2
 #define RESET_SYSTICK_TIMER() TCNT2 = 0
+#define SWITCH_THREAD() TIMER2_COMP_vect()
+#elif TIMER_USED == T0
+#define RESET_SYSTICK_TIMER() TCNT0 = 0
+#define SWITCH_THREAD() TIMER0_COMP_vect()
+#endif
 
 #define RESTORE_CONTEXT() \
     asm volatile(" \
@@ -136,47 +141,26 @@ static void insert_stack_overflow_detection_bytes(void);
 
 extern void kernel_panic(void);
 
-/*
-    * OCRn = (F_CPU*T/(2*prescaler)) - 1
-
-    T should be in microseconds, it gets devided by 1,000,000 to get us.
-*/
-#if   F_CPU == 8000000UL
-    #define MAX_US_TICK (8000u)
-#elif F_CPU == 16000000UL
-    #define MAX_US_TICK (4000u) /* (2*256*256)/(16*10^6) */
-#else
-    #error "MCU clock frequency must be either 8MHz or 16MHz!"
-#endif
 #define MIN_US_TICK (300u) // this number is based on the fact that thread switching takes about 15 microsec(at 16 MHz)
-#define PRESCALER (256u)
-
-
 
 static uint8_t init_system_ticking(void)
 {
-#if CONFIG_SYSTEM_TICK_IN_US > MAX_US_TICK || CONFIG_SYSTEM_TICK_IN_US < MIN_US_TICK
-    #error "OS's system tick period is out of bounds!"
-#endif
-
-    uint16_t us_tick = CONFIG_SYSTEM_TICK_IN_US * 2u; // the formula calculates the period, but we want half of that so it gets multiplied
+    const uint16_t prescaler = 256u;
+    const uint32_t us_tick = CONFIG_SYSTEM_TICK_IN_US * 2u; // the formula calculates the period, but we want half of that so it gets multiplied
 
     uint32_t val = F_CPU/100000u; // 10^5 is used instead of 10^6(to make sec to usec) but I keep the extra digit to be able to use rounding, after that, it is devided by 10, thus 10^6 in total
     val *= (uint32_t)us_tick;
     val /= 2u;
-    val /= PRESCALER;
+    val /= prescaler;
     val += 5u; // rounding
     val /= 10u;
     val -= 1u;
+
+#if TIMER_USED == T2
     if(val <= 255u) OCR2 = val;
 
     TCCR2 |= 1<<WGM21;
     TCCR2 &= ~(1<<WGM20);
-
-    DDRB |= 1<<PINB7;
-    PORTB &= ~(1<<PINB7);
-    TCCR2 &= ~(1<<COM21);
-    TCCR2 |= 1<<COM20;
 
     TCCR2 |= 1<<CS22;
     TCCR2 &= ~(1<<CS21 | 1<<CS20);
@@ -184,6 +168,20 @@ static uint8_t init_system_ticking(void)
     /* NOTE: don't forget to clear the timer reg and interrupt flag before starting the OS */
 
     TIMSK |= 1<<OCIE2;
+
+#elif TIMER_USED == T0
+    if(val <= 255u) OCR0 = val;
+
+    TCCR0 |= 1<<WGM01;
+    TCCR0 &= ~(1<<WGM00);
+
+    TCCR0 |= 1<<CS02 | 1<<CS01;
+    TCCR0 &= ~(1<<CS00);
+    
+    /* NOTE: don't forget to clear the timer reg and interrupt flag before starting the OS */
+
+    TIMSK |= 1<<OCIE0;
+#endif
     
     return NO_ERROR;
 }
@@ -198,9 +196,14 @@ static void start_scheduling(void)
     asm volatile("ret"); // the compiler may optimize the function call out, thus we would not return here
 }
 
+#if TIMER_USED == T2
 
 void TIMER2_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
 void TIMER2_COMP_vect( void )
+
+#elif TIMER_USED == T0
+void TIMER0_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
+void TIMER0_COMP_vect( void )
 {
     // global interrupt flag is disabled
     STORE_CONTEXT();
@@ -210,6 +213,7 @@ void TIMER2_COMP_vect( void )
     RESTORE_CONTEXT();
     asm volatile ("reti"); // enables global interrupt flag
 }
+#endif
 
 
 static uint8_t check_stack_for_overflow(void)
@@ -250,8 +254,13 @@ static void schedule_next_task(void)
 
 void disable_systick(void)
 {
+#if TIMER_USED == T2
     TCCR2 &= ~(1<<CS22 | 1<<CS21 | 1<<CS20);
     TIMSK &= ~(1<<OCIE2);
+#elif TIMER_USED == T0
+    TCCR0 &= ~(1<<CS02 | 1<<CS01 | 1<<CS00);
+    TIMSK &= ~(1<<OCIE0);
+#endif
     RESET_SYSTICK_TIMER(); // just in case of a sw reset
 }
 
@@ -348,7 +357,11 @@ k_error_t start_os(void)
     make_threadlist_circular();
 
     RESET_SYSTICK_TIMER();
+#if TIMER_USED == T2
     if(TIFR & (1<<OCF2)) TIFR |= 1<<OCF2;
+#elif TIMER_USED == T0
+    if(TIFR & (1<<OCF0)) TIFR |= 1<<OCF0;
+#endif
     KERNEL_EXIT_ATOMIC();
     start_scheduling();
 
@@ -569,6 +582,21 @@ uint8_t check_device_ownership(const uint8_t requested_device)
     return ret;
 }
 
+
+/***********************
+ ** senity checks
+ **********************/
+#if   F_CPU == 8000000UL
+    #define MAX_US_TICK (8000u)
+#elif F_CPU == 16000000UL
+    #define MAX_US_TICK (4000u) /* (2*256*256)/(16*10^6) */
+#else
+    #error "MCU clock frequency must be either 8MHz or 16MHz!"
+#endif
+
+#if CONFIG_SYSTEM_TICK_IN_US > MAX_US_TICK || CONFIG_SYSTEM_TICK_IN_US < MIN_US_TICK
+    #error "OS's system tick period is out of bounds!"
+#endif
 
 
 /*

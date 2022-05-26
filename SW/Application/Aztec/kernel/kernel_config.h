@@ -5,6 +5,11 @@
 
     /* HW */
 #define F_CPU (16000000UL) /* Hz */
+#define T0 (0u)
+#define T1 (1u)
+#define T2 (2u)
+#define T3 (3u)
+#define TIMER_USED T0
 
     /* THREADS */
 #define CONFIG_MAX_THREADS (25u)

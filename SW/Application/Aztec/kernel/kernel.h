@@ -29,9 +29,6 @@ AVR stuff:
 
 #define KERNEL_VERSION "v7.1"
 
-#define HAL_OK (0u)
-#define HAL_NOK (1u)
-
 #define KERNEL_ENTER_ATOMIC() cli() 
 #define KERNEL_EXIT_ATOMIC() sei()
 
