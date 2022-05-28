@@ -204,16 +204,16 @@ void TIMER2_COMP_vect( void )
 #elif TIMER_USED == T0
 void TIMER0_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
 void TIMER0_COMP_vect( void )
+#endif
 {
     // global interrupt flag is disabled
     STORE_CONTEXT();
     if(K_ERR_STACK_OVERFLOW == check_stack_for_overflow()) kernel_panic();
     schedule_next_task();
-    RESET_SYSTICK_TIMER();
+    //RESET_SYSTICK_TIMER();
     RESTORE_CONTEXT();
     asm volatile ("reti"); // enables global interrupt flag
 }
-#endif
 
 
 static uint8_t check_stack_for_overflow(void)
