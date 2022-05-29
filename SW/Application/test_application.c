@@ -80,8 +80,8 @@ static uint16_t toggle_buzzer_sound(void)
     return 0;
 }
 
-volatile static uint8_t imp_march_plays = FALSE;
-volatile static uint8_t imp_march_waiting = FALSE;
+static volatile uint8_t imp_march_plays = FALSE;
+static volatile uint8_t imp_march_waiting = FALSE;
 static uint16_t play_imp_march(void)
 {
     imp_march_plays = !imp_march_plays;
@@ -94,8 +94,8 @@ static uint16_t play_imp_march(void)
 }
 
 
-volatile static uint8_t tetris_plays = FALSE;
-volatile static uint8_t tetris_waiting = FALSE;
+static volatile uint8_t tetris_plays = FALSE;
+static volatile uint8_t tetris_waiting = FALSE;
 static uint16_t play_tetris(void)
 {
     tetris_plays = !tetris_plays;
@@ -142,7 +142,7 @@ void menu(void)
                                     };
 
     menu_point_s *current_menu_point = &fo_menu_pontok;
-    
+    /*
     lcd_send_command(LCD_CLEAR);
     if(cucli_helyzet == CUCLI_FENT) lcd_print(MENU_SELECTION_SIGN);
     lcd_move_cursor(2,1);
@@ -150,47 +150,10 @@ void menu(void)
     if(cucli_helyzet == CUCLI_LENT) lcd_print(MENU_SELECTION_SIGN);
     lcd_move_cursor(2,2);
     lcd_print(fo_menu_pontok[menu_index + 1].name);
+*/
+    do{
 
-    while(1){
-        char key = keypad_get_pressed_key();
-        switch(key)
-        {
-            case LE:
-                if(current_menu_point->is_end == FALSE) {
-                    ++menu_index;
-                    ++current_menu_point;
-                    if(cucli_helyzet == CUCLI_FENT) cucli_helyzet = CUCLI_LENT;
-                }
-                break;
-
-            case FEL:
-                if(menu_index > 0){
-                    --menu_index;
-                    --current_menu_point;
-                    if(cucli_helyzet == CUCLI_LENT) cucli_helyzet = CUCLI_FENT;
-                }
-                break;
-
-            case BELEPES:
-                if(current_menu_point->type == PARENT_MENU && current_menu_point->submenus != 0){
-                    current_menu_point = current_menu_point->submenus;
-                    menu_index = 0;
-                    cucli_helyzet = CUCLI_FENT;
-                }
-                break;
-
-            case KILEPES:
-                current_menu_point = &fo_menu_pontok;
-                menu_index = 0;
-                cucli_helyzet = CUCLI_FENT;
-                break;
-
-            case ACTIVATE:
-                if(current_menu_point->action != 0) current_menu_point->action();
-                break;
-        }
-
-        /* refresh lcd */
+         /* refresh lcd */
         lcd_send_command(LCD_CLEAR);
         if(cucli_helyzet == CUCLI_FENT){
             lcd_print(MENU_SELECTION_SIGN);
@@ -229,7 +192,45 @@ void menu(void)
                 }
             }
         }
-        
+
+        char key = keypad_get_pressed_key();
+        switch(key)
+        {
+            case LE:
+                if(current_menu_point->is_end == FALSE) {
+                    ++menu_index;
+                    ++current_menu_point;
+                    if(cucli_helyzet == CUCLI_FENT) cucli_helyzet = CUCLI_LENT;
+                }
+                break;
+
+            case FEL:
+                if(menu_index > 0){
+                    --menu_index;
+                    --current_menu_point;
+                    if(cucli_helyzet == CUCLI_LENT) cucli_helyzet = CUCLI_FENT;
+                }
+                break;
+
+            case BELEPES:
+                if(current_menu_point->type == PARENT_MENU && current_menu_point->submenus != 0){
+                    current_menu_point = current_menu_point->submenus;
+                    menu_index = 0;
+                    cucli_helyzet = CUCLI_FENT;
+                }
+                break;
+
+            case KILEPES:
+                current_menu_point = &fo_menu_pontok;
+                menu_index = 0;
+                cucli_helyzet = CUCLI_FENT;
+                break;
+
+            case ACTIVATE:
+                if(current_menu_point->action != 0) current_menu_point->action();
+                break;
+        }
+
         if(buzzer_is_on){
             buzzer_buzz(350);
             wait_ms(100);
@@ -237,7 +238,8 @@ void menu(void)
             wait_ms(50);
         }
         else wait_ms(150);
-    }
+        
+    }while(1);
 }
 
 /***********************************************************************/
