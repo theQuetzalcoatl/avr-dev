@@ -1,6 +1,5 @@
 #include "Aztec/kernel/kernel.h"
 
-static uint8_t song_playing = FALSE;
 
 /***********************************************************************/
 
@@ -15,54 +14,6 @@ void heartbeat(void)
     release(DEV_LED1);
 }
 
-/***********************************************************************/
-
-#if 0
-register_t thread_3_stack[CONFIG_MIN_STACK_SIZE+20];
-void thread_3(void)
-{
-    
-    wait_ms(10);
-    while(lease(DEV_LCD) == K_ERR_INVALID_DEVICE_ACCESS){;}
-    lease(DEV_ADC);
-    
-    char buff[5] = {0};
-    adc_t val = 0;
-    
-    lcd_turn_backligh_on();
-
-    while(1){
-        /* adc conversion print */
-        adc_convert(&val);
-        itoa(val, buff, 10);
-        lcd_move_cursor(1, 1);
-        lcd_print(buff);
-        
-        /* lcd params print */
-        char lcd_buff[3] = {0};
-        uint8_t rows = lcd_get_row_num();
-        uint8_t cols = lcd_get_column_num();
-        lcd_move_cursor(1, 2);
-
-        lcd_buff[0] = rows/10 + '0';
-        lcd_buff[1] = rows%10 + '0';
-
-        lcd_print("rows:");
-        lcd_print( lcd_buff );
-
-        lcd_buff[0] = cols/10 + '0';
-        lcd_buff[1] = cols%10 + '0';
-
-        lcd_print(" cols:");
-        lcd_print( lcd_buff );
-
-        wait_ms(750);
-        lcd_send_command(LCD_CLEAR);
-    }
-    release(DEV_LCD);
-    
-}
-#endif
 
 /***********************************************************************/
 
@@ -81,8 +32,9 @@ void display_kernel_version(void)
 
 /***********************************************************************/
 
-#define PARENT_MENU (15u)
-#define ACTION_MENU (16u)
+#define PARENT_MENU  (15u)
+#define PRESENT_MENU (16u)
+#define ACTION_MENU  (17u)
 
 #define CUCLI_FENT (0u)
 #define CUCLI_LENT (1u)
@@ -91,20 +43,72 @@ void display_kernel_version(void)
 #define FEL     KEYPAD_5
 #define BELEPES KEYPAD_9
 #define KILEPES KEYPAD_7
+#define ACTIVATE KEYPAD_8
 
-#define MENU_SELECTION_SIGN ">"
+#define MENU_SELECTION_SIGN "*"
 
 typedef struct
 {
     char *name;
     struct menu_point_s *submenus;
     uint8_t type;
-    uint8_t menu_size;
-    void (*action)(void);
+    uint8_t is_end;
+    uint16_t (*action)(void);
 }menu_point_s;
 
 
-register_t menu_stack[CONFIG_MIN_STACK_SIZE + 100];
+static uint16_t get_systick(void)
+{
+    return CONFIG_SYSTEM_TICK_IN_US;
+}
+
+static uint16_t get_sysclk(void)
+{
+    return F_CPU/1000000;
+}
+
+static uint16_t get_threads(void)
+{
+    return get_num_of_threads();
+}
+
+static uint8_t buzzer_is_on = FALSE;
+static uint16_t toggle_buzzer_sound(void)
+{
+    buzzer_is_on = !buzzer_is_on;
+    lease(DEV_BUZZER);
+    return 0;
+}
+
+volatile static uint8_t imp_march_plays = FALSE;
+volatile static uint8_t imp_march_waiting = FALSE;
+static uint16_t play_imp_march(void)
+{
+    imp_march_plays = !imp_march_plays;
+    if(imp_march_plays == TRUE) release(DEV_BUZZER);
+    else{
+        while(imp_march_waiting == FALSE){;}
+        lease(DEV_BUZZER);
+    }
+    return 0;
+}
+
+
+volatile static uint8_t tetris_plays = FALSE;
+volatile static uint8_t tetris_waiting = FALSE;
+static uint16_t play_imp_march(void)
+{
+    tetris_plays = !tetris_plays;
+    if(tetris_plays == TRUE) release(DEV_BUZZER);
+    else{
+        while(tetris_waiting == FALSE){;}
+        lease(DEV_BUZZER);
+    }
+    return 0;
+}
+
+
+register_t menu_stack[CONFIG_MIN_STACK_SIZE + 200];
 void menu(void)
 {
     wait_ms(1000);
@@ -113,21 +117,29 @@ void menu(void)
 
     uint8_t cucli_helyzet = CUCLI_FENT;
     uint8_t menu_index = 0;
+    char buffer[10] = {0};
 
     menu_point_s music_almenu_pontok[] = {
-                                            [0] = {.name = "Imp. March", .type = ACTION_MENU, .action = 0, .submenus = 0},
-                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = 0, .submenus = 0}
+                                            [0] = {.name = "Imp. March", .type = ACTION_MENU, .action = &play_imp_march, .submenus = 0, .is_end = FALSE},
+                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = 0, .submenus = 0, .is_end = TRUE}
                                          };
-    for(int i = 0; i < sizeof(music_almenu_pontok)/sizeof(music_almenu_pontok[0]); ++i) music_almenu_pontok[i].menu_size = sizeof(music_almenu_pontok)/sizeof(music_almenu_pontok[0]);
+
+    menu_point_s sys_info_submenu[] = {
+                                        [0] = {.name = "Threads  - ", .type = PRESENT_MENU, .action = &get_threads, .submenus = 0, .is_end = FALSE},
+                                        [1] = {.name = "Systicks - ", .type = PRESENT_MENU, .action = &get_systick, .submenus = 0, .is_end = FALSE},
+                                        [2] = {.name = "Clock[MHz] - ", .type = PRESENT_MENU, .action = &get_sysclk, .submenus = 0, .is_end = TRUE}
+                                      };
+
+    menu_point_s keypad_submenu[] = {
+                                       [0] = { .name = "On/Off", .type = ACTION_MENU, .action = &toggle_buzzer_sound, .submenus = 0, .is_end = FALSE},
+                                       [1] = { .name = " ", .type = ACTION_MENU, .action = 0, .submenus = 0, .is_end = TRUE},
+                                    };
 
     menu_point_s fo_menu_pontok[] = {
-                                        [0] = {.name = "Music...", .type = PARENT_MENU, .action = 0, .submenus = &music_almenu_pontok},
-                                        [1] = {.name = "System info...", .type = PARENT_MENU, .action = 0, .submenus = 0},
-                                        [2] = {.name = "Menu 1", .type = ACTION_MENU, .action = 0, .submenus = 0},
-                                        [3] = {.name = "Menu 2", .type = ACTION_MENU, .action = 0, .submenus = 0},
-                                        [4] = {.name = "Menu 3", .type = ACTION_MENU, .action = 0, .submenus = 0}
+                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenus = &music_almenu_pontok, .is_end = FALSE},
+                                        [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenus = &sys_info_submenu, .is_end = FALSE},
+                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenus = &keypad_submenu, .is_end = TRUE},
                                     };
-    for(int i = 0; i < sizeof(fo_menu_pontok)/sizeof(fo_menu_pontok[0]); ++i) fo_menu_pontok[i].menu_size = sizeof(fo_menu_pontok)/sizeof(fo_menu_pontok[0]);
 
     menu_point_s *current_menu_point = &fo_menu_pontok;
     
@@ -144,7 +156,7 @@ void menu(void)
         switch(key)
         {
             case LE:
-                if(menu_index < current_menu_point->menu_size - 1) {
+                if(current_menu_point->is_end == FALSE) {
                     ++menu_index;
                     ++current_menu_point;
                     if(cucli_helyzet == CUCLI_FENT) cucli_helyzet = CUCLI_LENT;
@@ -171,7 +183,11 @@ void menu(void)
                 current_menu_point = &fo_menu_pontok;
                 menu_index = 0;
                 cucli_helyzet = CUCLI_FENT;
-            break;
+                break;
+
+            case ACTIVATE:
+                current_menu_point->action();
+                break;
         }
 
         /* refresh lcd */
@@ -179,37 +195,247 @@ void menu(void)
         if(cucli_helyzet == CUCLI_FENT){
             lcd_print(MENU_SELECTION_SIGN);
             lcd_print(current_menu_point->name);
+            if(current_menu_point->action != 0){
+                if(current_menu_point->type == PRESENT_MENU){
+                    utoa(current_menu_point->action(), buffer, 10);
+                    lcd_print(buffer);
+                }
+            }
             lcd_move_cursor(2,2);
             lcd_print((current_menu_point+1)->name);
+            if((current_menu_point + 1)->action != 0){
+                if((current_menu_point + 1)->type == PRESENT_MENU){
+                    utoa((current_menu_point + 1)->action(), buffer, 10);
+                    lcd_print(buffer);
+                }
+            }
         }
         else{
             lcd_move_cursor(2,1);
             lcd_print((current_menu_point - 1)->name);
+            if((current_menu_point - 1)->action != 0){
+                if((current_menu_point - 1)->type == PRESENT_MENU){
+                    utoa((current_menu_point - 1)->action(), buffer, 10);
+                    lcd_print(buffer);
+                }
+            }
             lcd_move_cursor(1,2);
             lcd_print(MENU_SELECTION_SIGN);
             lcd_print((current_menu_point)->name);
+            if(current_menu_point->action != 0){
+                if(current_menu_point->type == PRESENT_MENU){
+                    utoa(current_menu_point->action(), buffer, 10);
+                    lcd_print(buffer);
+                }
+            }
         }
         
-        buzzer_buzz(350);
-        wait_ms(100);
-        buzzer_off();
-        wait_ms(50);
+        if(buzzer_is_on){
+            buzzer_buzz(350);
+            wait_ms(100);
+            buzzer_off();
+            wait_ms(50);
+        }
+        else wait_ms(150);
     }
 }
 
 /***********************************************************************/
 
-register_t imp_march_stack[CONFIG_MIN_STACK_SIZE + 10];
+register_t imp_march_stack[CONFIG_MIN_STACK_SIZE + 30];
 void imperial_march(void)
 {
-    wait_ms(1000);
+    wait_ms(1500);
+    
     while(lease(DEV_BUZZER) != NO_ERROR){;}
 
-
     while(1){
-        buzzer_buzz(20);
+        for(int i = 0; i < 3; ++i){
+            /* E4 */
+            buzzer_buzz(329);
+            wait_ms(550);
+            buzzer_off();
+            wait_ms(75);
+
+            if(imp_march_plays == FALSE){
+                release(DEV_BUZZER);
+                imp_march_waiting = TRUE;
+                while(imp_march_plays == FALSE){;}
+                while(lease(DEV_BUZZER) != NO_ERROR){;}
+                imp_march_waiting = FALSE;
+            }
+        }
+
+        for(int i = 0; i < 2; ++i){
+            /* C4 */
+            buzzer_buzz(261);
+            wait_ms(450);
+            buzzer_off();
+            wait_ms(10);
+
+            if(imp_march_plays == FALSE){
+                release(DEV_BUZZER);
+                imp_march_waiting = TRUE;
+                while(imp_march_plays == FALSE){;}
+                while(lease(DEV_BUZZER) != NO_ERROR){;}
+                imp_march_waiting = FALSE;
+            }
+
+            /* G4 */
+            buzzer_buzz(392);
+            wait_ms(200);
+            buzzer_off();
+            wait_ms(10);
+
+            if(imp_march_plays == FALSE){
+                release(DEV_BUZZER);
+                imp_march_waiting = TRUE;
+                while(imp_march_plays == FALSE){;}
+                while(lease(DEV_BUZZER) != NO_ERROR){;}
+                imp_march_waiting = FALSE;
+            }
+
+            /* E4 */
+            buzzer_buzz(329);
+            wait_ms(550);
+            buzzer_off();
+            wait_ms(75);
+
+            if(imp_march_plays == FALSE){
+                release(DEV_BUZZER);
+                imp_march_waiting = TRUE;
+                while(imp_march_plays == FALSE){;}
+                while(lease(DEV_BUZZER) != NO_ERROR){;}
+                imp_march_waiting = FALSE;
+            }
+
+        }
+
+        wait_ms(500);
+
+        for(int i = 0; i < 3; ++i){
+            /* B4 */
+            buzzer_buzz(493);
+            wait_ms(550);
+            buzzer_off();
+            wait_ms(75);
+
+            if(imp_march_plays == FALSE){
+                release(DEV_BUZZER);
+                imp_march_waiting = TRUE;
+                while(imp_march_plays == FALSE){;}
+                while(lease(DEV_BUZZER) != NO_ERROR){;}
+                imp_march_waiting = FALSE;
+            }
+        }
+
+        /* C4 */
+        buzzer_buzz(523);
+        wait_ms(450);
+        buzzer_off();
+        wait_ms(10);
+
+        if(imp_march_plays == FALSE){
+            release(DEV_BUZZER);
+            imp_march_waiting = TRUE;
+            while(imp_march_plays == FALSE){;}
+            while(lease(DEV_BUZZER) != NO_ERROR){;}
+            imp_march_waiting = FALSE;
+        }
+
+
+        /* G4 */
+        buzzer_buzz(392);
+        wait_ms(200);
+        buzzer_off();
+        wait_ms(10);
+
+        if(imp_march_plays == FALSE){
+            release(DEV_BUZZER);
+            imp_march_waiting = TRUE;
+            while(imp_march_plays == FALSE){;}
+            while(lease(DEV_BUZZER) != NO_ERROR){;}
+            imp_march_waiting = FALSE;
+        }
+
+        /* E4 */
+        buzzer_buzz(329);
+        wait_ms(550);
+        buzzer_off();
+        wait_ms(75);
+
+        if(imp_march_plays == FALSE){
+            release(DEV_BUZZER);
+            imp_march_waiting = TRUE;
+            while(imp_march_plays == FALSE){;}
+            while(lease(DEV_BUZZER) != NO_ERROR){;}
+            imp_march_waiting = FALSE;
+        }
+
+        /* C4 */
+        buzzer_buzz(261);
+        wait_ms(450);
+        buzzer_off();
+        wait_ms(10);
+
+        if(imp_march_plays == FALSE){
+            release(DEV_BUZZER);
+            imp_march_waiting = TRUE;
+            while(imp_march_plays == FALSE){;}
+            while(lease(DEV_BUZZER) != NO_ERROR){;}
+            imp_march_waiting = FALSE;
+        }
+
+        /* G4 */
+        buzzer_buzz(392);
+        wait_ms(200);
+        buzzer_off();
+        wait_ms(10);
+
+        if(imp_march_plays == FALSE){
+            release(DEV_BUZZER);
+            imp_march_waiting = TRUE;
+            while(imp_march_plays == FALSE){;}
+            while(lease(DEV_BUZZER) != NO_ERROR){;}
+            imp_march_waiting = FALSE;
+        }
+
+        /* E4 */
+        buzzer_buzz(329);
+        wait_ms(550);
+        buzzer_off();
+        wait_ms(75);
+
+        if(imp_march_plays == FALSE){
+            release(DEV_BUZZER);
+            imp_march_waiting = TRUE;
+            while(imp_march_plays == FALSE){;}
+            while(lease(DEV_BUZZER) != NO_ERROR){;}
+            imp_march_waiting = FALSE;
+        }
+
+        wait_ms(1000);
     }
 }
+
+/***********************************************************************/
+
+register_t tetris_stack[CONFIG_MIN_STACK_SIZE + 30];
+void tetris(void)
+{
+    wait_ms(1500);
+    
+    while(lease(DEV_BUZZER) != NO_ERROR){;}
+
+    while(1){
+        /* E4 */
+        buzzer_buzz(329);
+        wait_ms(550);
+        buzzer_off();
+        wait_ms(75);
+    }
+}
+
 
 
 /***********************************************************************/
@@ -230,6 +456,7 @@ int main(void)
     register_thread(heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
     register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
     register_thread(menu, menu_stack, sizeof(menu_stack));
+    register_thread(imperial_march, imp_march_stack, sizeof(imp_march_stack));
 
     start_os();
 
