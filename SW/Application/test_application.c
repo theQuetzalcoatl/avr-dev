@@ -96,7 +96,7 @@ static uint16_t play_imp_march(void)
 
 volatile static uint8_t tetris_plays = FALSE;
 volatile static uint8_t tetris_waiting = FALSE;
-static uint16_t play_imp_march(void)
+static uint16_t play_tetris(void)
 {
     tetris_plays = !tetris_plays;
     if(tetris_plays == TRUE) release(DEV_BUZZER);
@@ -121,7 +121,7 @@ void menu(void)
 
     menu_point_s music_almenu_pontok[] = {
                                             [0] = {.name = "Imp. March", .type = ACTION_MENU, .action = &play_imp_march, .submenus = 0, .is_end = FALSE},
-                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = 0, .submenus = 0, .is_end = TRUE}
+                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenus = 0, .is_end = TRUE}
                                          };
 
     menu_point_s sys_info_submenu[] = {
@@ -186,7 +186,7 @@ void menu(void)
                 break;
 
             case ACTIVATE:
-                current_menu_point->action();
+                if(current_menu_point->action != 0) current_menu_point->action();
                 break;
         }
 
@@ -242,6 +242,17 @@ void menu(void)
 
 /***********************************************************************/
 
+static void pause_imp_march(void)
+{
+    if(imp_march_plays == FALSE){   
+        release(DEV_BUZZER);
+        imp_march_waiting = TRUE;
+        while(imp_march_plays == FALSE){;}
+        while(lease(DEV_BUZZER) != NO_ERROR){;}
+        imp_march_waiting = FALSE;
+    }
+}
+
 register_t imp_march_stack[CONFIG_MIN_STACK_SIZE + 30];
 void imperial_march(void)
 {
@@ -257,13 +268,7 @@ void imperial_march(void)
             buzzer_off();
             wait_ms(75);
 
-            if(imp_march_plays == FALSE){
-                release(DEV_BUZZER);
-                imp_march_waiting = TRUE;
-                while(imp_march_plays == FALSE){;}
-                while(lease(DEV_BUZZER) != NO_ERROR){;}
-                imp_march_waiting = FALSE;
-            }
+            pause_imp_march();
         }
 
         for(int i = 0; i < 2; ++i){
@@ -273,13 +278,7 @@ void imperial_march(void)
             buzzer_off();
             wait_ms(10);
 
-            if(imp_march_plays == FALSE){
-                release(DEV_BUZZER);
-                imp_march_waiting = TRUE;
-                while(imp_march_plays == FALSE){;}
-                while(lease(DEV_BUZZER) != NO_ERROR){;}
-                imp_march_waiting = FALSE;
-            }
+            pause_imp_march();
 
             /* G4 */
             buzzer_buzz(392);
@@ -287,13 +286,7 @@ void imperial_march(void)
             buzzer_off();
             wait_ms(10);
 
-            if(imp_march_plays == FALSE){
-                release(DEV_BUZZER);
-                imp_march_waiting = TRUE;
-                while(imp_march_plays == FALSE){;}
-                while(lease(DEV_BUZZER) != NO_ERROR){;}
-                imp_march_waiting = FALSE;
-            }
+            pause_imp_march();
 
             /* E4 */
             buzzer_buzz(329);
@@ -301,13 +294,7 @@ void imperial_march(void)
             buzzer_off();
             wait_ms(75);
 
-            if(imp_march_plays == FALSE){
-                release(DEV_BUZZER);
-                imp_march_waiting = TRUE;
-                while(imp_march_plays == FALSE){;}
-                while(lease(DEV_BUZZER) != NO_ERROR){;}
-                imp_march_waiting = FALSE;
-            }
+            pause_imp_march();
 
         }
 
@@ -320,13 +307,7 @@ void imperial_march(void)
             buzzer_off();
             wait_ms(75);
 
-            if(imp_march_plays == FALSE){
-                release(DEV_BUZZER);
-                imp_march_waiting = TRUE;
-                while(imp_march_plays == FALSE){;}
-                while(lease(DEV_BUZZER) != NO_ERROR){;}
-                imp_march_waiting = FALSE;
-            }
+            pause_imp_march();
         }
 
         /* C4 */
@@ -335,14 +316,7 @@ void imperial_march(void)
         buzzer_off();
         wait_ms(10);
 
-        if(imp_march_plays == FALSE){
-            release(DEV_BUZZER);
-            imp_march_waiting = TRUE;
-            while(imp_march_plays == FALSE){;}
-            while(lease(DEV_BUZZER) != NO_ERROR){;}
-            imp_march_waiting = FALSE;
-        }
-
+        pause_imp_march();
 
         /* G4 */
         buzzer_buzz(392);
@@ -350,13 +324,7 @@ void imperial_march(void)
         buzzer_off();
         wait_ms(10);
 
-        if(imp_march_plays == FALSE){
-            release(DEV_BUZZER);
-            imp_march_waiting = TRUE;
-            while(imp_march_plays == FALSE){;}
-            while(lease(DEV_BUZZER) != NO_ERROR){;}
-            imp_march_waiting = FALSE;
-        }
+        pause_imp_march();
 
         /* E4 */
         buzzer_buzz(329);
@@ -364,13 +332,7 @@ void imperial_march(void)
         buzzer_off();
         wait_ms(75);
 
-        if(imp_march_plays == FALSE){
-            release(DEV_BUZZER);
-            imp_march_waiting = TRUE;
-            while(imp_march_plays == FALSE){;}
-            while(lease(DEV_BUZZER) != NO_ERROR){;}
-            imp_march_waiting = FALSE;
-        }
+        pause_imp_march();
 
         /* C4 */
         buzzer_buzz(261);
@@ -378,13 +340,7 @@ void imperial_march(void)
         buzzer_off();
         wait_ms(10);
 
-        if(imp_march_plays == FALSE){
-            release(DEV_BUZZER);
-            imp_march_waiting = TRUE;
-            while(imp_march_plays == FALSE){;}
-            while(lease(DEV_BUZZER) != NO_ERROR){;}
-            imp_march_waiting = FALSE;
-        }
+        pause_imp_march();
 
         /* G4 */
         buzzer_buzz(392);
@@ -392,13 +348,7 @@ void imperial_march(void)
         buzzer_off();
         wait_ms(10);
 
-        if(imp_march_plays == FALSE){
-            release(DEV_BUZZER);
-            imp_march_waiting = TRUE;
-            while(imp_march_plays == FALSE){;}
-            while(lease(DEV_BUZZER) != NO_ERROR){;}
-            imp_march_waiting = FALSE;
-        }
+        pause_imp_march();
 
         /* E4 */
         buzzer_buzz(329);
@@ -406,13 +356,7 @@ void imperial_march(void)
         buzzer_off();
         wait_ms(75);
 
-        if(imp_march_plays == FALSE){
-            release(DEV_BUZZER);
-            imp_march_waiting = TRUE;
-            while(imp_march_plays == FALSE){;}
-            while(lease(DEV_BUZZER) != NO_ERROR){;}
-            imp_march_waiting = FALSE;
-        }
+        pause_imp_march();
 
         wait_ms(1000);
     }
@@ -420,20 +364,166 @@ void imperial_march(void)
 
 /***********************************************************************/
 
+static void pause_tetris(void)
+{
+    if(tetris_plays == FALSE){   
+        release(DEV_BUZZER);
+        tetris_waiting = TRUE;
+        while(tetris_plays == FALSE){;}
+        while(lease(DEV_BUZZER) != NO_ERROR){;}
+        tetris_waiting = FALSE;
+    }
+}
+
 register_t tetris_stack[CONFIG_MIN_STACK_SIZE + 30];
 void tetris(void)
 {
-    wait_ms(1500);
+    wait_ms(1700);
     
     while(lease(DEV_BUZZER) != NO_ERROR){;}
 
-    while(1){
-        /* E4 */
-        buzzer_buzz(329);
-        wait_ms(550);
-        buzzer_off();
-        wait_ms(75);
-    }
+        while(1){
+            /* E4 */
+            buzzer_buzz(329);
+            wait_ms(500);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* B3 */
+            buzzer_buzz(246);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* C4 */
+            buzzer_buzz(261);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* D4 */
+            buzzer_buzz(293);
+            wait_ms(400);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* C4 */
+            buzzer_buzz(261);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* B3 */
+            buzzer_buzz(246);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* A3 */
+            buzzer_buzz(220);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            wait_ms(120);
+
+            /* A3 */
+            buzzer_buzz(220);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* C4 */
+            buzzer_buzz(261);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* E4 */
+            buzzer_buzz(329);
+            wait_ms(400);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* D4 */
+            buzzer_buzz(293);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* C4 */
+            buzzer_buzz(261);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* B3 */
+            buzzer_buzz(246);
+            wait_ms(500);
+            buzzer_off();
+
+            pause_tetris();
+
+            wait_ms(75);
+
+            /* C4 */
+            buzzer_buzz(261);
+            wait_ms(250);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* D4 */
+            buzzer_buzz(293);
+            wait_ms(400);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* E4 */
+            buzzer_buzz(329);
+            wait_ms(400);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* C4 */
+            buzzer_buzz(261);
+            wait_ms(400);
+            buzzer_off();
+
+            pause_tetris();
+
+            /* A3 */
+            buzzer_buzz(220);
+            wait_ms(350);
+            buzzer_off();
+
+            pause_tetris();
+
+            wait_ms(75);
+
+            /* A3 */
+            buzzer_buzz(220);
+            wait_ms(350);
+            buzzer_off();
+
+            pause_tetris();
+
+            wait_ms(1000);
+        }
 }
 
 
@@ -457,6 +547,7 @@ int main(void)
     register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
     register_thread(menu, menu_stack, sizeof(menu_stack));
     register_thread(imperial_march, imp_march_stack, sizeof(imp_march_stack));
+    register_thread(tetris, tetris_stack, sizeof(tetris_stack));
 
     start_os();
 
