@@ -36,21 +36,21 @@ void display_kernel_version(void)
 #define PRESENT_MENU (16u)
 #define ACTION_MENU  (17u)
 
-#define CUCLI_FENT (0u)
-#define CUCLI_LENT (1u)
+#define MENU_MARKER_UP   (0u)
+#define MENU_MARKER_DOWN (1u)
 
-#define LE      KEYPAD_0
-#define FEL     KEYPAD_5
-#define BELEPES KEYPAD_9
-#define KILEPES KEYPAD_7
-#define ACTIVATE KEYPAD_8
+#define DOWN      KEYPAD_0
+#define UP        KEYPAD_5
+#define ENTER     KEYPAD_9
+#define EXIT      KEYPAD_7
+#define ACTIVATE  KEYPAD_8
 
 #define MENU_SELECTION_SIGN "*"
 
 typedef struct
 {
     char *name;
-    struct menu_point_s *submenus;
+    struct menu_point_s *submenu;
     uint8_t type;
     uint8_t is_end;
     uint16_t (*action)(void);
@@ -115,47 +115,40 @@ void menu(void)
     while(lease(DEV_BUZZER) != NO_ERROR){;}
     while(lease(DEV_LCD) != NO_ERROR){;}
 
-    uint8_t cucli_helyzet = CUCLI_FENT;
+    uint8_t menu_marker_pos = MENU_MARKER_UP;
     uint8_t menu_index = 0;
     char buffer[10] = {0};
 
     menu_point_s music_almenu_pontok[] = {
-                                            [0] = {.name = "Imp. March", .type = ACTION_MENU, .action = &play_imp_march, .submenus = 0, .is_end = FALSE},
-                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenus = 0, .is_end = TRUE}
+                                            [0] = {.name = "Imp. March", .type = ACTION_MENU, .action = &play_imp_march, .submenu = 0, .is_end = FALSE},
+                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenu = 0, .is_end = TRUE}
                                          };
 
     menu_point_s sys_info_submenu[] = {
-                                        [0] = {.name = "Threads  - ", .type = PRESENT_MENU, .action = &get_threads, .submenus = 0, .is_end = FALSE},
-                                        [1] = {.name = "Systicks - ", .type = PRESENT_MENU, .action = &get_systick, .submenus = 0, .is_end = FALSE},
-                                        [2] = {.name = "Clock[MHz] - ", .type = PRESENT_MENU, .action = &get_sysclk, .submenus = 0, .is_end = TRUE}
+                                        [0] = {.name = "Threads  - ", .type = PRESENT_MENU, .action = &get_threads, .submenu = 0, .is_end = FALSE},
+                                        [1] = {.name = "Systicks - ", .type = PRESENT_MENU, .action = &get_systick, .submenu = 0, .is_end = FALSE},
+                                        [2] = {.name = "Clock[MHz] - ", .type = PRESENT_MENU, .action = &get_sysclk, .submenu = 0, .is_end = TRUE}
                                       };
 
     menu_point_s keypad_submenu[] = {
-                                       [0] = { .name = "On/Off", .type = ACTION_MENU, .action = &toggle_buzzer_sound, .submenus = 0, .is_end = FALSE},
-                                       [1] = { .name = " ", .type = ACTION_MENU, .action = 0, .submenus = 0, .is_end = TRUE},
+                                       [0] = { .name = "On/Off", .type = ACTION_MENU, .action = &toggle_buzzer_sound, .submenu = 0, .is_end = FALSE},
+                                       [1] = { .name = " ", .type = ACTION_MENU, .action = 0, .submenu = 0, .is_end = TRUE},
                                     };
 
     menu_point_s fo_menu_pontok[] = {
-                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenus = &music_almenu_pontok, .is_end = FALSE},
-                                        [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenus = &sys_info_submenu, .is_end = FALSE},
-                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenus = &keypad_submenu, .is_end = TRUE},
+                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenu = &music_almenu_pontok, .is_end = FALSE},
+                                        [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenu = &sys_info_submenu, .is_end = FALSE},
+                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenu = &keypad_submenu, .is_end = TRUE},
                                     };
 
     menu_point_s *current_menu_point = &fo_menu_pontok;
-    /*
-    lcd_send_command(LCD_CLEAR);
-    if(cucli_helyzet == CUCLI_FENT) lcd_print(MENU_SELECTION_SIGN);
-    lcd_move_cursor(2,1);
-    lcd_print(fo_menu_pontok[menu_index].name);
-    if(cucli_helyzet == CUCLI_LENT) lcd_print(MENU_SELECTION_SIGN);
-    lcd_move_cursor(2,2);
-    lcd_print(fo_menu_pontok[menu_index + 1].name);
-*/
+
     do{
 
          /* refresh lcd */
         lcd_send_command(LCD_CLEAR);
-        if(cucli_helyzet == CUCLI_FENT){
+        wait_ms(2); /* needed because we can be too fast and print out garbage */
+        if(menu_marker_pos == MENU_MARKER_UP){
             lcd_print(MENU_SELECTION_SIGN);
             lcd_print(current_menu_point->name);
             if(current_menu_point->action != 0){
@@ -196,34 +189,34 @@ void menu(void)
         char key = keypad_get_pressed_key();
         switch(key)
         {
-            case LE:
+            case DOWN:
                 if(current_menu_point->is_end == FALSE) {
                     ++menu_index;
                     ++current_menu_point;
-                    if(cucli_helyzet == CUCLI_FENT) cucli_helyzet = CUCLI_LENT;
+                    if(menu_marker_pos == MENU_MARKER_UP) menu_marker_pos = MENU_MARKER_DOWN;
                 }
                 break;
 
-            case FEL:
+            case UP:
                 if(menu_index > 0){
                     --menu_index;
                     --current_menu_point;
-                    if(cucli_helyzet == CUCLI_LENT) cucli_helyzet = CUCLI_FENT;
+                    if(menu_marker_pos == MENU_MARKER_DOWN) menu_marker_pos = MENU_MARKER_UP;
                 }
                 break;
 
-            case BELEPES:
-                if(current_menu_point->type == PARENT_MENU && current_menu_point->submenus != 0){
-                    current_menu_point = current_menu_point->submenus;
+            case ENTER:
+                if(current_menu_point->type == PARENT_MENU && current_menu_point->submenu != 0){
+                    current_menu_point = current_menu_point->submenu;
                     menu_index = 0;
-                    cucli_helyzet = CUCLI_FENT;
+                    menu_marker_pos = MENU_MARKER_UP;
                 }
                 break;
 
-            case KILEPES:
+            case EXIT:
                 current_menu_point = &fo_menu_pontok;
                 menu_index = 0;
-                cucli_helyzet = CUCLI_FENT;
+                menu_marker_pos = MENU_MARKER_UP;
                 break;
 
             case ACTIVATE:
@@ -242,7 +235,9 @@ void menu(void)
     }while(1);
 }
 
+
 /***********************************************************************/
+
 
 static void pause_imp_march(void)
 {
