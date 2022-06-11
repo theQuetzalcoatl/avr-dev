@@ -37,11 +37,13 @@ static void remove_curr_thread_from_list(void);
 static void release_owned_devices(void);
 static void init_device_ownerships(void);
 static void make_threadlist_circular(void);
-static void sort_thread_list_descending(void);
-static void link_thread_list(void);
 static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
 static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom);
 static void insert_stack_overflow_detection_bytes(void);
+#if CONFIG_THREADS_QUERY_STATE == TRUE
+static void link_thread_list(void);
+static void sort_thread_list_descending(void);
+#endif
 
 #if TIMER_USED == T2
 #define RESET_SYSTICK_TIMER() TCNT2 = 0
@@ -512,7 +514,7 @@ typedef struct device_t
 device_t device[DEVICE_COUNT] = {0}; /* initialized data field is initialzed here implicitly to FALSE */
 
 
-k_error_t init_device(void (*driver_func) (void), uint8_t dev)
+k_error_t register_device(void (*driver_func) (void), uint8_t dev)
 {
     if(dev >= DEVICE_COUNT || device[dev].initialized == TRUE) return K_ERR_INVALID_DEVICE_ACCESS;
     else{

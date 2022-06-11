@@ -41,25 +41,23 @@ AVR stuff:
 typedef uint16_t stack_size_t;
 typedef uint8_t register_t;
 typedef void (*thread_address_t)(void);
-typedef uint8_t device_id_t;
 
 extern k_error_t start_os(void); // Last one to call in main, after all the thread registration
 extern k_error_t register_thread(const thread_address_t thread_addr, register_t * const stack_start, const stack_size_t stack_size); // Registers one thread in the kernel. Must be called before OS starts
-extern k_error_t init_device(void (*driver_func) (void), uint8_t dev);
 
 /*************************************************
  **             SYSTEM CALLS 
  ************************************************/
 
 extern void exit_(void);  // Threads can exit from being scheduled and run again.
-extern void wait_us(const uint32_t us); // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
-extern void wait_ms(const uint16_t ms); // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
-extern k_error_t release(const uint8_t requested_device);
-extern k_error_t lease(const uint8_t requested_device);
-extern uint8_t check_device_ownership(const uint8_t requested_device); // does not return the owner, only a true/false value
-extern uint8_t get_num_of_threads(void);
-extern void halt_system(void);
-extern void reboot(void);
+extern void wait_us(const uint32_t us);     // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
+extern void wait_ms(const uint16_t ms);     // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
+extern k_error_t release(const uint8_t requested_device);               // changes the device's state to NO_OWNER if caller thread owns the device, else K_ERR_INVALID_DEVICE_ACCESS
+extern k_error_t lease(const uint8_t requested_device);                 // makes the device to be owned by the caller thread
+extern uint8_t check_device_ownership(const uint8_t requested_device);  // NO_OWNER - device is free to take, SAME_OWNER - caller leased the device, DIFFERENT_OWNER - other thread leased device
+extern uint8_t get_num_of_threads(void);    // provides the number of threads which are not in the DELETED state
+extern void halt_system(void);              // halts the system indefenitely
+extern void reboot(void);                   // acts like a hardware reset, except it does not reset the RAM, only the .bss and .data regions
 #if CONFIG_THREADS_QUERY_STATE == TRUE
 extern uint8_t get_thread_state(const thread_address_t th_addr); // provides the state of the supplied thread or K_ERR_THREAD_NOT_FOUND if an invalid ID was given.
 #endif
@@ -69,11 +67,14 @@ extern uint8_t get_thread_state(const thread_address_t th_addr); // provides the
  **             DRIVERS
  ************************************************/
 
+typedef uint8_t device_id_t; // valid IDs are stored in DEVICE_IDS enum
+extern k_error_t register_device(void (*driver_func) (void), uint8_t dev); // Run the initialization function of a device, also the kernel registers it as well
+
 #define NO_OWNER ((thread_t *)0)
 #define SAME_OWNER      (1u)
 #define DIFFERENT_OWNER (2u)
 
-enum DEVICES
+enum DEVICE_IDS
 {
     DEV_BUTTON,
     DEV_LED1,

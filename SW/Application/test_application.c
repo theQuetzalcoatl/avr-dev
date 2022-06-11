@@ -27,7 +27,7 @@ void display_kernel_version(void)
     lcd_print("Aztec "KERNEL_VERSION" ");
     wait_ms(2000);
     lcd_send_command(LCD_CLEAR);
-    exit_(); 
+    exit_();  // exiting without releasing the LCD -> kernel takes care of it
 }
 
 /***********************************************************************/
@@ -45,7 +45,7 @@ void display_kernel_version(void)
 #define EXIT      KEYPAD_7
 #define ACTIVATE  KEYPAD_8
 
-#define MENU_SELECTION_SIGN "*"
+#define MENU_MARKER "*"
 
 typedef struct
 {
@@ -149,7 +149,7 @@ void menu(void)
         lcd_send_command(LCD_CLEAR);
         wait_ms(2); /* needed because we can be too fast and print out garbage */
         if(menu_marker_pos == MENU_MARKER_UP){
-            lcd_print(MENU_SELECTION_SIGN);
+            lcd_print(MENU_MARKER);
             lcd_print(current_menu_point->name);
             if(current_menu_point->action != 0){
                 if(current_menu_point->type == PRESENT_MENU){
@@ -176,7 +176,7 @@ void menu(void)
                 }
             }
             lcd_move_cursor(1,2);
-            lcd_print(MENU_SELECTION_SIGN);
+            lcd_print(MENU_MARKER);
             lcd_print((current_menu_point)->name);
             if(current_menu_point->action != 0){
                 if(current_menu_point->type == PRESENT_MENU){
@@ -249,6 +249,7 @@ static void pause_imp_march(void)
         imp_march_waiting = FALSE;
     }
 }
+
 
 register_t imp_march_stack[CONFIG_MIN_STACK_SIZE + 30];
 void imperial_march(void)
@@ -529,16 +530,16 @@ void tetris(void)
 
 int main(void)
 {
-    init_device(button_init_device, DEV_BUTTON);
-    init_device(led_init_device, DEV_LED1); 
-    init_device(led_init_device, DEV_LED2);
-    init_device(led_init_device, DEV_LED3);
-    init_device(led_init_device, DEV_LED4);
-    init_device(lcd_init_device, DEV_LCD);
-    init_device(uart_init_device, DEV_UART);
-    init_device(buzzer_init_device, DEV_BUZZER);
-    init_device(adc_init_device, DEV_ADC);
-    keypad_init_device();
+    register_device(button_init_device, DEV_BUTTON);
+    register_device(led_init_device, DEV_LED1); 
+    register_device(led_init_device, DEV_LED2);
+    register_device(led_init_device, DEV_LED3);
+    register_device(led_init_device, DEV_LED4);
+    register_device(lcd_init_device, DEV_LCD);
+    register_device(uart_init_device, DEV_UART);
+    register_device(buzzer_init_device, DEV_BUZZER);
+    register_device(adc_init_device, DEV_ADC);
+    keypad_init_device(); // devices need not be registered by the kernel
 
     register_thread(heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
     register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));

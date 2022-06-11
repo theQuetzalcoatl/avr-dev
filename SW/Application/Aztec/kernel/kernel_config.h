@@ -9,12 +9,12 @@
 #define T1 (1u)
 #define T2 (2u)
 #define T3 (3u)
-#define TIMER_USED T2
+#define TIMER_USED T2 /* NOTE: only T0 and T1 is implemented yet */
 
     /* THREADS */
 #define CONFIG_MAX_THREADS (25u)
 #define CONFIG_NUM_OF_THREADS (6u)
-#define CONFIG_THREADS_QUERY_STATE TRUE /* TRUE - every thread costs 2 additional bytes of RAM, but enables querying another thread's state */
+#define CONFIG_THREADS_QUERY_STATE FALSE /* TRUE - every thread costs 2 additional bytes of RAM, but enables querying another thread's state */
 
     /* STACKS */
 #define CONFIG_MIN_STACK_SIZE (2u + 32u + 1u + 2u) /* required for context switching -> PC + R0->R31 + SREG + 2bytes stack overflow detection */ /* bytes */

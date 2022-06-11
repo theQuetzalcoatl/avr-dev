@@ -24,7 +24,12 @@ A lightweight, monolithic, real time embedded OS for AVR chips.
 
 #### Driver system</br>
 
-TODO
+    *Related syscalls, functions*:
+* register_device - initializes and notifies the kernel of its existance, provides init checking upon leasing and ownership handling
+* lease - checks device initialization and its owner. If not owned it will be by the calling thread, if owned, an error will be raised by the kernel
+* release - tries to release the requested device. If the caller own it, it will be released, if not, error.
+    If a thread exits without releasing any of its owned devices, the kernel releases them.
+* check_device_ownership - the developer of a driver can guard function calls to a device by checking the caller's ownership. It is not necessary, though.
 
 #### Notice
 More threads and longer systick period lessen the wait syscalls' accuracy.</br>
