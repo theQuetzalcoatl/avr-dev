@@ -30,7 +30,7 @@ A lightweight, monolithic, real time embedded OS for AVR chips.
 * _release_ - tries to release the requested device. If the caller own it, it will be released, if not, error.
     If a thread exits without releasing any of its owned devices, the kernel releases them.
 * _check_device_ownership_ - the developer of a driver can guard function calls to a device by checking the caller's ownership. It is not necessary, though.</br></br>
-**Prepare a device for registration** by adding a device ID entry to the DEVICES_IDS enum in kernel.h. Then create a directory under 'drivers'. Lastly, create at least an initialization function for it with type void and no arguments.
+**Prepare a device for registration** by creating a directory under 'drivers'. Create at least an initialization function for it with type void and no arguments, and lastly, add a device ID entry to the DEVICES_IDS enum in kernel.h and include the header file.
 
 #### Notice
 More threads and longer systick period lessen the wait syscalls' accuracy.</br>
