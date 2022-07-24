@@ -108,6 +108,20 @@ static uint16_t play_tetris(void)
 }
 
 
+static volatile uint8_t gta_plays = FALSE;
+static volatile uint8_t gta_waiting = FALSE;
+static uint16_t play_gta(void)
+{
+    gta_plays = !gta_plays;
+    if(gta_plays == TRUE) release(DEV_BUZZER);
+    else{
+        while(gta_waiting == FALSE){;}
+        lease(DEV_BUZZER);
+    }
+    return 0;
+}
+
+
 register_t menu_stack[CONFIG_MIN_STACK_SIZE + 200];
 void menu(void)
 {
@@ -120,8 +134,9 @@ void menu(void)
     char buffer[10] = {0};
 
     menu_point_s music_almenu_pontok[] = {
-                                            [0] = {.name = "Imp. March", .type = ACTION_MENU, .action = &play_imp_march, .submenu = 0, .is_end = FALSE},
-                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenu = 0, .is_end = TRUE}
+                                            [0] = {.name = "Imperial March", .type = ACTION_MENU, .action = &play_imp_march, .submenu = 0, .is_end = FALSE},
+                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenu = 0, .is_end = FALSE},
+                                            [2] = {.name = "GTA SA", .type = ACTION_MENU, .action = &play_gta, .submenu = 0, .is_end = TRUE}
                                          };
 
     menu_point_s sys_info_submenu[] = {
@@ -380,153 +395,322 @@ void tetris(void)
     
     while(lease(DEV_BUZZER) != NO_ERROR){;}
 
-        while(1){
-            /* E4 */
-            buzzer_buzz(329);
-            wait_ms(500);
-            buzzer_off();
+    while(1){
+        /* E4 */
+        buzzer_buzz(329);
+        wait_ms(500);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* B3 */
-            buzzer_buzz(246);
-            wait_ms(250);
-            buzzer_off();
+        /* B3 */
+        buzzer_buzz(246);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* C4 */
-            buzzer_buzz(261);
-            wait_ms(250);
-            buzzer_off();
+        /* C4 */
+        buzzer_buzz(261);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* D4 */
-            buzzer_buzz(293);
-            wait_ms(400);
-            buzzer_off();
+        /* D4 */
+        buzzer_buzz(293);
+        wait_ms(400);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* C4 */
-            buzzer_buzz(261);
-            wait_ms(250);
-            buzzer_off();
+        /* C4 */
+        buzzer_buzz(261);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* B3 */
-            buzzer_buzz(246);
-            wait_ms(250);
-            buzzer_off();
+        /* B3 */
+        buzzer_buzz(246);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* A3 */
-            buzzer_buzz(220);
-            wait_ms(250);
-            buzzer_off();
+        /* A3 */
+        buzzer_buzz(220);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            wait_ms(120);
+        wait_ms(120);
 
-            /* A3 */
-            buzzer_buzz(220);
-            wait_ms(250);
-            buzzer_off();
+        /* A3 */
+        buzzer_buzz(220);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* C4 */
-            buzzer_buzz(261);
-            wait_ms(250);
-            buzzer_off();
+        /* C4 */
+        buzzer_buzz(261);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* E4 */
-            buzzer_buzz(329);
-            wait_ms(400);
-            buzzer_off();
+        /* E4 */
+        buzzer_buzz(329);
+        wait_ms(400);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* D4 */
-            buzzer_buzz(293);
-            wait_ms(250);
-            buzzer_off();
+        /* D4 */
+        buzzer_buzz(293);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* C4 */
-            buzzer_buzz(261);
-            wait_ms(250);
-            buzzer_off();
+        /* C4 */
+        buzzer_buzz(261);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* B3 */
-            buzzer_buzz(246);
-            wait_ms(500);
-            buzzer_off();
+        /* B3 */
+        buzzer_buzz(246);
+        wait_ms(500);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            wait_ms(75);
+        wait_ms(75);
 
-            /* C4 */
-            buzzer_buzz(261);
-            wait_ms(250);
-            buzzer_off();
+        /* C4 */
+        buzzer_buzz(261);
+        wait_ms(250);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* D4 */
-            buzzer_buzz(293);
-            wait_ms(400);
-            buzzer_off();
+        /* D4 */
+        buzzer_buzz(293);
+        wait_ms(400);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* E4 */
-            buzzer_buzz(329);
-            wait_ms(400);
-            buzzer_off();
+        /* E4 */
+        buzzer_buzz(329);
+        wait_ms(400);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* C4 */
-            buzzer_buzz(261);
-            wait_ms(400);
-            buzzer_off();
+        /* C4 */
+        buzzer_buzz(261);
+        wait_ms(400);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            /* A3 */
-            buzzer_buzz(220);
-            wait_ms(350);
-            buzzer_off();
+        /* A3 */
+        buzzer_buzz(220);
+        wait_ms(350);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            wait_ms(75);
+        wait_ms(75);
 
-            /* A3 */
-            buzzer_buzz(220);
-            wait_ms(350);
-            buzzer_off();
+        /* A3 */
+        buzzer_buzz(220);
+        wait_ms(350);
+        buzzer_off();
 
-            pause_tetris();
+        pause_tetris();
 
-            wait_ms(1000);
-        }
+        wait_ms(1000);
+    }
 }
 
 
+/***********************************************************************/
+
+static void pause_gta(void)
+{
+    if(gta_plays == FALSE){   
+        release(DEV_BUZZER);
+        gta_waiting = TRUE;
+        while(gta_plays == FALSE){;}
+        while(lease(DEV_BUZZER) != NO_ERROR){;}
+        gta_waiting = FALSE;
+    }
+}
+
+
+register_t gta_sa_stack[CONFIG_MIN_STACK_SIZE + 20];
+void gta_sa_theme(void)
+{
+    wait_ms(1700);
+    
+    while(lease(DEV_BUZZER) != NO_ERROR){;}
+
+    while(4){
+        /* G5 */
+        buzzer_buzz(783);
+        wait_ms(400);
+        buzzer_off();
+
+        wait_ms(70);
+
+        pause_gta();
+
+        /* G6 */
+        buzzer_buzz(1567);
+        wait_ms(400);
+        buzzer_off();
+
+        pause_gta();
+
+        /* Eb6 */
+        buzzer_buzz(1244);
+        wait_ms(300);
+        buzzer_off();
+
+        pause_gta();
+
+        wait_ms(50);
+
+        /* D6 */
+        buzzer_buzz(1174);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        /* Eb6 */
+        buzzer_buzz(1244);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        /* D6 */
+        buzzer_buzz(1174);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        /* C6 */
+        buzzer_buzz(1046);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        /* D6 */
+        buzzer_buzz(1174);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        wait_ms(150);
+
+        /* D6 */
+        buzzer_buzz(1174);
+        wait_ms(600);
+        buzzer_off();
+
+        wait_ms(150);
+
+        pause_gta();
+
+        /* Bb5 */
+        buzzer_buzz(932);
+        wait_ms(400);
+        buzzer_off();
+
+        pause_gta();
+
+        wait_ms(50);
+
+        /* C6 */
+        buzzer_buzz(1046);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        /* Bb5 */
+        buzzer_buzz(932);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        /* C6 */
+        buzzer_buzz(1046);
+        wait_ms(400);
+        buzzer_off();
+
+        pause_gta();
+
+        /* D6 */
+        buzzer_buzz(1174);
+        wait_ms(300);
+        buzzer_off();
+
+        pause_gta();
+
+        wait_ms(50);
+
+        /* G5 */
+        buzzer_buzz(783);
+        wait_ms(300);
+        buzzer_off();
+
+        pause_gta();
+
+        wait_ms(30);
+
+        /* C6 */
+        buzzer_buzz(1046);
+        wait_ms(300);
+        buzzer_off();
+
+        pause_gta();
+
+        wait_ms(40);
+
+        /* Bb5 */
+        buzzer_buzz(932);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        /* G5 */
+        buzzer_buzz(783);
+        wait_ms(200);
+        buzzer_off();
+
+        pause_gta();
+
+        wait_ms(1000);
+
+    }
+}
 
 /***********************************************************************/
+
 
 int main(void)
 {
@@ -546,6 +730,7 @@ int main(void)
     register_thread(menu, menu_stack, sizeof(menu_stack));
     register_thread(imperial_march, imp_march_stack, sizeof(imp_march_stack));
     register_thread(tetris, tetris_stack, sizeof(tetris_stack));
+    register_thread(gta_sa_theme, gta_sa_stack, sizeof(gta_sa_stack));
 
     start_os();
 
