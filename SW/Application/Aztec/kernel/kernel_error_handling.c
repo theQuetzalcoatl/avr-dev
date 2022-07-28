@@ -3,6 +3,8 @@
 extern void disable_systick(void);
 
 static void signal_morse_sos_forever();
+
+void kernel_panic(void) __attribute__ ((weak));
 void kernel_panic(void)
 {
     disable_systick();

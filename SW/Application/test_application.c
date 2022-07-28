@@ -738,3 +738,34 @@ int main(void)
  
     return 0;
 }
+
+
+/***********************************************************************/
+
+/* user defined kernel panic, overwrites the default kernel one */
+void kernel_panic(void)
+{
+    cli();
+    DDRC |= 1<<LED3;
+    while(1){
+        for(uint8_t i = 3; i; --i){
+            PORTC |= 1<<LED3;
+            _delay_ms(100);
+            PORTC &= ~(1<<LED3);
+            _delay_ms(100);
+        }
+        for(uint8_t i = 3; i; --i){
+            PORTC |= 1<<LED3;
+            _delay_ms(300);
+            PORTC &= ~(1<<LED3);
+            _delay_ms(100);
+        }
+        for(uint8_t i = 3; i; --i){
+            PORTC |= 1<<LED3;
+            _delay_ms(100);
+            PORTC &= ~(1<<LED4);
+            _delay_ms(100);
+        }
+        _delay_ms(500);
+    }
+}
