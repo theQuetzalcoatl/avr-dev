@@ -27,7 +27,7 @@ AVR stuff:
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#define KERNEL_VERSION "v8.0"
+#define KERNEL_VERSION "v8.1"
 
 #define KERNEL_ENTER_ATOMIC() cli() 
 #define KERNEL_EXIT_ATOMIC() sei()
