@@ -1,7 +1,7 @@
 **Versioning**: 
 
 Right now somewhat arbitrary, but a **major.minor** is being used</br>
-*major*: The change forces the user to use the SW a different way. E.g. A feature is cut, an API has changed, new feature, new build environment etc.</br>
+*major*: The change forces the user to use the SW a different way. E.g. A feature is cut, an API has changed, new build environment etc.</br>
 *minor*: Changes may not directly affect the user. E.g. Bugfixes, efficiency improvement, internal restructuring etc.
 
 **How to compile**:</br>
