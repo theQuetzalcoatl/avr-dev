@@ -732,6 +732,10 @@ int main(void)
     register_thread(tetris, tetris_stack, sizeof(tetris_stack));
     register_thread(gta_sa_theme, gta_sa_stack, sizeof(gta_sa_stack));
 
+    klog_init(uart_puts);
+
+    klog_log("JAJ JAJ NAGY BAJ!!!");
+
     start_os();
 
     while(1){;} // just in case

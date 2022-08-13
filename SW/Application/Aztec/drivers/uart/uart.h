@@ -45,6 +45,7 @@ extern k_error_t uart_set_speed_mode(const uint8_t mode);
 extern k_error_t uart_set_stop_bits(const uint8_t stop_bits);
 extern k_error_t uart_set_data_bits(const uint8_t data_b);
 extern k_error_t uart_putc(const char c);
+extern k_error_t uart_puts(const char *s);
 
 #endif /* UART_H */
 

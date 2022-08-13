@@ -21,6 +21,8 @@
 
     /* OTHER */
 #define CONFIG_SYSTEM_TICK_IN_US (3500u)
+#define CONFIG_K_LOG_ENTRY_NUM   (5u)
+#define CONFIG_K_LOG_ENTRY_LENGTH_BYTES   (40u)
 
 
 #endif /* KERNEL_CONFIG_H */

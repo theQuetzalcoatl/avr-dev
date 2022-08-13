@@ -5,14 +5,16 @@
 
 typedef uint8_t k_error_t;
 
-#define NO_ERROR                        (0u | 0x80u)
-#define K_ERR_FAILED_INIT_SYSTICK       (2u | 0x80u)
-#define K_ERR_STACK_OVERFLOW            (3u | 0x80u)
-#define K_ERR_INVALID_STACKSIZE         (4u | 0x80u)
-#define K_ERR_THREAD_NUM_OUT_OF_BOUNDS  (5u | 0x80u)
-#define K_ERR_THREAD_NOT_FOUND          (6u | 0x80u)
-#define K_ERR_ALREADY_REGISTERED_STACK  (7u | 0x80u)
-#define K_ERR_INVALID_DEVICE_ACCESS     (8u | 0x80u)
+enum KERNEL_ERRORS
+{
+    NO_ERROR = 0x80u,
+    K_ERR_STACK_OVERFLOW,
+    K_ERR_INVALID_STACKSIZE,
+    K_ERR_THREAD_NUM_OUT_OF_BOUNDS,
+    K_ERR_THREAD_NOT_FOUND,
+    K_ERR_ALREADY_REGISTERED_STACK,
+    K_ERR_INVALID_DEVICE_ACCESS
+};
 
 #endif /* KERNEL_ERROR_HANDLING_H */
 

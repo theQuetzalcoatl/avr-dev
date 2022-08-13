@@ -20,8 +20,9 @@ AVR stuff:
 #include <stdint.h>
 
 #include "../utils.h"
-#include "../kernel/kernel_config.h"
+#include "kernel_config.h"
 #include "kernel_error_handling.h"
+#include "kernel_logging.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>

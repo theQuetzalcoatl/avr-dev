@@ -11,6 +11,7 @@ void kernel_panic(void)
     signal_morse_sos_forever();
 }
 
+
 static void signal_morse_sos_forever()
 {
     DDRC |= 1<<LED4;
