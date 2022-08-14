@@ -25,8 +25,8 @@ void klog_log(const char *log_msg)
     
     /* pushing the read index in front of the write one if needed */
     if(kernel_log.w_index == kernel_log.r_index){
-        if(kernel_log.r_index == CONFIG_K_LOG_ENTRY_NUM) kernel_log.r_index = 0;
-        else ++kernel_log.r_index;
+        ++kernel_log.r_index;
+        if(kernel_log.r_index == CONFIG_K_LOG_ENTRY_NUM) kernel_log.r_index = 0; 
     }
     
     /* actually logging */
@@ -38,21 +38,20 @@ void klog_log(const char *log_msg)
 }
 
 
- /* post increment - circular fifo
-  * alawys stops when reaches write index
-
-  */
+/* post increment - circular fifo
+ * alawys stops when reaches write index
+ */
 k_error_t klog_print(void)
 {
     k_error_t ret = NO_ERROR;
     
     while(kernel_log.r_index != kernel_log.w_index){
-        if(kernel_log.r_index >= CONFIG_K_LOG_ENTRY_NUM) kernel_log.r_index = 0;
-        ret = printing_func(kernel_log.entries[kernel_log.r_index].entry);
+        (void)printing_func(kernel_log.entries[kernel_log.r_index].entry);
     	++kernel_log.r_index;
+        if(kernel_log.r_index >= CONFIG_K_LOG_ENTRY_NUM) kernel_log.r_index = 0;
         if(ret != NO_ERROR) break;
     }
-    ret = printing_func(kernel_log.entries[kernel_log.r_index].entry); // printing from the position where the write index is
+    ret = printing_func(kernel_log.entries[kernel_log.r_index].entry);
     
     return ret;
 }
