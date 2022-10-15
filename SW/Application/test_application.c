@@ -67,6 +67,52 @@ static uint16_t get_sysclk(void)
     return F_CPU/1000000;
 }
 
+static uint16_t display_time(void)
+{
+    char c = 0;
+    uint32_t uptime_s = 0;
+    uint8_t hours = 0;
+    uint8_t minutes = 0;
+    uint8_t seconds = 0;
+    uint8_t prev_seconds_val = seconds;
+    char buffer[4] = {0};
+
+    wait_ms(200); // Needed because we immideatly escape from the view.
+
+    do{
+
+        uptime_s = get_uptime();
+    
+        hours = uptime_s/3600;
+        uptime_s -= hours*3600;
+    
+        minutes = uptime_s/60;
+        uptime_s -= minutes*60;
+
+        seconds = uptime_s;
+
+        if(seconds != prev_seconds_val){
+            lcd_send_command(LCD_CLEAR);
+            lcd_move_cursor(1,1);
+
+            utoa(hours, buffer, 10);
+            lcd_print(buffer);
+            lcd_print(":");
+            utoa(minutes, buffer, 10);
+            lcd_print(buffer);
+            lcd_print(":");
+            utoa(seconds, buffer, 10);
+            lcd_print(buffer);
+
+            prev_seconds_val = seconds;
+        }
+
+        c = keypad_get_pressed_key_nonblocking();
+    }while(c == KEYPAD_NO_NUM);
+
+    return 0;
+}
+
 static uint16_t get_threads(void)
 {
     return get_num_of_threads();
@@ -133,7 +179,7 @@ void menu(void)
     uint8_t menu_index = 0;
     char buffer[10] = {0};
 
-    menu_point_s music_almenu_pontok[] = {
+    menu_point_s music_submenu[] = {
                                             [0] = {.name = "Imperial March", .type = ACTION_MENU, .action = &play_imp_march, .submenu = 0, .is_end = FALSE},
                                             [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenu = 0, .is_end = FALSE},
                                             [2] = {.name = "GTA SA", .type = ACTION_MENU, .action = &play_gta, .submenu = 0, .is_end = TRUE}
@@ -142,7 +188,8 @@ void menu(void)
     menu_point_s sys_info_submenu[] = {
                                         [0] = {.name = "Threads  - ", .type = PRESENT_MENU, .action = &get_threads, .submenu = 0, .is_end = FALSE},
                                         [1] = {.name = "Systicks - ", .type = PRESENT_MENU, .action = &get_systick, .submenu = 0, .is_end = FALSE},
-                                        [2] = {.name = "Clock[MHz] - ", .type = PRESENT_MENU, .action = &get_sysclk, .submenu = 0, .is_end = TRUE}
+                                        [2] = {.name = "Clock[MHz] - ", .type = PRESENT_MENU, .action = &get_sysclk, .submenu = 0, .is_end = FALSE},
+                                        [3] = {.name = "Uptime        >", .type = ACTION_MENU, .action = &display_time, .submenu = 0, .is_end = TRUE},
                                       };
 
     menu_point_s keypad_submenu[] = {
@@ -150,13 +197,13 @@ void menu(void)
                                        [1] = { .name = " ", .type = ACTION_MENU, .action = 0, .submenu = 0, .is_end = TRUE},
                                     };
 
-    menu_point_s fo_menu_pontok[] = {
-                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenu = &music_almenu_pontok, .is_end = FALSE},
+    menu_point_s main_menu_points[] = {
+                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenu = &music_submenu, .is_end = FALSE},
                                         [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenu = &sys_info_submenu, .is_end = FALSE},
                                         [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenu = &keypad_submenu, .is_end = TRUE},
                                     };
 
-    menu_point_s *current_menu_point = &fo_menu_pontok;
+    menu_point_s *current_menu_point = &main_menu_points;
 
     do{
 
@@ -229,7 +276,7 @@ void menu(void)
                 break;
 
             case EXIT:
-                current_menu_point = &fo_menu_pontok;
+                current_menu_point = &main_menu_points;
                 menu_index = 0;
                 menu_marker_pos = MENU_MARKER_UP;
                 break;
@@ -734,7 +781,7 @@ int main(void)
 
     klog_init(uart_puts);
 
-    klog_log("JAJ JAJ NAGY BAJ!!!");
+    klog_log("OH OOH, BIG PROBLEM");
 
     start_os();
 

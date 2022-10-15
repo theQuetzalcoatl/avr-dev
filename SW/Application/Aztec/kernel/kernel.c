@@ -26,6 +26,7 @@ typedef struct thread_control_block_t
 }thread_control_block_t;
 
 static thread_control_block_t tcb = {0};
+static uint64_t uptime_in_quanta = 0;
 
 /******************************
  ** LOCAL FUNCTIONS
@@ -212,7 +213,7 @@ void TIMER0_COMP_vect( void )
     STORE_CONTEXT();
     if(K_ERR_STACK_OVERFLOW == check_stack_for_overflow()) kernel_panic();
     schedule_next_task();
-    //RESET_SYSTICK_TIMER();
+    ++uptime_in_quanta;
     RESTORE_CONTEXT();
     asm volatile ("reti"); // enables global interrupt flag
 }
@@ -337,6 +338,12 @@ void wait_us(const uint32_t us)
 void wait_ms(const uint16_t ms)
 {
     wait_us((uint32_t)ms*1000);
+}
+
+
+uint32_t get_uptime(void)
+{
+    return uptime_in_quanta*CONFIG_SYSTEM_TICK_IN_US/1000000ul;
 }
 
 

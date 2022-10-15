@@ -70,16 +70,52 @@ char keypad_get_pressed_key(void)
     }
 }
 
+
+char keypad_get_pressed_key_nonblocking(void)
+{
+        switch_to_column(COL_1);
+        _delay_us(5); // without delay, first row is not recognised due to parasitic capacitances and inductance which slows down the column switching
+        if(is_row_active(ROW_1)) return KEYPAD_1;
+        else if(is_row_active(ROW_2)) return KEYPAD_4;
+        else if(is_row_active(ROW_3)) return KEYPAD_7;
+        else if(is_row_active(ROW_4)) return KEYPAD_ASTERISK;
+        
+        _delay_us(100);
+        
+        switch_to_column(COL_2);
+        _delay_us(5);
+        if(is_row_active(ROW_1)) return KEYPAD_2;
+        else if(is_row_active(ROW_2)) return KEYPAD_5;
+        else if(is_row_active(ROW_3)) return KEYPAD_8;
+        else if(is_row_active(ROW_4)) return KEYPAD_0;
+        
+        _delay_us(100);
+        
+        switch_to_column(COL_3);
+        _delay_us(5);
+        if(is_row_active(ROW_1)) return KEYPAD_3;
+        else if(is_row_active(ROW_2)) return KEYPAD_6;
+        else if(is_row_active(ROW_3)) return KEYPAD_9;
+        else if(is_row_active(ROW_4)) return KEYPAD_POUND;
+
+        _delay_us(25);
+
+        return KEYPAD_NO_NUM;
+}
+
+
 static void switch_to_column(uint8_t column)
 {
     PORTD |= 1<<COL_2 | 1<<COL_1 | 1<<COL_3;
     PORTD &= ~(1<<column);
 }
 
+
 static uint8_t is_row_active(uint8_t row)
 {
     return !(PIND & (1<<row));
 }
+
 
 /*
  * keypad.c

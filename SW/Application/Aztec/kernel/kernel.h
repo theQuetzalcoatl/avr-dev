@@ -53,6 +53,7 @@ extern k_error_t register_thread(const thread_address_t thread_addr, register_t 
 extern void exit_(void);  // Threads can exit from being scheduled and run again.
 extern void wait_us(const uint32_t us);     // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
 extern void wait_ms(const uint16_t ms);     // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
+extern uint32_t get_uptime(void);           // returns the seconds passed since bootup
 extern k_error_t release(const uint8_t requested_device);               // changes the device's state to NO_OWNER if caller thread owns the device, else K_ERR_INVALID_DEVICE_ACCESS
 extern k_error_t lease(const uint8_t requested_device);                 // makes the device to be owned by the caller thread
 extern uint8_t check_device_ownership(const uint8_t requested_device);  // NO_OWNER - device is free to take, SAME_OWNER - caller leased the device, DIFFERENT_OWNER - other thread leased device
