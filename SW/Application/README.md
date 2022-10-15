@@ -5,8 +5,8 @@ Right now somewhat arbitrary, but a **major.minor** is being used</br>
 *minor*: Changes may not directly affect the user. E.g. Bugfixes, efficiency improvement, internal restructuring etc.
 
 **How to compile**:</br>
-*  ./build_n_burn.sh        (only compilation)</br>
-*  ./build_n_burn.sh upload (for burning as well)
+*  ./build.sh        (only compilation)</br>
+*  ./build.sh upload (for burning as well)
 ___
 ### Aztec</br>
 A lightweight, monolithic, real time embedded OS for AVR chips.
