@@ -33,6 +33,11 @@ void lcd_init_device(void)
     execute_lcd_init_sequence();
 }
 
+void lcd_init_backlight(void)
+{
+	DDRA |= 1<<BACK_LIGHT;
+}
+
 
 static void init_gpio()
 {
@@ -118,7 +123,7 @@ k_error_t lcd_send_command(uint8_t command)
 
 k_error_t lcd_turn_backligh_on(void)
 {
-	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
+	if(check_device_ownership(DEV_LCD_LIGHT) == SAME_OWNER){
 		LCD_PORT |= 1<<BACK_LIGHT;
 		return NO_ERROR;
 	}
@@ -128,7 +133,7 @@ k_error_t lcd_turn_backligh_on(void)
 
 k_error_t lcd_turn_backligh_off(void)
 {
-	if(check_device_ownership(DEV_LCD) == SAME_OWNER){
+	if(check_device_ownership(DEV_LCD_LIGHT) == SAME_OWNER){
 		LCD_PORT &= ~(1<<BACK_LIGHT);
 		return NO_ERROR;
 	}

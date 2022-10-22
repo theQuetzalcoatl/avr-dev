@@ -84,6 +84,7 @@ enum DEVICE_IDS
     DEV_LED3,
     DEV_LED4,
     DEV_LCD,
+    DEV_LCD_LIGHT,
     DEV_UART,
     DEV_BUZZER,
     DEV_ADC,

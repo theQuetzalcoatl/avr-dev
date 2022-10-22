@@ -13,7 +13,7 @@
 
     /* THREADS */
 #define CONFIG_MAX_THREADS (25u)
-#define CONFIG_NUM_OF_THREADS (6u)
+#define CONFIG_NUM_OF_THREADS (7u)
 #define CONFIG_THREADS_QUERY_STATE FALSE /* TRUE - every thread costs 2 additional bytes of RAM, but enables querying another thread's state */
 
     /* STACKS */

@@ -1,6 +1,40 @@
 #include "Aztec/kernel/kernel.h"
 
 
+///////////// DIRTY GLOBALS IN ABSCENSE OF IPC ////////////
+
+uint8_t lcd_bcklight_change = FALSE;
+
+///////////////////////////////////////////////////////////
+
+
+#define BACKLIGHT_DURATION_SEC (5u)
+
+register_t lcd_backlight_monitor_stack[CONFIG_MIN_STACK_SIZE+28];
+void lcd_backlight_monitor(void)
+{
+    while(lease(DEV_LCD_LIGHT) != NO_ERROR){;}
+    uint32_t t1 = 0;
+    uint32_t t2 = 0;
+
+    for(;;){
+        t1 = get_uptime();
+
+        if(lcd_bcklight_change == TRUE){
+            t2 = t1; // resetting the timer 
+            lcd_turn_backligh_on();
+            lcd_bcklight_change = FALSE;
+        }
+        
+        if(t1 - t2 >= BACKLIGHT_DURATION_SEC){
+            t2 = t1;
+            lcd_turn_backligh_off();
+        }
+    }
+    release(DEV_LCD_LIGHT);
+}
+
+
 /***********************************************************************/
 
 register_t heartbeat_stack[CONFIG_MIN_STACK_SIZE+10];
@@ -22,6 +56,7 @@ register_t kv_stack[CONFIG_MIN_STACK_SIZE + 10];
 void display_kernel_version(void)
 {
     lease(DEV_LCD);
+    lease(DEV_LCD_LIGHT);
     lcd_turn_backligh_on();
     lcd_move_cursor(4,1);
     lcd_print("Aztec "KERNEL_VERSION" ");
@@ -70,18 +105,17 @@ static uint16_t get_sysclk(void)
 static uint16_t display_time(void)
 {
     char c = 0;
-    uint32_t uptime_s = 0;
-    uint8_t hours = 0;
+    uint64_t uptime_s = 0;
+    uint16_t hours = 0;
     uint8_t minutes = 0;
     uint8_t seconds = 0;
     uint8_t prev_seconds_val = seconds;
     char buffer[4] = {0};
 
-    wait_ms(200); // Needed because we immideatly escape from the view.
+    wait_ms(200); // Needed because otherwise we immideatly escape from the view.
 
     do{
-
-        uptime_s = get_uptime();
+        uptime_s = get_uptime();;
     
         hours = uptime_s/3600;
         uptime_s -= hours*3600;
@@ -106,9 +140,9 @@ static uint16_t display_time(void)
 
             prev_seconds_val = seconds;
         }
-
         c = keypad_get_pressed_key_nonblocking();
     }while(c == KEYPAD_NO_NUM);
+    lcd_bcklight_change = TRUE;
 
     return 0;
 }
@@ -180,10 +214,10 @@ void menu(void)
     char buffer[10] = {0};
 
     menu_point_s music_submenu[] = {
-                                            [0] = {.name = "Imperial March", .type = ACTION_MENU, .action = &play_imp_march, .submenu = 0, .is_end = FALSE},
-                                            [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenu = 0, .is_end = FALSE},
-                                            [2] = {.name = "GTA SA", .type = ACTION_MENU, .action = &play_gta, .submenu = 0, .is_end = TRUE}
-                                         };
+                                        [0] = {.name = "Imperial March", .type = ACTION_MENU, .action = &play_imp_march, .submenu = 0, .is_end = FALSE},
+                                        [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenu = 0, .is_end = FALSE},
+                                        [2] = {.name = "GTA SA", .type = ACTION_MENU, .action = &play_gta, .submenu = 0, .is_end = TRUE}
+                                    };
 
     menu_point_s sys_info_submenu[] = {
                                         [0] = {.name = "Threads  - ", .type = PRESENT_MENU, .action = &get_threads, .submenu = 0, .is_end = FALSE},
@@ -200,13 +234,13 @@ void menu(void)
     menu_point_s main_menu_points[] = {
                                         [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenu = &music_submenu, .is_end = FALSE},
                                         [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenu = &sys_info_submenu, .is_end = FALSE},
-                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenu = &keypad_submenu, .is_end = TRUE},
+                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenu = &keypad_submenu, .is_end = FALSE},
+                                        [3] = {.name = "Games         >", .type = PARENT_MENU, .action = 0, .submenu = 0, .is_end = TRUE},
                                     };
 
     menu_point_s *current_menu_point = &main_menu_points;
 
     do{
-
          /* refresh lcd */
         lcd_send_command(LCD_CLEAR);
         wait_ms(2); /* needed because we can be too fast and print out garbage */
@@ -249,6 +283,7 @@ void menu(void)
         }
 
         char key = keypad_get_pressed_key();
+        lcd_bcklight_change = TRUE;
         switch(key)
         {
             case DOWN:
@@ -770,6 +805,7 @@ int main(void)
     register_device(uart_init_device, DEV_UART);
     register_device(buzzer_init_device, DEV_BUZZER);
     register_device(adc_init_device, DEV_ADC);
+    register_device(lcd_init_backlight, DEV_LCD_LIGHT);
     keypad_init_device(); // devices need not be registered by the kernel
 
     register_thread(heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
@@ -778,6 +814,7 @@ int main(void)
     register_thread(imperial_march, imp_march_stack, sizeof(imp_march_stack));
     register_thread(tetris, tetris_stack, sizeof(tetris_stack));
     register_thread(gta_sa_theme, gta_sa_stack, sizeof(gta_sa_stack));
+    register_thread(lcd_backlight_monitor, lcd_backlight_monitor_stack, sizeof(lcd_backlight_monitor_stack));
 
     klog_init(uart_puts);
 
