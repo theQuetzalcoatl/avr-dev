@@ -1,13 +1,6 @@
 #include "Aztec/kernel/kernel.h"
 
 
-///////////// DIRTY GLOBALS IN ABSCENSE OF IPC ////////////
-
-uint8_t lcd_bcklight_change = FALSE;
-
-///////////////////////////////////////////////////////////
-
-
 #define BACKLIGHT_DURATION_SEC (5u)
 
 register_t lcd_backlight_monitor_stack[CONFIG_MIN_STACK_SIZE+28];
@@ -18,16 +11,15 @@ void lcd_backlight_monitor(void)
     uint32_t t2 = 0;
 
     for(;;){
-        t1 = get_uptime();
+        t2 = get_uptime();
 
-        if(lcd_bcklight_change == TRUE){
-            t2 = t1; // resetting the timer 
+        if(keypad_get_pressed_key_nonblocking() != KEYPAD_NO_NUM){
+            t1 = t2; // resetting the timer 
             lcd_turn_backligh_on();
-            lcd_bcklight_change = FALSE;
         }
         
-        if(t1 - t2 >= BACKLIGHT_DURATION_SEC){
-            t2 = t1;
+        if(t2 - t1 >= BACKLIGHT_DURATION_SEC){
+            t1 = t2;
             lcd_turn_backligh_off();
         }
     }
@@ -142,7 +134,6 @@ static uint16_t display_time(void)
         }
         c = keypad_get_pressed_key_nonblocking();
     }while(c == KEYPAD_NO_NUM);
-    lcd_bcklight_change = TRUE;
 
     return 0;
 }
@@ -283,7 +274,6 @@ void menu(void)
         }
 
         char key = keypad_get_pressed_key();
-        lcd_bcklight_change = TRUE;
         switch(key)
         {
             case DOWN:
