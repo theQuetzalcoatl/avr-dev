@@ -1,4 +1,5 @@
 #include "Aztec/kernel/kernel.h"
+#include <stdlib.h>
 
 
 #define BACKLIGHT_DURATION_SEC (5u)
@@ -74,7 +75,7 @@ void display_kernel_version(void)
 
 #define MENU_MARKER "*"
 
-typedef struct
+typedef struct menu_point_s
 {
     char *name;
     struct menu_point_s *submenu;
@@ -223,13 +224,13 @@ void menu(void)
                                     };
 
     menu_point_s main_menu_points[] = {
-                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenu = &music_submenu, .is_end = FALSE},
-                                        [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenu = &sys_info_submenu, .is_end = FALSE},
-                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenu = &keypad_submenu, .is_end = FALSE},
+                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenu = music_submenu, .is_end = FALSE},
+                                        [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenu = sys_info_submenu, .is_end = FALSE},
+                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenu = keypad_submenu, .is_end = FALSE},
                                         [3] = {.name = "Games         >", .type = PARENT_MENU, .action = 0, .submenu = 0, .is_end = TRUE},
                                     };
 
-    menu_point_s *current_menu_point = &main_menu_points;
+    menu_point_s *current_menu_point = main_menu_points;
 
     do{
          /* refresh lcd */
@@ -301,7 +302,7 @@ void menu(void)
                 break;
 
             case EXIT:
-                current_menu_point = &main_menu_points;
+                current_menu_point = main_menu_points;
                 menu_index = 0;
                 menu_marker_pos = MENU_MARKER_UP;
                 break;
