@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 
-#define BACKLIGHT_DURATION_SEC (5u)
+#define BACKLIGHT_ON_DURATION_SEC (10u)
 
 register_t lcd_backlight_monitor_stack[CONFIG_MIN_STACK_SIZE+28];
 void lcd_backlight_monitor(void)
@@ -19,7 +19,7 @@ void lcd_backlight_monitor(void)
             lcd_turn_backligh_on();
         }
         
-        if(t2 - t1 >= BACKLIGHT_DURATION_SEC){
+        if(t2 - t1 > BACKLIGHT_ON_DURATION_SEC){
             t1 = t2;
             lcd_turn_backligh_off();
         }

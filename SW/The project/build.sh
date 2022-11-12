@@ -23,7 +23,7 @@ function main()
 	local object_files=$(find ./Aztec -type f -name "*.o");
 
 	rm ./Aztec/*.a;
-	avr-ar -r -s "./Aztec/${archive_filename}" ${object_files};
+	avr-ar -r -s -c "./Aztec/${archive_filename}" ${object_files};
 
 	# ----- Application compilation ----- #
 	avr-gcc -mmcu=${uC} ${warnings} -I /usr/lib/avr/include/ ${optimization} ${used_standard} ${debug} -c -o test_application.o test_application.c || did_compile=$?;
