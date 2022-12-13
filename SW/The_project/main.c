@@ -1,6 +1,12 @@
 #include "Aztec/kernel/kernel.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
+/***** Applications *****/
+
+#include "./Applications/heartbeat/heartbeat.h"
+
+/************************/
 
 #define BACKLIGHT_ON_DURATION_SEC (10u)
 
@@ -26,21 +32,6 @@ void lcd_backlight_monitor(void)
     }
     release(DEV_LCD_LIGHT);
 }
-
-
-/***********************************************************************/
-
-register_t heartbeat_stack[CONFIG_MIN_STACK_SIZE+10];
-void heartbeat(void)
-{
-    lease(DEV_LED1);
-    for(;;){
-        led_1_toggle();
-        wait_us(500000);
-    }
-    release(DEV_LED1);
-}
-
 
 /***********************************************************************/
 
@@ -144,7 +135,7 @@ static uint16_t get_threads(void)
     return get_num_of_threads();
 }
 
-static uint8_t buzzer_is_on = FALSE;
+static uint8_t buzzer_is_on = false;
 static uint16_t toggle_buzzer_sound(void)
 {
     buzzer_is_on = !buzzer_is_on;
@@ -152,42 +143,42 @@ static uint16_t toggle_buzzer_sound(void)
     return 0;
 }
 
-static volatile uint8_t imp_march_plays = FALSE;
-static volatile uint8_t imp_march_waiting = FALSE;
+static volatile uint8_t imp_march_plays = false;
+static volatile uint8_t imp_march_waiting = false;
 static uint16_t play_imp_march(void)
 {
     imp_march_plays = !imp_march_plays;
-    if(imp_march_plays == TRUE) release(DEV_BUZZER);
+    if(imp_march_plays == true) release(DEV_BUZZER);
     else{
-        while(imp_march_waiting == FALSE){;}
+        while(imp_march_waiting == false){;}
         lease(DEV_BUZZER);
     }
     return 0;
 }
 
 
-static volatile uint8_t tetris_plays = FALSE;
-static volatile uint8_t tetris_waiting = FALSE;
+static volatile uint8_t tetris_plays = false;
+static volatile uint8_t tetris_waiting = false;
 static uint16_t play_tetris(void)
 {
     tetris_plays = !tetris_plays;
-    if(tetris_plays == TRUE) release(DEV_BUZZER);
+    if(tetris_plays == true) release(DEV_BUZZER);
     else{
-        while(tetris_waiting == FALSE){;}
+        while(tetris_waiting == false){;}
         lease(DEV_BUZZER);
     }
     return 0;
 }
 
 
-static volatile uint8_t gta_plays = FALSE;
-static volatile uint8_t gta_waiting = FALSE;
+static volatile uint8_t gta_plays = false;
+static volatile uint8_t gta_waiting = false;
 static uint16_t play_gta(void)
 {
     gta_plays = !gta_plays;
-    if(gta_plays == TRUE) release(DEV_BUZZER);
+    if(gta_plays == true) release(DEV_BUZZER);
     else{
-        while(gta_waiting == FALSE){;}
+        while(gta_waiting == false){;}
         lease(DEV_BUZZER);
     }
     return 0;
@@ -206,28 +197,28 @@ void menu(void)
     char buffer[10] = {0};
 
     menu_point_s music_submenu[] = {
-                                        [0] = {.name = "Imperial March", .type = ACTION_MENU, .action = &play_imp_march, .submenu = 0, .is_end = FALSE},
-                                        [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenu = 0, .is_end = FALSE},
-                                        [2] = {.name = "GTA SA", .type = ACTION_MENU, .action = &play_gta, .submenu = 0, .is_end = TRUE}
+                                        [0] = {.name = "Imperial March", .type = ACTION_MENU, .action = &play_imp_march, .submenu = 0, .is_end = false},
+                                        [1] = {.name = "Tetris", .type = ACTION_MENU, .action = &play_tetris, .submenu = 0, .is_end = false},
+                                        [2] = {.name = "GTA SA", .type = ACTION_MENU, .action = &play_gta, .submenu = 0, .is_end = true}
                                     };
 
     menu_point_s sys_info_submenu[] = {
-                                        [0] = {.name = "Threads  - ", .type = PRESENT_MENU, .action = &get_threads, .submenu = 0, .is_end = FALSE},
-                                        [1] = {.name = "Systicks - ", .type = PRESENT_MENU, .action = &get_systick, .submenu = 0, .is_end = FALSE},
-                                        [2] = {.name = "Clock[MHz] - ", .type = PRESENT_MENU, .action = &get_sysclk, .submenu = 0, .is_end = FALSE},
-                                        [3] = {.name = "Uptime        >", .type = ACTION_MENU, .action = &display_time, .submenu = 0, .is_end = TRUE},
+                                        [0] = {.name = "Threads  - ", .type = PRESENT_MENU, .action = &get_threads, .submenu = 0, .is_end = false},
+                                        [1] = {.name = "Systicks - ", .type = PRESENT_MENU, .action = &get_systick, .submenu = 0, .is_end = false},
+                                        [2] = {.name = "Clock[MHz] - ", .type = PRESENT_MENU, .action = &get_sysclk, .submenu = 0, .is_end = false},
+                                        [3] = {.name = "Uptime        >", .type = ACTION_MENU, .action = &display_time, .submenu = 0, .is_end = true},
                                       };
 
     menu_point_s keypad_submenu[] = {
-                                       [0] = { .name = "On/Off", .type = ACTION_MENU, .action = &toggle_buzzer_sound, .submenu = 0, .is_end = FALSE},
-                                       [1] = { .name = " ", .type = ACTION_MENU, .action = 0, .submenu = 0, .is_end = TRUE},
+                                       [0] = { .name = "On/Off", .type = ACTION_MENU, .action = &toggle_buzzer_sound, .submenu = 0, .is_end = false},
+                                       [1] = { .name = " ", .type = ACTION_MENU, .action = 0, .submenu = 0, .is_end = true},
                                     };
 
     menu_point_s main_menu_points[] = {
-                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenu = music_submenu, .is_end = FALSE},
-                                        [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenu = sys_info_submenu, .is_end = FALSE},
-                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenu = keypad_submenu, .is_end = FALSE},
-                                        [3] = {.name = "Games         >", .type = PARENT_MENU, .action = 0, .submenu = 0, .is_end = TRUE},
+                                        [0] = {.name = "Music         >", .type = PARENT_MENU, .action = 0, .submenu = music_submenu, .is_end = false},
+                                        [1] = {.name = "System info   >", .type = PARENT_MENU, .action = 0, .submenu = sys_info_submenu, .is_end = false},
+                                        [2] = {.name = "Keypad sound  >", .type = PARENT_MENU, .action = 0, .submenu = keypad_submenu, .is_end = false},
+                                        [3] = {.name = "Games         >", .type = PARENT_MENU, .action = 0, .submenu = 0, .is_end = true},
                                     };
 
     menu_point_s *current_menu_point = main_menu_points;
@@ -278,7 +269,7 @@ void menu(void)
         switch(key)
         {
             case DOWN:
-                if(current_menu_point->is_end == FALSE) {
+                if(current_menu_point->is_end == false) {
                     ++menu_index;
                     ++current_menu_point;
                     if(menu_marker_pos == MENU_MARKER_UP) menu_marker_pos = MENU_MARKER_DOWN;
@@ -329,12 +320,12 @@ void menu(void)
 
 static void pause_imp_march(void)
 {
-    if(imp_march_plays == FALSE){   
+    if(imp_march_plays == false){   
         release(DEV_BUZZER);
-        imp_march_waiting = TRUE;
-        while(imp_march_plays == FALSE){;}
+        imp_march_waiting = true;
+        while(imp_march_plays == false){;}
         while(lease(DEV_BUZZER) != NO_ERROR){;}
-        imp_march_waiting = FALSE;
+        imp_march_waiting = false;
     }
 }
 
@@ -452,12 +443,12 @@ void imperial_march(void)
 
 static void pause_tetris(void)
 {
-    if(tetris_plays == FALSE){   
+    if(tetris_plays == false){   
         release(DEV_BUZZER);
-        tetris_waiting = TRUE;
-        while(tetris_plays == FALSE){;}
+        tetris_waiting = true;
+        while(tetris_plays == false){;}
         while(lease(DEV_BUZZER) != NO_ERROR){;}
-        tetris_waiting = FALSE;
+        tetris_waiting = false;
     }
 }
 
@@ -617,12 +608,12 @@ void tetris(void)
 
 static void pause_gta(void)
 {
-    if(gta_plays == FALSE){   
+    if(gta_plays == false){   
         release(DEV_BUZZER);
-        gta_waiting = TRUE;
-        while(gta_plays == FALSE){;}
+        gta_waiting = true;
+        while(gta_plays == false){;}
         while(lease(DEV_BUZZER) != NO_ERROR){;}
-        gta_waiting = FALSE;
+        gta_waiting = false;
     }
 }
 
@@ -799,7 +790,7 @@ int main(void)
     register_device(lcd_init_backlight, DEV_LCD_LIGHT);
     keypad_init_device(); // devices need not be registered by the kernel
 
-    register_thread(heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
+    register_thread(main_heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
     register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
     register_thread(menu, menu_stack, sizeof(menu_stack));
     register_thread(imperial_march, imp_march_stack, sizeof(imp_march_stack));

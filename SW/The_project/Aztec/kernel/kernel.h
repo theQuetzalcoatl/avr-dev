@@ -105,8 +105,6 @@ enum DEVICE_IDS
 
 
 
-
-
 /*
  * kernel.h
  * This file is part of Aztec

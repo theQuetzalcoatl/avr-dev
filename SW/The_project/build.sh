@@ -7,6 +7,7 @@ function main()
 	local debug="-g1";
 	local uC="atmega128";
 	local warnings="-Wall -Wextra"
+	export kernel_include_path="$PWD/Aztec/kernel"; # for application shell scripts to use
 
 	local did_compile=0;
 
@@ -14,7 +15,6 @@ function main()
 	local archive_filename="Aztec.a";
 
 	local c_files=$(find ./Aztec -type f -name "*.c");
-	local h_files=$(find ./Aztec -type f -name "*.h");
 
 	for c_file in ${c_files}; do
 		avr-gcc -mmcu=${uC} ${warnings} -I /usr/lib/avr/include/ ${optimization} ${used_standard} ${debug} -c -o ${c_file/%.c/.o} ${c_file} || did_compile=$?;
@@ -23,15 +23,25 @@ function main()
 	local object_files=$(find ./Aztec -type f -name "*.o");
 
 	rm ./Aztec/*.a;
-	avr-ar -r -s -c "./Aztec/${archive_filename}" ${object_files};
+	avr-ar -r -s -c ./Aztec/${archive_filename} ${object_files};
+	find ./Aztec -type f -name "*.o" -exec rm {} \;
 
 	# ----- Application compilation ----- #
-	avr-gcc -mmcu=${uC} ${warnings} -I /usr/lib/avr/include/ ${optimization} ${used_standard} ${debug} -c -o test_application.o test_application.c || did_compile=$?;
+	cd Applications;
+
+	for app_dir in $(ls -d */); do
+		bash "${app_dir}/build.sh";
+		if [[ $? != 0 ]] ; then echo "Nincs siker!"; did_compile=1; fi
+	done
+
+	cd ..;
+
+	avr-gcc -mmcu=${uC} ${warnings} -I /usr/lib/avr/include/ -I "${kernel_include_path}" ${optimization} ${used_standard} ${debug} -c -o main.o main.c || did_compile=$?;
+
+	object_files=$(find . -type f -name "*.o");
 
 	# ----- linking ----- #
-	avr-gcc -mmcu=${uC} -o ${output_bin} test_application.o ./Aztec/${archive_filename} || did_compile=$?;
-
-	find . -type f -name "*.o" -exec rm {} \;
+	avr-gcc -mmcu=${uC} -o ${output_bin} ${object_files} ./Aztec/${archive_filename} || did_compile=$?;
 
 	avr-objdump --source ${output_bin} > app_disass.s;
 
@@ -42,7 +52,7 @@ function main()
 	./ToolsAndScripts/header_guard_checker.sh ./Aztec/
 
 	if [[ "$1" == "upload" && ${did_compile} == 0 ]]; then
-		avrdude -p m128 -b 19200 -P /dev/ttyUSB0 -c arduino -U flash:w:application.hex:i;
+		avrdude -p m128 -b 19200 -P /dev/ttyUSB3 -c arduino -U flash:w:application.hex:i;
 	fi
 }
 

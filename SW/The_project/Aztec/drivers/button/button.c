@@ -1,5 +1,7 @@
 #include "./button.h"
 
+#define PIN_HIGH (1U)
+#define PIN_LOW  (0U)
 
 /* Device initialization */
 
