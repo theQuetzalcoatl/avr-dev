@@ -10,7 +10,7 @@ typedef struct thread_t
     register_t *stack_bottom;
     uint8_t state;
     uint16_t wait_roundabouts;
-#if CONFIG_THREADS_QUERY_STATE == TRUE
+#if CONFIG_THREADS_QUERY_STATE == true
     thread_address_t id;
 #endif
     struct thread_t *next;
@@ -41,7 +41,7 @@ static void make_threadlist_circular(void);
 static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
 static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom);
 static void insert_stack_overflow_detection_bytes(void);
-#if CONFIG_THREADS_QUERY_STATE == TRUE
+#if CONFIG_THREADS_QUERY_STATE == true
 static void link_thread_list(void);
 static void sort_thread_list_descending(void);
 #endif
@@ -359,7 +359,7 @@ k_error_t start_os(void)
 
     init_device_ownerships();
 
-#if CONFIG_THREADS_QUERY_STATE == TRUE
+#if CONFIG_THREADS_QUERY_STATE == true
     sort_thread_list_descending();
     link_thread_list();
 #endif
@@ -384,7 +384,7 @@ static void make_threadlist_circular(void)
 }
 
 
-#if CONFIG_THREADS_QUERY_STATE == TRUE
+#if CONFIG_THREADS_QUERY_STATE == true
 static void sort_thread_list_descending(void)
 {
     thread_t temp = {0};
@@ -452,7 +452,7 @@ k_error_t register_thread(const thread_address_t thread_addr,  register_t * cons
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
         .wait_roundabouts = 0,
-#if CONFIG_THREADS_QUERY_STATE == TRUE
+#if CONFIG_THREADS_QUERY_STATE == true
         .id = thread_addr,
 #endif
         .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. thread_number=NUM_OF_THREADS case is cought by at the start of function
@@ -518,15 +518,15 @@ typedef struct device_t
     uint8_t initialized;
 }device_t;
 
-device_t device[DEVICE_COUNT] = {0}; /* initialized data field is initialzed here implicitly to FALSE */
+device_t device[DEVICE_COUNT] = {0}; /* initialized data field is initialzed here implicitly to false */
 
 
 k_error_t register_device(void (*driver_func) (void), uint8_t dev)
 {
-    if(dev >= DEVICE_COUNT || device[dev].initialized == TRUE) return K_ERR_INVALID_DEVICE_ACCESS;
+    if(dev >= DEVICE_COUNT || device[dev].initialized == true) return K_ERR_INVALID_DEVICE_ACCESS;
     else{
         driver_func();
-        device[dev].initialized = TRUE;
+        device[dev].initialized = true;
         return NO_ERROR;
     }
 }
@@ -554,7 +554,7 @@ k_error_t lease(const uint8_t requested_device)
     k_error_t ret = NO_ERROR;
 
     if(requested_device >= DEVICE_COUNT) ret = K_ERR_INVALID_DEVICE_ACCESS;
-    if(device[requested_device].initialized == FALSE || device[requested_device].owner != NO_OWNER) ret = K_ERR_INVALID_DEVICE_ACCESS;
+    if(device[requested_device].initialized == false || device[requested_device].owner != NO_OWNER) ret = K_ERR_INVALID_DEVICE_ACCESS;
     else device[requested_device].owner = tcb.current_thread;
 
     KERNEL_EXIT_ATOMIC();

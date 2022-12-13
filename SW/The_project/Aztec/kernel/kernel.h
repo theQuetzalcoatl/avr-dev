@@ -18,8 +18,8 @@ AVR stuff:
 */
 
 #include <stdint.h>
+#include <stdbool.h>
 
-#include "../utils.h"
 #include "kernel_config.h"
 #include "kernel_error_handling.h"
 #include "kernel_logging.h"
@@ -60,7 +60,7 @@ extern uint8_t check_device_ownership(const uint8_t requested_device);  // NO_OW
 extern uint8_t get_num_of_threads(void);    // provides the number of threads which are not in the DELETED state
 extern void halt_system(void);              // halts the system indefenitely
 extern void reboot(void);                   // acts like a hardware reset, except it does not reset the RAM, only the .bss and .data regions
-#if CONFIG_THREADS_QUERY_STATE == TRUE
+#if CONFIG_THREADS_QUERY_STATE == true
 extern uint8_t get_thread_state(const thread_address_t th_addr); // provides the state of the supplied thread or K_ERR_THREAD_NOT_FOUND if an invalid ID was given.
 #endif
 

@@ -1,7 +1,6 @@
 #ifndef KERNEL_CONFIG_H
 #define KERNEL_CONFIG_H
 
-#include "../utils.h"
 
     /* HW */
 #define F_CPU (16000000UL) /* Hz */
