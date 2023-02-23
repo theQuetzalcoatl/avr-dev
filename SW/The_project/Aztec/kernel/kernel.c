@@ -10,9 +10,7 @@ typedef struct thread_t
     register_t *stack_bottom;
     uint8_t state;
     uint16_t wait_roundabouts;
-#if CONFIG_THREADS_QUERY_STATE == true
     thread_address_t id;
-#endif
     struct thread_t *next;
 }thread_t;
 
@@ -38,13 +36,11 @@ static void remove_curr_thread_from_list(void);
 static void release_owned_devices(void);
 static void init_device_ownerships(void);
 static void make_threadlist_circular(void);
-static void init_stack(const thread_address_t thread_addr, register_t * const stack_start);
+static void init_stack(thread_t *t);
 static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom);
-static void insert_stack_overflow_detection_bytes(void);
-#if CONFIG_THREADS_QUERY_STATE == true
+static void insert_stack_overflow_detection_bytes(thread_t *t);
 static void link_thread_list(void);
 static void sort_thread_list_descending(void);
-#endif
 
 #if TIMER_USED == T2
 #define RESET_SYSTICK_TIMER() TCNT2 = 0
@@ -56,14 +52,14 @@ static void sort_thread_list_descending(void);
 
 #define RESTORE_CONTEXT() \
     asm volatile(" \
-                lds R26, tcb \n\
-                lds R27, tcb+1 \n\
-                ld R31, X+ \n\
-                out __SP_L__, R31 \n\
-                ld R31, X \n\
-                out __SP_H__, R31 \n\
-                pop R31 \n\
-                out  __SREG__, R31  \n\
+                lds R26, tcb       \n\
+                lds R27, tcb+1     \n\
+                ld R31, X+         \n\
+                out __SP_L__, R31  \n\
+                ld R31, X          \n\
+                out __SP_H__, R31  \n\
+                pop R31            \n\
+                out  __SREG__, R31 \n\
                 pop R31 \n  \
                 pop R30 \n  \
                 pop R29 \n  \
@@ -218,7 +214,8 @@ void TIMER0_COMP_vect( void )
     asm volatile ("reti"); // enables global interrupt flag
 }
 
-
+extern void main_heartbeat(void); ///////////
+extern void display_kernel_version(void); ///////////////////
 static uint8_t check_stack_for_overflow(void)
 {
     if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return K_ERR_STACK_OVERFLOW;
@@ -240,7 +237,7 @@ static void schedule_next_task(void)
             tcb.prev_thread = tcb.current_thread;
             break;
         
-        case DELETED: // we are here because of an exit syscall
+        case DELETED: // we are here because of an exit syscall,  prev_trhead was changed during the exit syscall
             break;
 
         case READY:
@@ -250,7 +247,7 @@ static void schedule_next_task(void)
     tcb.current_thread = tcb.current_thread->next;
 
     if(tcb.current_thread->state == READY) tcb.current_thread->state = RUNNING;
-    else if(tcb.current_thread->state == WAITING);
+    else if(tcb.current_thread->state == WAITING); /* do nothing, new thread is waiting */
     else kernel_panic();
 }
 
@@ -292,6 +289,58 @@ void halt_system(void)
 uint8_t get_num_of_threads(void)
 {
     return tcb.active_threads;
+}
+
+
+k_error_t load(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
+{
+    KERNEL_ENTER_ATOMIC();
+
+    /* senity checks */
+    if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+    if(stack_size < CONFIG_MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
+
+    bool already_used = false;
+    for(thread_t *th = tcb.current_thread->next; th != tcb.current_thread; th = th->next){
+        if(th->id == thread_addr || th->stack_bottom == stack_start){
+            already_used = true;
+            break;
+        }
+    }
+    if(tcb.current_thread->id == thread_addr || tcb.current_thread->stack_bottom == stack_start) already_used = true; // take into account current thread
+
+    if(already_used){
+        KERNEL_EXIT_ATOMIC();
+        return K_ERR_MULTIPLE_THREADS_IN_SYSTEM;
+    }
+
+    already_used = true;
+
+    /* search for first deleted or non registered thread */
+    for(uint8_t i = 0; i < CONFIG_NUM_OF_THREADS; ++i){
+        if(tcb.thread[i].state == DELETED || tcb.thread[i].next == NULL || tcb.thread[i].state == 0){ /* DELETED -> was registered, NULL -> was never registered(requires init.-ing tcb to 0) */
+           tcb.thread[i] = \
+            (thread_t){
+            .stack_bottom = stack_start,
+            .stack_pointer = stack_start + stack_size - 1,
+            .state = READY,
+            .wait_roundabouts = 0,
+            .id = thread_addr,
+            };
+
+            /* inserting new thread ahead of current one */
+            tcb.thread[i].next = tcb.current_thread->next;
+            tcb.current_thread->next = &tcb.thread[i];
+
+            init_stack(&tcb.thread[i]);
+            ++tcb.active_threads;
+            already_used = false;
+
+            break;
+        }
+    }
+    KERNEL_EXIT_ATOMIC();
+    return (already_used) ? K_ERR_NO_AVAILABLE_THREAD : NO_ERROR;
 }
 
 
@@ -358,11 +407,8 @@ k_error_t start_os(void)
     if(ret != NO_ERROR) return ret;
 
     init_device_ownerships();
-
-#if CONFIG_THREADS_QUERY_STATE == true
     sort_thread_list_descending();
     link_thread_list();
-#endif
     make_threadlist_circular();
 
     RESET_SYSTICK_TIMER();
@@ -384,7 +430,6 @@ static void make_threadlist_circular(void)
 }
 
 
-#if CONFIG_THREADS_QUERY_STATE == true
 static void sort_thread_list_descending(void)
 {
     thread_t temp = {0};
@@ -431,8 +476,6 @@ k_error_t get_thread_state(const thread_address_t th_addr)
 #endif
 }
 
-#endif
-
 
 k_error_t register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
 {
@@ -441,29 +484,29 @@ k_error_t register_thread(const thread_address_t thread_addr,  register_t * cons
     if(stack_size < CONFIG_MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
     if(tcb.active_threads > 0){
         if(check_if_stack_is_already_registered(stack_start) == K_ERR_ALREADY_REGISTERED_STACK) return K_ERR_ALREADY_REGISTERED_STACK;
+        /* implicitly prohibiting multiple instances of the same thread because those instances should only use one to work correctly */
     }
 
     tcb.current_thread = &tcb.thread[tcb.active_threads];
 
-    /* in case of avr-gcc we get the stack_start upside down, starting at bottom address. So it is flipped here */
+    /* stack expands towards lower RAM addresses, array start at low adress, is indexed to higher --> bottom and top flipped */
     *tcb.current_thread = \
         (thread_t){
         .stack_bottom = stack_start,
         .stack_pointer = stack_start + stack_size - 1,
         .state = READY,
         .wait_roundabouts = 0,
-#if CONFIG_THREADS_QUERY_STATE == true
         .id = thread_addr,
-#endif
         .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. thread_number=NUM_OF_THREADS case is cought by at the start of function
         };
     
-    init_stack(thread_addr, tcb.current_thread->stack_pointer);
+    init_stack(tcb.current_thread);
     
     ++tcb.active_threads;
 
     return NO_ERROR;
 }
+
 
 /* CONTEXT
 
@@ -476,26 +519,23 @@ k_error_t register_thread(const thread_address_t thread_addr,  register_t * cons
     SREG
 */
 
-static void init_stack(const thread_address_t thread_addr, register_t * const stack_start)
+static void init_stack(thread_t *t)
 {
-    register_t *stack_pointer = stack_start;
+    *t->stack_pointer = (uint16_t)t->id & (uint16_t)0x00ffu; --t->stack_pointer;
+    *t->stack_pointer = (uint16_t)(t->id)>>8u; --t->stack_pointer;
+    *t->stack_pointer = 0u; /* R0 */ --t->stack_pointer;
+    *t->stack_pointer = 0u; /* R1 */ --t->stack_pointer;
+    for(int i = 2; i <= 31; ++i, --t->stack_pointer) *t->stack_pointer = i; /* R2 - R31 */
+    *t->stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --t->stack_pointer;
 
-    *stack_pointer = (uint16_t)thread_addr & (uint16_t)0x00ffu; --stack_pointer;
-    *stack_pointer = (uint16_t)thread_addr>>8u; --stack_pointer;
-    *stack_pointer = 0u; /* R0 */ --stack_pointer;
-    *stack_pointer = 0u; /* R1 */ --stack_pointer;
-    for(int i = 2; i <= 31; ++i, --stack_pointer) *stack_pointer = i; /* R2 - R31 */
-    *stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --stack_pointer;
-    tcb.current_thread->stack_pointer = stack_pointer;
-
-    insert_stack_overflow_detection_bytes();   
+    insert_stack_overflow_detection_bytes(t);   
 }
 
 
-static void insert_stack_overflow_detection_bytes(void)
+static void insert_stack_overflow_detection_bytes(thread_t *t)
 {
-    *(tcb.current_thread->stack_bottom + 1) = 0xBE;
-    *(tcb.current_thread->stack_bottom) = 0xEF;
+    *(t->stack_bottom + 1) = 0xBE;
+    *(t->stack_bottom) = 0xEF;
 }
 
 
@@ -521,11 +561,11 @@ typedef struct device_t
 device_t device[DEVICE_COUNT] = {0}; /* initialized data field is initialzed here implicitly to false */
 
 
-k_error_t register_device(void (*driver_func) (void), uint8_t dev)
+k_error_t register_device(void (*driver_init) (void), uint8_t dev)
 {
     if(dev >= DEVICE_COUNT || device[dev].initialized == true) return K_ERR_INVALID_DEVICE_ACCESS;
     else{
-        driver_func();
+        driver_init();
         device[dev].initialized = true;
         return NO_ERROR;
     }
@@ -616,7 +656,7 @@ uint8_t check_device_ownership(const uint8_t requested_device)
  *
  * Aztec is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software found_addration; either version 2 of the License, or
  * (at your option) any later version.
  *
  * Aztec is distributed in the hope that it will be useful,

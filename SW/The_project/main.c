@@ -5,38 +5,13 @@
 /***** Applications *****/
 
 #include "./Applications/heartbeat/heartbeat.h"
+#include "./Applications/lcd_backlight_monitor/lcd_backlight_monitor.h"
+#include "./Applications/songs/songs.h"
 
 /************************/
 
-#define BACKLIGHT_ON_DURATION_SEC (10u)
 
-register_t lcd_backlight_monitor_stack[CONFIG_MIN_STACK_SIZE+28];
-void lcd_backlight_monitor(void)
-{
-    while(lease(DEV_LCD_LIGHT) != NO_ERROR){;}
-    uint32_t t1 = 0;
-    uint32_t t2 = 0;
-
-    for(;;){
-        t2 = get_uptime();
-
-        if(keypad_get_pressed_key_nonblocking() != KEYPAD_NO_NUM){
-            t1 = t2; // resetting the timer 
-            lcd_turn_backligh_on();
-        }
-        
-        if(t2 - t1 > BACKLIGHT_ON_DURATION_SEC){
-            t1 = t2;
-            lcd_turn_backligh_off();
-        }
-    }
-    release(DEV_LCD_LIGHT);
-}
-
-/***********************************************************************/
-
-
-register_t kv_stack[CONFIG_MIN_STACK_SIZE + 10];
+register_t kv_stack[CONFIG_MIN_STACK_SIZE + 20];
 void display_kernel_version(void)
 {
     lease(DEV_LCD);
@@ -46,6 +21,7 @@ void display_kernel_version(void)
     lcd_print("Aztec "KERNEL_VERSION" ");
     wait_ms(2000);
     lcd_send_command(LCD_CLEAR);
+    load(main_heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
     exit_();  // exiting without releasing the LCD -> kernel takes care of it
 }
 
@@ -135,7 +111,7 @@ static uint16_t get_threads(void)
     return get_num_of_threads();
 }
 
-static uint8_t buzzer_is_on = false;
+static bool buzzer_is_on = false;
 static uint16_t toggle_buzzer_sound(void)
 {
     buzzer_is_on = !buzzer_is_on;
@@ -143,44 +119,25 @@ static uint16_t toggle_buzzer_sound(void)
     return 0;
 }
 
-static volatile uint8_t imp_march_plays = false;
-static volatile uint8_t imp_march_waiting = false;
+
 static uint16_t play_imp_march(void)
 {
-    imp_march_plays = !imp_march_plays;
-    if(imp_march_plays == true) release(DEV_BUZZER);
-    else{
-        while(imp_march_waiting == false){;}
-        lease(DEV_BUZZER);
-    }
+    release(DEV_BUZZER);
+    load(imperial_march, song_stack, sizeof(song_stack));
     return 0;
 }
 
-
-static volatile uint8_t tetris_plays = false;
-static volatile uint8_t tetris_waiting = false;
 static uint16_t play_tetris(void)
 {
-    tetris_plays = !tetris_plays;
-    if(tetris_plays == true) release(DEV_BUZZER);
-    else{
-        while(tetris_waiting == false){;}
-        lease(DEV_BUZZER);
-    }
+    release(DEV_BUZZER);
+    load(tetris, song_stack, sizeof(song_stack));
     return 0;
 }
 
-
-static volatile uint8_t gta_plays = false;
-static volatile uint8_t gta_waiting = false;
 static uint16_t play_gta(void)
 {
-    gta_plays = !gta_plays;
-    if(gta_plays == true) release(DEV_BUZZER);
-    else{
-        while(gta_waiting == false){;}
-        lease(DEV_BUZZER);
-    }
+    release(DEV_BUZZER);
+    load(gta_sa_theme, song_stack, sizeof(song_stack));
     return 0;
 }
 
@@ -210,8 +167,8 @@ void menu(void)
                                       };
 
     menu_point_s keypad_submenu[] = {
-                                       [0] = { .name = "On/Off", .type = ACTION_MENU, .action = &toggle_buzzer_sound, .submenu = 0, .is_end = false},
-                                       [1] = { .name = " ", .type = ACTION_MENU, .action = 0, .submenu = 0, .is_end = true},
+                                        [0] = { .name = "On/Off", .type = ACTION_MENU, .action = &toggle_buzzer_sound, .submenu = 0, .is_end = false},
+                                        [1] = { .name = " ", .type = ACTION_MENU, .action = 0, .submenu = 0, .is_end = true},
                                     };
 
     menu_point_s main_menu_points[] = {
@@ -224,6 +181,7 @@ void menu(void)
     menu_point_s *current_menu_point = main_menu_points;
 
     do{
+        lease(DEV_BUZZER); // try to get back buzzer
          /* refresh lcd */
         lcd_send_command(LCD_CLEAR);
         wait_ms(2); /* needed because we can be too fast and print out garbage */
@@ -318,469 +276,11 @@ void menu(void)
 /***********************************************************************/
 
 
-static void pause_imp_march(void)
-{
-    if(imp_march_plays == false){   
-        release(DEV_BUZZER);
-        imp_march_waiting = true;
-        while(imp_march_plays == false){;}
-        while(lease(DEV_BUZZER) != NO_ERROR){;}
-        imp_march_waiting = false;
-    }
-}
-
-
-register_t imp_march_stack[CONFIG_MIN_STACK_SIZE + 30];
-void imperial_march(void)
-{
-    wait_ms(1500);
-    
-    while(lease(DEV_BUZZER) != NO_ERROR){;}
-
-    while(1){
-        for(int i = 0; i < 3; ++i){
-            /* E4 */
-            buzzer_buzz(329);
-            wait_ms(550);
-            buzzer_off();
-            wait_ms(75);
-
-            pause_imp_march();
-        }
-
-        for(int i = 0; i < 2; ++i){
-            /* C4 */
-            buzzer_buzz(261);
-            wait_ms(450);
-            buzzer_off();
-            wait_ms(10);
-
-            pause_imp_march();
-
-            /* G4 */
-            buzzer_buzz(392);
-            wait_ms(200);
-            buzzer_off();
-            wait_ms(10);
-
-            pause_imp_march();
-
-            /* E4 */
-            buzzer_buzz(329);
-            wait_ms(550);
-            buzzer_off();
-            wait_ms(75);
-
-            pause_imp_march();
-
-        }
-
-        wait_ms(500);
-
-        for(int i = 0; i < 3; ++i){
-            /* B4 */
-            buzzer_buzz(493);
-            wait_ms(550);
-            buzzer_off();
-            wait_ms(75);
-
-            pause_imp_march();
-        }
-
-        /* C4 */
-        buzzer_buzz(523);
-        wait_ms(450);
-        buzzer_off();
-        wait_ms(10);
-
-        pause_imp_march();
-
-        /* G4 */
-        buzzer_buzz(392);
-        wait_ms(200);
-        buzzer_off();
-        wait_ms(10);
-
-        pause_imp_march();
-
-        /* E4 */
-        buzzer_buzz(329);
-        wait_ms(550);
-        buzzer_off();
-        wait_ms(75);
-
-        pause_imp_march();
-
-        /* C4 */
-        buzzer_buzz(261);
-        wait_ms(450);
-        buzzer_off();
-        wait_ms(10);
-
-        pause_imp_march();
-
-        /* G4 */
-        buzzer_buzz(392);
-        wait_ms(200);
-        buzzer_off();
-        wait_ms(10);
-
-        pause_imp_march();
-
-        /* E4 */
-        buzzer_buzz(329);
-        wait_ms(550);
-        buzzer_off();
-        wait_ms(75);
-
-        pause_imp_march();
-
-        wait_ms(1000);
-    }
-}
-
-/***********************************************************************/
-
-static void pause_tetris(void)
-{
-    if(tetris_plays == false){   
-        release(DEV_BUZZER);
-        tetris_waiting = true;
-        while(tetris_plays == false){;}
-        while(lease(DEV_BUZZER) != NO_ERROR){;}
-        tetris_waiting = false;
-    }
-}
-
-register_t tetris_stack[CONFIG_MIN_STACK_SIZE + 30];
-void tetris(void)
-{
-    wait_ms(1700);
-    
-    while(lease(DEV_BUZZER) != NO_ERROR){;}
-
-    while(1){
-        /* E4 */
-        buzzer_buzz(329);
-        wait_ms(500);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* B3 */
-        buzzer_buzz(246);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* C4 */
-        buzzer_buzz(261);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* D4 */
-        buzzer_buzz(293);
-        wait_ms(400);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* C4 */
-        buzzer_buzz(261);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* B3 */
-        buzzer_buzz(246);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* A3 */
-        buzzer_buzz(220);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        wait_ms(120);
-
-        /* A3 */
-        buzzer_buzz(220);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* C4 */
-        buzzer_buzz(261);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* E4 */
-        buzzer_buzz(329);
-        wait_ms(400);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* D4 */
-        buzzer_buzz(293);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* C4 */
-        buzzer_buzz(261);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* B3 */
-        buzzer_buzz(246);
-        wait_ms(500);
-        buzzer_off();
-
-        pause_tetris();
-
-        wait_ms(75);
-
-        /* C4 */
-        buzzer_buzz(261);
-        wait_ms(250);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* D4 */
-        buzzer_buzz(293);
-        wait_ms(400);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* E4 */
-        buzzer_buzz(329);
-        wait_ms(400);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* C4 */
-        buzzer_buzz(261);
-        wait_ms(400);
-        buzzer_off();
-
-        pause_tetris();
-
-        /* A3 */
-        buzzer_buzz(220);
-        wait_ms(350);
-        buzzer_off();
-
-        pause_tetris();
-
-        wait_ms(75);
-
-        /* A3 */
-        buzzer_buzz(220);
-        wait_ms(350);
-        buzzer_off();
-
-        pause_tetris();
-
-        wait_ms(1000);
-    }
-}
-
-
-/***********************************************************************/
-
-static void pause_gta(void)
-{
-    if(gta_plays == false){   
-        release(DEV_BUZZER);
-        gta_waiting = true;
-        while(gta_plays == false){;}
-        while(lease(DEV_BUZZER) != NO_ERROR){;}
-        gta_waiting = false;
-    }
-}
-
-
-register_t gta_sa_stack[CONFIG_MIN_STACK_SIZE + 20];
-void gta_sa_theme(void)
-{
-    wait_ms(1700);
-    
-    while(lease(DEV_BUZZER) != NO_ERROR){;}
-
-    while(4){
-        /* G5 */
-        buzzer_buzz(783);
-        wait_ms(400);
-        buzzer_off();
-
-        wait_ms(70);
-
-        pause_gta();
-
-        /* G6 */
-        buzzer_buzz(1567);
-        wait_ms(400);
-        buzzer_off();
-
-        pause_gta();
-
-        /* Eb6 */
-        buzzer_buzz(1244);
-        wait_ms(300);
-        buzzer_off();
-
-        pause_gta();
-
-        wait_ms(50);
-
-        /* D6 */
-        buzzer_buzz(1174);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        /* Eb6 */
-        buzzer_buzz(1244);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        /* D6 */
-        buzzer_buzz(1174);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        /* C6 */
-        buzzer_buzz(1046);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        /* D6 */
-        buzzer_buzz(1174);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        wait_ms(150);
-
-        /* D6 */
-        buzzer_buzz(1174);
-        wait_ms(600);
-        buzzer_off();
-
-        wait_ms(150);
-
-        pause_gta();
-
-        /* Bb5 */
-        buzzer_buzz(932);
-        wait_ms(400);
-        buzzer_off();
-
-        pause_gta();
-
-        wait_ms(50);
-
-        /* C6 */
-        buzzer_buzz(1046);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        /* Bb5 */
-        buzzer_buzz(932);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        /* C6 */
-        buzzer_buzz(1046);
-        wait_ms(400);
-        buzzer_off();
-
-        pause_gta();
-
-        /* D6 */
-        buzzer_buzz(1174);
-        wait_ms(300);
-        buzzer_off();
-
-        pause_gta();
-
-        wait_ms(50);
-
-        /* G5 */
-        buzzer_buzz(783);
-        wait_ms(300);
-        buzzer_off();
-
-        pause_gta();
-
-        wait_ms(30);
-
-        /* C6 */
-        buzzer_buzz(1046);
-        wait_ms(300);
-        buzzer_off();
-
-        pause_gta();
-
-        wait_ms(40);
-
-        /* Bb5 */
-        buzzer_buzz(932);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        /* G5 */
-        buzzer_buzz(783);
-        wait_ms(200);
-        buzzer_off();
-
-        pause_gta();
-
-        wait_ms(1000);
-
-    }
-}
-
-/***********************************************************************/
-
-
 int main(void)
 {
     register_device(button_init_device, DEV_BUTTON);
     register_device(led_init_device, DEV_LED1); 
-    register_device(led_init_device, DEV_LED2);
+    register_device(led_init_device, DEV_LED2); // multiple init function for different devices
     register_device(led_init_device, DEV_LED3);
     register_device(led_init_device, DEV_LED4);
     register_device(lcd_init_device, DEV_LCD);
@@ -790,13 +290,9 @@ int main(void)
     register_device(lcd_init_backlight, DEV_LCD_LIGHT);
     keypad_init_device(); // devices need not be registered by the kernel
 
-    register_thread(main_heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
     register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
     register_thread(menu, menu_stack, sizeof(menu_stack));
-    register_thread(imperial_march, imp_march_stack, sizeof(imp_march_stack));
-    register_thread(tetris, tetris_stack, sizeof(tetris_stack));
-    register_thread(gta_sa_theme, gta_sa_stack, sizeof(gta_sa_stack));
-    register_thread(lcd_backlight_monitor, lcd_backlight_monitor_stack, sizeof(lcd_backlight_monitor_stack));
+    register_thread(lcd_backlight_monitor_main, lcd_backlight_monitor_stack, sizeof(lcd_backlight_monitor_stack));
 
     klog_init(uart_puts);
 
