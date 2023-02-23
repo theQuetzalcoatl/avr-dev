@@ -214,8 +214,7 @@ void TIMER0_COMP_vect( void )
     asm volatile ("reti"); // enables global interrupt flag
 }
 
-extern void main_heartbeat(void); ///////////
-extern void display_kernel_version(void); ///////////////////
+
 static uint8_t check_stack_for_overflow(void)
 {
     if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return K_ERR_STACK_OVERFLOW;
