@@ -6,21 +6,21 @@
 
 typedef struct thread_t
 {
-    register_t *stack_pointer; /* must be first field because of embedded assembly */
-    register_t *stack_bottom;
-    uint8_t state;
-    uint16_t wait_roundabouts;
-    thread_address_t id;
-    struct thread_t *next;
+  register_t *stack_pointer; /* must be first field because of embedded assembly */
+  register_t *stack_bottom;
+  uint8_t state;
+  uint16_t wait_roundabouts;
+  thread_address_t id;
+  struct thread_t *next;
 }thread_t;
 
 
 typedef struct thread_control_block_t
 {
-    thread_t *current_thread;  /* must be first field because of embedded assembly */
-    thread_t *prev_thread;
-    uint8_t active_threads; /* = not deleted */
-    thread_t thread[CONFIG_NUM_OF_THREADS];
+  thread_t *current_thread;  /* must be first field because of embedded assembly */
+  thread_t *prev_thread;
+  uint8_t active_threads; /* = not deleted */
+  thread_t thread[CONFIG_NUM_OF_THREADS];
 }thread_control_block_t;
 
 static thread_control_block_t tcb = {0};
@@ -50,6 +50,18 @@ static void sort_thread_list_descending(void);
 #define SWITCH_THREAD() TIMER0_COMP_vect()
 #endif
 
+
+/*
+(R26;R27) = X (R28;R29) = Y (R30;R31) = Z
+lds R26, tcb      -> Load r26 with the contents of data space location tcb(e.g. 0x0237)
+ld	r31, X+       -> Load r31 with data space loc. where X points to(X post inc)
+out __SP_L__, R31 -> write the value of R31 to memory location __SP_L__(0x3d)
+uint8_t *X =  tcb.current_thread;
+R31 = (*X)++;
+uint16_t *SP = (uint8_t)R31;
+R31 = *X;
+SP = R31<<8;
+*/
 #define RESTORE_CONTEXT() \
     asm volatile(" \
                 lds R26, tcb       \n\
@@ -201,8 +213,10 @@ void TIMER2_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
 void TIMER2_COMP_vect( void )
 
 #elif TIMER_USED == T0
+
 void TIMER0_COMP_vect( void ) __attribute__ ( ( signal, naked ) );
 void TIMER0_COMP_vect( void )
+
 #endif
 {
     // global interrupt flag is disabled
@@ -214,8 +228,8 @@ void TIMER0_COMP_vect( void )
     asm volatile ("reti"); // enables global interrupt flag
 }
 
-extern void main_heartbeat(void); ///////////
-extern void display_kernel_version(void); ///////////////////
+extern void main_heartbeat(void); 
+extern void display_kernel_version(void);
 static uint8_t check_stack_for_overflow(void)
 {
     if(*(tcb.current_thread->stack_bottom + 1) != 0xBE || *(tcb.current_thread->stack_bottom) != 0xEF) return K_ERR_STACK_OVERFLOW;
@@ -484,7 +498,7 @@ k_error_t register_thread(const thread_address_t thread_addr,  register_t * cons
     if(stack_size < CONFIG_MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
     if(tcb.active_threads > 0){
         if(check_if_stack_is_already_registered(stack_start) == K_ERR_ALREADY_REGISTERED_STACK) return K_ERR_ALREADY_REGISTERED_STACK;
-        /* implicitly prohibiting multiple instances of the same thread because those instances should only use one to work correctly */
+        /* implicitly prohibiting multiple instances of the same thread because those instances should only use one stack to work correctly */
     }
 
     tcb.current_thread = &tcb.thread[tcb.active_threads];
@@ -497,7 +511,7 @@ k_error_t register_thread(const thread_address_t thread_addr,  register_t * cons
         .state = READY,
         .wait_roundabouts = 0,
         .id = thread_addr,
-        .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. thread_number=NUM_OF_THREADS case is cought by at the start of function
+        .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. thread_number=NUM_OF_THREADS case is cought at the start of function
         };
     
     init_stack(tcb.current_thread);

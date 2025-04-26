@@ -7,6 +7,10 @@
 
 static void set_gpio_to_input(void);
 static void activate_pullup_resistors();
+static void deactivate_pullup_resistors(void);
+static void set_gpio_to_output_low(void);
+
+
 void button_init_device(void)
 {
     set_gpio_to_input();
@@ -32,8 +36,6 @@ uint8_t button_get_state(uint8_t button)
     else return ERR_INVALID_BUTTON;
 }
 
-static void deactivate_pullup_resistors(void);
-static void set_gpio_to_output_low(void);
 k_error_t button_deactivate_buttons(void)
 {
     if(check_device_ownership(DEV_BUTTON) == SAME_OWNER){
