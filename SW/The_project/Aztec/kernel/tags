@@ -1,0 +1,142 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/dani/sajat/Villamosmernok/Sajat_projektek/fejlesztőpanel/Application_rep/SW/The_project/Aztec/kernel/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	//
+CONFIG_K_LOG_ENTRY_LENGTH_BYTES	kernel_config.h	/^#define CONFIG_K_LOG_ENTRY_LENGTH_BYTES /;"	d
+CONFIG_K_LOG_ENTRY_NUM	kernel_config.h	/^#define CONFIG_K_LOG_ENTRY_NUM /;"	d
+CONFIG_MAX_THREADS	kernel_config.h	/^#define CONFIG_MAX_THREADS /;"	d
+CONFIG_MIN_STACK_SIZE	kernel_config.h	/^#define CONFIG_MIN_STACK_SIZE /;"	d
+CONFIG_NUM_OF_THREADS	kernel_config.h	/^#define CONFIG_NUM_OF_THREADS /;"	d
+CONFIG_SYSTEM_TICK_IN_US	kernel_config.h	/^#define CONFIG_SYSTEM_TICK_IN_US /;"	d
+DELETED	kernel.h	/^#define DELETED /;"	d
+DEVICE_COUNT	kernel.h	/^    DEVICE_COUNT$/;"	e	enum:DEVICE_IDS
+DEVICE_IDS	kernel.h	/^enum DEVICE_IDS$/;"	g
+DEV_ADC	kernel.h	/^    DEV_ADC,$/;"	e	enum:DEVICE_IDS
+DEV_BUTTON	kernel.h	/^    DEV_BUTTON,$/;"	e	enum:DEVICE_IDS
+DEV_BUZZER	kernel.h	/^    DEV_BUZZER,$/;"	e	enum:DEVICE_IDS
+DEV_LCD	kernel.h	/^    DEV_LCD,$/;"	e	enum:DEVICE_IDS
+DEV_LCD_LIGHT	kernel.h	/^    DEV_LCD_LIGHT,$/;"	e	enum:DEVICE_IDS
+DEV_LED1	kernel.h	/^    DEV_LED1,$/;"	e	enum:DEVICE_IDS
+DEV_LED2	kernel.h	/^    DEV_LED2,$/;"	e	enum:DEVICE_IDS
+DEV_LED3	kernel.h	/^    DEV_LED3,$/;"	e	enum:DEVICE_IDS
+DEV_LED4	kernel.h	/^    DEV_LED4,$/;"	e	enum:DEVICE_IDS
+DEV_UART	kernel.h	/^    DEV_UART,$/;"	e	enum:DEVICE_IDS
+DIFFERENT_OWNER	kernel.h	/^#define DIFFERENT_OWNER /;"	d
+EMPTY	kernel.c	/^#define EMPTY /;"	d	file:
+F_CPU	kernel_config.h	/^#define F_CPU /;"	d
+HALT_WAIT_TIMER	kernel.c	/^#define HALT_WAIT_TIMER(/;"	d	file:
+ISR	kernel.c	/^ISR(TIMER1_COMPA_vect)$/;"	f
+KERNEL_CONFIG_H	kernel_config.h	/^#define KERNEL_CONFIG_H$/;"	d
+KERNEL_ENTER_ATOMIC	kernel.h	/^#define KERNEL_ENTER_ATOMIC(/;"	d
+KERNEL_ERRORS	kernel_error_handling.h	/^enum KERNEL_ERRORS$/;"	g
+KERNEL_ERROR_HANDLING_H	kernel_error_handling.h	/^#define KERNEL_ERROR_HANDLING_H$/;"	d
+KERNEL_EXIT_ATOMIC	kernel.h	/^#define KERNEL_EXIT_ATOMIC(/;"	d
+KERNEL_H	kernel.h	/^#define KERNEL_H$/;"	d
+KERNEL_LOGGING_H	kernel_logging.h	/^#define KERNEL_LOGGING_H$/;"	d
+KERNEL_VERSION	kernel.h	/^#define KERNEL_VERSION /;"	d
+K_ERR_ALREADY_REGISTERED_STACK	kernel_error_handling.h	/^    K_ERR_ALREADY_REGISTERED_STACK,$/;"	e	enum:KERNEL_ERRORS
+K_ERR_INVALID_DEVICE_ACCESS	kernel_error_handling.h	/^    K_ERR_INVALID_DEVICE_ACCESS,$/;"	e	enum:KERNEL_ERRORS
+K_ERR_INVALID_STACKSIZE	kernel_error_handling.h	/^    K_ERR_INVALID_STACKSIZE,$/;"	e	enum:KERNEL_ERRORS
+K_ERR_MULTIPLE_THREADS_IN_SYSTEM	kernel_error_handling.h	/^    K_ERR_MULTIPLE_THREADS_IN_SYSTEM,$/;"	e	enum:KERNEL_ERRORS
+K_ERR_NO_AVAILABLE_THREAD	kernel_error_handling.h	/^    K_ERR_NO_AVAILABLE_THREAD$/;"	e	enum:KERNEL_ERRORS
+K_ERR_STACK_OVERFLOW	kernel_error_handling.h	/^    K_ERR_STACK_OVERFLOW,$/;"	e	enum:KERNEL_ERRORS
+K_ERR_THREAD_NOT_FOUND	kernel_error_handling.h	/^    K_ERR_THREAD_NOT_FOUND,$/;"	e	enum:KERNEL_ERRORS
+K_ERR_THREAD_NUM_OUT_OF_BOUNDS	kernel_error_handling.h	/^    K_ERR_THREAD_NUM_OUT_OF_BOUNDS,$/;"	e	enum:KERNEL_ERRORS
+MAX_MS_DELAY	kernel.c	/^#define MAX_MS_DELAY /;"	d	file:
+MAX_US_TICK	kernel.c	/^    #define MAX_US_TICK /;"	d	file:
+MIN_US_TICK	kernel.c	/^#define MIN_US_TICK /;"	d	file:
+NO_ERROR	kernel_error_handling.h	/^    NO_ERROR = 0x80u,$/;"	e	enum:KERNEL_ERRORS
+NO_OWNER	kernel.h	/^#define NO_OWNER /;"	d
+READY	kernel.h	/^#define READY /;"	d
+RESET_SYSTICK_TIMER	kernel.c	/^#define RESET_SYSTICK_TIMER(/;"	d	file:
+RESTORE_CONTEXT	kernel.c	/^#define RESTORE_CONTEXT(/;"	d	file:
+RESUME_WAIT_TIMER	kernel.c	/^#define RESUME_WAIT_TIMER(/;"	d	file:
+RUNNING	kernel.h	/^#define RUNNING /;"	d
+SAME_OWNER	kernel.h	/^#define SAME_OWNER /;"	d
+STORE_CONTEXT	kernel.c	/^#define STORE_CONTEXT(/;"	d	file:
+SWITCH_THREAD	kernel.c	/^#define SWITCH_THREAD(/;"	d	file:
+T0	kernel_config.h	/^#define T0 /;"	d
+T1	kernel_config.h	/^#define T1 /;"	d
+T2	kernel_config.h	/^#define T2 /;"	d
+T3	kernel_config.h	/^#define T3 /;"	d
+TIMER2_COMP_vect	kernel.c	/^void TIMER2_COMP_vect( void )$/;"	f	typeref:typename:void
+TIMER_USED	kernel_config.h	/^#define TIMER_USED /;"	d
+WAITING	kernel.h	/^#define WAITING /;"	d
+__anon595369bd0108	kernel_logging.c	/^{$/;"	s	file:
+__anon595369bd0208	kernel_logging.c	/^    {$/;"	s	struct:__anon595369bd0108	file:
+active_threads	kernel.c	/^  uint8_t active_threads; \/* = not deleted *\/$/;"	m	struct:thread_control_block_t	typeref:typename:uint8_t	file:
+check_device_ownership	kernel.c	/^uint8_t check_device_ownership(const uint8_t requested_device)$/;"	f	typeref:typename:uint8_t
+check_if_stack_is_already_registered	kernel.c	/^static k_error_t check_if_stack_is_already_registered(register_t * const stack_bottom)$/;"	f	typeref:typename:k_error_t	file:
+check_stack_for_overflow	kernel.c	/^static uint8_t check_stack_for_overflow(void)$/;"	f	typeref:typename:uint8_t	file:
+current_thread	kernel.c	/^  thread_t *current_thread;  \/* must be first field because of embedded assembly *\/$/;"	m	struct:thread_control_block_t	typeref:typename:thread_t *	file:
+device	kernel.c	/^device_t device[DEVICE_COUNT] = {0}; \/* initialized data field is initialzed here implicitly to/;"	v	typeref:typename:device_t[]
+device_id_t	kernel.h	/^typedef uint8_t device_id_t; \/\/ valid IDs are stored in DEVICE_IDS enum$/;"	t	typeref:typename:uint8_t
+device_t	kernel.c	/^typedef struct device_t$/;"	s	file:
+device_t	kernel.c	/^}device_t;$/;"	t	typeref:struct:device_t	file:
+disable_systick	kernel.c	/^void disable_systick(void)$/;"	f	typeref:typename:void
+entries	kernel_logging.c	/^    }entries[CONFIG_K_LOG_ENTRY_NUM];   $/;"	m	struct:__anon595369bd0108	typeref:struct:__anon595369bd0108::__anon595369bd0208[]	file:
+entry	kernel_logging.c	/^        char entry[CONFIG_K_LOG_ENTRY_LENGTH_BYTES];$/;"	m	struct:__anon595369bd0108::__anon595369bd0208	typeref:typename:char[]	file:
+exit_	kernel.c	/^void exit_(void)$/;"	f	typeref:typename:void
+get_num_of_threads	kernel.c	/^uint8_t get_num_of_threads(void)$/;"	f	typeref:typename:uint8_t
+get_thread_state	kernel.c	/^k_error_t get_thread_state(const thread_address_t th_addr)$/;"	f	typeref:typename:k_error_t
+get_uptime	kernel.c	/^uint32_t get_uptime(void)$/;"	f	typeref:typename:uint32_t
+halt_system	kernel.c	/^void halt_system(void)$/;"	f	typeref:typename:void
+id	kernel.c	/^  thread_address_t id;$/;"	m	struct:thread_t	typeref:typename:thread_address_t	file:
+init_device_ownerships	kernel.c	/^static void init_device_ownerships(void)$/;"	f	typeref:typename:void	file:
+init_stack	kernel.c	/^static void init_stack(thread_t *t)$/;"	f	typeref:typename:void	file:
+init_system_ticking	kernel.c	/^static uint8_t init_system_ticking(void)$/;"	f	typeref:typename:uint8_t	file:
+init_wait_timer	kernel.c	/^void init_wait_timer(void)$/;"	f	typeref:typename:void
+initialized	kernel.c	/^    uint8_t initialized;$/;"	m	struct:device_t	typeref:typename:uint8_t	file:
+insert_stack_overflow_detection_bytes	kernel.c	/^static void insert_stack_overflow_detection_bytes(thread_t *t)$/;"	f	typeref:typename:void	file:
+k_error_t	kernel_error_handling.h	/^typedef uint8_t k_error_t;$/;"	t	typeref:typename:uint8_t
+kernel_log	kernel_logging.c	/^static klog_t kernel_log = {0};$/;"	v	typeref:typename:klog_t	file:
+kernel_panic	kernel_error_handling.c	/^void kernel_panic(void)$/;"	f	typeref:typename:void
+klog_init	kernel_logging.c	/^void klog_init(k_error_t (*rec_func)(const char *))$/;"	f	typeref:typename:void
+klog_log	kernel_logging.c	/^void klog_log(const char *log_msg)$/;"	f	typeref:typename:void
+klog_print	kernel_logging.c	/^k_error_t klog_print(void)$/;"	f	typeref:typename:k_error_t
+klog_t	kernel_logging.c	/^}klog_t;$/;"	t	typeref:struct:__anon595369bd0108	file:
+lease	kernel.c	/^k_error_t lease(const uint8_t requested_device)$/;"	f	typeref:typename:k_error_t
+link_thread_list	kernel.c	/^static void link_thread_list(void)$/;"	f	typeref:typename:void	file:
+load	kernel.c	/^k_error_t load(const thread_address_t thread_addr,  register_t * const stack_start, const stack_/;"	f	typeref:typename:k_error_t
+make_threadlist_circular	kernel.c	/^static void make_threadlist_circular(void)$/;"	f	typeref:typename:void	file:
+ms_to_timerval	kernel.c	/^uint16_t ms_to_timerval(uint16_t ms)$/;"	f	typeref:typename:uint16_t
+next	kernel.c	/^  struct thread_t *next;$/;"	m	struct:thread_t	typeref:struct:thread_t *	file:
+owner	kernel.c	/^    thread_t *owner;$/;"	m	struct:device_t	typeref:typename:thread_t *	file:
+prev_thread	kernel.c	/^  thread_t *prev_thread;$/;"	m	struct:thread_control_block_t	typeref:typename:thread_t *	file:
+printing_func	kernel_logging.c	/^static k_error_t (*printing_func)(const char *); \/\/ Holds the printing function, specified by /;"	v	typeref:typename:k_error_t (*)(const char *)	file:
+r_index	kernel_logging.c	/^    uint8_t r_index;$/;"	m	struct:__anon595369bd0108	typeref:typename:uint8_t	file:
+reboot	kernel.c	/^void reboot(void)$/;"	f	typeref:typename:void
+register_device	kernel.c	/^k_error_t register_device(void (*driver_init) (void), uint8_t dev)$/;"	f	typeref:typename:k_error_t
+register_t	kernel.h	/^typedef uint8_t register_t;$/;"	t	typeref:typename:uint8_t
+register_thread	kernel.c	/^k_error_t register_thread(const thread_address_t thread_addr,  register_t * const stack_start, c/;"	f	typeref:typename:k_error_t
+release	kernel.c	/^k_error_t release(const uint8_t requested_device)$/;"	f	typeref:typename:k_error_t
+release_owned_devices	kernel.c	/^static void release_owned_devices(void)$/;"	f	typeref:typename:void	file:
+remove_curr_thread_from_list	kernel.c	/^static void remove_curr_thread_from_list(void)$/;"	f	typeref:typename:void	file:
+schedule_next_thread	kernel.c	/^static void schedule_next_thread(void)$/;"	f	typeref:typename:void	file:
+signal_morse_sos_forever	kernel_error_handling.c	/^static void signal_morse_sos_forever()$/;"	f	typeref:typename:void	file:
+sort_thread_list_descending	kernel.c	/^static void sort_thread_list_descending(void)$/;"	f	typeref:typename:void	file:
+stack_bottom	kernel.c	/^  register_t *stack_bottom;$/;"	m	struct:thread_t	typeref:typename:register_t *	file:
+stack_pointer	kernel.c	/^  register_t *stack_pointer; \/* must be first field because of embedded assembly *\/$/;"	m	struct:thread_t	typeref:typename:register_t *	file:
+stack_size_t	kernel.h	/^typedef uint16_t stack_size_t;$/;"	t	typeref:typename:uint16_t
+start_os	kernel.c	/^k_error_t start_os(void)$/;"	f	typeref:typename:k_error_t
+start_scheduling	kernel.c	/^static void start_scheduling(void)$/;"	f	typeref:typename:void	file:
+state	kernel.c	/^  uint8_t state;$/;"	m	struct:thread_t	typeref:typename:uint8_t	file:
+tcb	kernel.c	/^static thread_control_block_t tcb = {0};$/;"	v	typeref:typename:thread_control_block_t	file:
+thread	kernel.c	/^  thread_t thread[CONFIG_NUM_OF_THREADS];$/;"	m	struct:thread_control_block_t	typeref:typename:thread_t[]	file:
+thread_address_t	kernel.h	/^typedef void (*thread_address_t)(void);$/;"	t	typeref:typename:void (*)(void)
+thread_control_block_t	kernel.c	/^typedef struct thread_control_block_t$/;"	s	file:
+thread_control_block_t	kernel.c	/^}thread_control_block_t;$/;"	t	typeref:struct:thread_control_block_t	file:
+thread_t	kernel.c	/^typedef struct thread_t$/;"	s	file:
+thread_t	kernel.c	/^}thread_t;$/;"	t	typeref:struct:thread_t	file:
+uptime_in_quanta	kernel.c	/^static uint64_t uptime_in_quanta = 0;$/;"	v	typeref:typename:uint64_t	file:
+w_index	kernel_logging.c	/^    uint8_t w_index;$/;"	m	struct:__anon595369bd0108	typeref:typename:uint8_t	file:
+wait_list	kernel.c	/^  thread_t *wait_list;$/;"	m	struct:thread_control_block_t	typeref:typename:thread_t *	file:
+wait_ms	kernel.c	/^void wait_ms(uint16_t ms)$/;"	f	typeref:typename:void
+wait_value	kernel.c	/^  uint16_t wait_value;$/;"	m	struct:thread_t	typeref:typename:uint16_t	file:

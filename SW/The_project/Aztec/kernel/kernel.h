@@ -32,7 +32,11 @@ AVR stuff:
 #define KERNEL_VERSION "v8.1"
 
 #define KERNEL_ENTER_ATOMIC() cli() 
-#define KERNEL_EXIT_ATOMIC() sei()
+#define KERNEL_EXIT_ATOMIC()  sei()
+#define KERNEL_HALT_SCHEDULING \
+      do{                      \
+        /* HALTOLNI */ \
+      while(0); 
 
 /* THREAD STATES */
 #define RUNNING ('X')
@@ -53,7 +57,6 @@ extern k_error_t register_thread(const thread_address_t thread_addr, register_t 
 
 extern k_error_t load(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size); // Tries to insert the given thread ahead of the caller NOTE: does not check for supplied stack ownership
 extern void exit_(void);  // Threads can exit from being scheduled and run again.
-extern void wait_us(const uint32_t us);     // wait functions get less precise the shorter the requested wait. The number of active threads and a longer systick worsens accuracy
 extern void wait_ms(const uint16_t ms);     // If there is a huge (~1min) delay and most of the threads exit during this time, the instance of the delay can become highly inaccurate
 extern uint32_t get_uptime(void);           // returns the seconds passed since bootup
 extern k_error_t release(const uint8_t requested_device);               // changes the device's state to NO_OWNER if caller thread owns the device, else K_ERR_INVALID_DEVICE_ACCESS

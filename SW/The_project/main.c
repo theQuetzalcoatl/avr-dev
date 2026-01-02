@@ -10,22 +10,40 @@
 
 /************************/
 
+register_t heartbeat_stack2[CONFIG_MIN_STACK_SIZE+130];
+void main_heartbeat2(void)
+{
+    lease(DEV_LED3);
+    for(;;){
+        led_3_toggle();
+//        wait_ms(100);
+        _delay_ms(100);
+    }
+    release(DEV_LED2);
+}
 
-register_t kv_stack[CONFIG_MIN_STACK_SIZE + 20];
+register_t kv_stack[CONFIG_MIN_STACK_SIZE + 160];
 void display_kernel_version(void)
 {
     lease(DEV_LCD);
     lease(DEV_LCD_LIGHT);
+    lease(DEV_LED3);
     lcd_turn_backligh_on();
     lcd_move_cursor(4,1);
     lcd_print("Aztec "KERNEL_VERSION" ");
     wait_ms(2000);
     lcd_send_command(LCD_CLEAR);
-    load(main_heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
+    if(NO_ERROR != load(main_heartbeat, heartbeat_stack, sizeof(heartbeat_stack)))
+      PORTC |= 1<<LED3;
+    if(NO_ERROR != load(main_heartbeat2, heartbeat_stack2, sizeof(heartbeat_stack2)))
+      PORTC |= 1<<LED3;
+
+    release(DEV_LED3);
     exit_();  // exiting without releasing the LCD -> kernel takes care of it
 }
 
 /***********************************************************************/
+
 
 #define PARENT_MENU  (15u)
 #define PRESENT_MENU (16u)
@@ -142,7 +160,7 @@ static uint16_t play_gta(void)
 }
 
 
-register_t menu_stack[CONFIG_MIN_STACK_SIZE + 200];
+register_t menu_stack[CONFIG_MIN_STACK_SIZE + 300];
 void menu(void)
 {
     wait_ms(1000);
@@ -290,15 +308,18 @@ int main(void)
     register_device(lcd_init_backlight, DEV_LCD_LIGHT);
     keypad_init_device(); // devices need not be registered by the kernel
 
-    register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
-    register_thread(menu, menu_stack, sizeof(menu_stack));
-    register_thread(lcd_backlight_monitor_main, lcd_backlight_monitor_stack, sizeof(lcd_backlight_monitor_stack));
+//    register_thread(display_kernel_version, kv_stack, sizeof(kv_stack));
+      register_thread(main_heartbeat, heartbeat_stack, sizeof(heartbeat_stack));
+      register_thread(main_heartbeat2, heartbeat_stack2, sizeof(heartbeat_stack2));
+//    register_thread(menu, menu_stack, sizeof(menu_stack));
+//    register_thread(lcd_backlight_monitor_main, lcd_backlight_monitor_stack, sizeof(lcd_backlight_monitor_stack));
+//    if(register_thread(main_heartbeat, heartbeat_stack, sizeof(heartbeat_stack)) == NO_ERROR){
+//      klog_init(uart_puts);
 
-    klog_init(uart_puts);
+//      klog_log("OH OOH, BIG PROBLEM");
 
-    klog_log("OH OOH, BIG PROBLEM");
-
-    start_os();
+      start_os();
+//    }
 
     while(1){;} // just in case
  
@@ -309,6 +330,7 @@ int main(void)
 /***********************************************************************/
 
 /* user defined kernel panic, overwrites the default kernel one */
+#if 0
 void kernel_panic(void)
 {
     cli();
@@ -335,3 +357,4 @@ void kernel_panic(void)
         _delay_ms(500);
     }
 }
+#endif

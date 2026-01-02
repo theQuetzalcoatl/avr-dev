@@ -8,7 +8,7 @@
 #define T1 (1u)
 #define T2 (2u)
 #define T3 (3u)
-#define TIMER_USED T2 /* NOTE: only T0 and T1 is implemented yet */
+#define TIMER_USED T2 /* NOTE: only T0 and T2 is implemented yet */
 
     /* THREADS */
 #define CONFIG_MAX_THREADS (25u)

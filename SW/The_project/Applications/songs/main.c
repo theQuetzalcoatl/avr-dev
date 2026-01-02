@@ -16,7 +16,7 @@
 #define Eb6 (1244u)
 #define G6 (1567u)
 
-register_t song_stack[CONFIG_MIN_STACK_SIZE + 20];
+register_t song_stack[CONFIG_MIN_STACK_SIZE + 40];
 
 
 void tetris(void)

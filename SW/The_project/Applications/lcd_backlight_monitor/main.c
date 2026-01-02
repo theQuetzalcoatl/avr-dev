@@ -2,7 +2,7 @@
 
 #define BACKLIGHT_ON_DURATION_SEC (10u)
 
-register_t lcd_backlight_monitor_stack[CONFIG_MIN_STACK_SIZE+28];
+register_t lcd_backlight_monitor_stack[CONFIG_MIN_STACK_SIZE+68];
 void lcd_backlight_monitor_main(void)
 {
     wait_ms(100);

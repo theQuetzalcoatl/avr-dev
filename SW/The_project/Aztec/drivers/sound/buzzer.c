@@ -4,6 +4,8 @@
 
 static uint16_t prescaler = 8;
 
+static uint8_t check_frequency_boundaries(const uint16_t frequency_Hz);
+
 /* Device initialization */
 
 static void init_timer(void);
@@ -30,7 +32,6 @@ static void init_timer(void)
 
 /* Device functionalities */
 
-static uint8_t check_frequency_boundaries(const uint16_t frequency_Hz);
 k_error_t buzzer_buzz(const uint16_t frequency_Hz)
 {   
     if(check_device_ownership(DEV_BUZZER) == SAME_OWNER){

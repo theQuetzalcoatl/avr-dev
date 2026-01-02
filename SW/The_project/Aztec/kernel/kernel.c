@@ -1,7 +1,9 @@
 #include "../kernel/kernel.h"
 
-#if (CONFIG_NUM_OF_THREADS > CONFIG_MAX_THREADS || CONFIG_NUM_OF_THREADS == 0)
-    #error "Number of maximum threads shall not exceed 255. Also, there should be at least one thread."
+#if (CONFIG_NUM_OF_THREADS > CONFIG_MAX_THREADS)
+  #error "Number of maximum threads shall not exceed 255. Also, there should be at least one thread."
+#elif (CONFIG_NUM_OF_THREADS == 0)
+  #error "There must be at least one thread."
 #endif
 
 typedef struct thread_t
@@ -9,7 +11,7 @@ typedef struct thread_t
   register_t *stack_pointer; /* must be first field because of embedded assembly */
   register_t *stack_bottom;
   uint8_t state;
-  uint16_t wait_roundabouts;
+  uint16_t wait_value;
   thread_address_t id;
   struct thread_t *next;
 }thread_t;
@@ -19,6 +21,7 @@ typedef struct thread_control_block_t
 {
   thread_t *current_thread;  /* must be first field because of embedded assembly */
   thread_t *prev_thread;
+  thread_t *wait_list;
   uint8_t active_threads; /* = not deleted */
   thread_t thread[CONFIG_NUM_OF_THREADS];
 }thread_control_block_t;
@@ -30,7 +33,7 @@ static uint64_t uptime_in_quanta = 0;
  ** LOCAL FUNCTIONS
  *****************************/
 
-static void schedule_next_task(void);
+static void schedule_next_thread(void);
 static uint8_t check_stack_for_overflow(void);
 static void remove_curr_thread_from_list(void);
 static void release_owned_devices(void);
@@ -49,6 +52,12 @@ static void sort_thread_list_descending(void);
 #define RESET_SYSTICK_TIMER() TCNT0 = 0
 #define SWITCH_THREAD() TIMER0_COMP_vect()
 #endif
+
+#define HALT_WAIT_TIMER() do{ TCCR1B &= ~(1<<CS12 | 1<<CS11 | 1<<CS10); }while(0); 
+#define RESUME_WAIT_TIMER() do{ \
+                              TCCR1B &= ~(1<<CS11 | 1<<CS10); \
+                              TCCR1B |= (1<<CS12); \
+                            }while(0); 
 
 
 /*
@@ -154,6 +163,8 @@ extern void kernel_panic(void);
 
 #define MIN_US_TICK (300u) // this number is based on the fact that thread switching takes about 15 microsec(at 16 MHz)
 
+#define EMPTY NULL
+
 static uint8_t init_system_ticking(void)
 {
     const uint16_t prescaler = 256u;
@@ -168,7 +179,9 @@ static uint8_t init_system_ticking(void)
     val -= 1u;
 
 #if TIMER_USED == T2
-    if(val <= 255u) OCR2 = val;
+    if(val <= UINT_LEAST8_MAX) OCR2 = val;
+
+    TCCR2 = 0;
 
     TCCR2 |= 1<<WGM21;
     TCCR2 &= ~(1<<WGM20);
@@ -176,12 +189,12 @@ static uint8_t init_system_ticking(void)
     TCCR2 |= 1<<CS22;
     TCCR2 &= ~(1<<CS21 | 1<<CS20);
     
-    /* NOTE: don't forget to clear the timer reg and interrupt flag before starting the OS */
-
     TIMSK |= 1<<OCIE2;
 
 #elif TIMER_USED == T0
-    if(val <= 255u) OCR0 = val;
+    if(val <= UINT_LEAST8_MAX) OCR0 = val;
+
+    TCCR0 = 0;
 
     TCCR0 |= 1<<WGM01;
     TCCR0 &= ~(1<<WGM00);
@@ -189,10 +202,9 @@ static uint8_t init_system_ticking(void)
     TCCR0 |= 1<<CS02 | 1<<CS01;
     TCCR0 &= ~(1<<CS00);
     
-    /* NOTE: don't forget to clear the timer reg and interrupt flag before starting the OS */
-
     TIMSK |= 1<<OCIE0;
 #endif
+    /* NOTE: don't forget to clear the timer reg and interrupt flag before starting the OS */
     
     return NO_ERROR;
 }
@@ -221,8 +233,12 @@ void TIMER0_COMP_vect( void )
 {
     // global interrupt flag is disabled
     STORE_CONTEXT();
-    if(K_ERR_STACK_OVERFLOW == check_stack_for_overflow()) kernel_panic();
-    schedule_next_task();
+    if(K_ERR_STACK_OVERFLOW == check_stack_for_overflow()){
+      DDRC |= 1<<LED_D4;
+      PORTC |= 1<<LED_D4;
+      kernel_panic();
+    }
+    schedule_next_thread();
     ++uptime_in_quanta;
     RESTORE_CONTEXT();
     asm volatile ("reti"); // enables global interrupt flag
@@ -236,13 +252,12 @@ static uint8_t check_stack_for_overflow(void)
 }
 
 
-static void schedule_next_task(void)
+static void schedule_next_thread(void)
 {
     switch(tcb.current_thread->state){
-        case WAITING: // we are here because of a regular systick interrupt
-            --tcb.current_thread->wait_roundabouts;
-            tcb.prev_thread = tcb.current_thread;
-            if(tcb.current_thread->wait_roundabouts == 0) tcb.current_thread->state = READY;
+        case WAITING: 
+            tcb.current_thread = tcb.prev_thread; /* Dirty trick, since at this point(beacusee of wait_ms()) prev thread points to the to be scheduled thread
+                                                     by making the current thread equal to the prev one, later here we switch to the proper curr thread */
             break;
 
         case RUNNING: // we are here because of a regular systick interrupt
@@ -255,13 +270,28 @@ static void schedule_next_task(void)
 
         case READY:
         default:
+            DDRC |= 1<<LED_D5;
+            PORTC |= 1<<LED_D5;
             kernel_panic();
     }
     tcb.current_thread = tcb.current_thread->next;
 
     if(tcb.current_thread->state == READY) tcb.current_thread->state = RUNNING;
-    else if(tcb.current_thread->state == WAITING); /* do nothing, new thread is waiting */
-    else kernel_panic();
+    else if(tcb.current_thread->state == WAITING){
+      DDRC |= 1<<LED_D5;
+      PORTC |= 1<<LED_D5;
+      kernel_panic();
+    }
+    else if(tcb.current_thread->state == RUNNING){
+      DDRC |= 1<<LED_D5;
+      PORTC |= 1<<LED_D5;
+      kernel_panic();
+    }
+    else if(tcb.current_thread->state == DELETED){
+      DDRC |= 1<<LED_D7;
+      PORTC |= 1<<LED_D7;
+      kernel_panic();
+    }
 }
 
 
@@ -278,6 +308,39 @@ void disable_systick(void)
 }
 
 
+void init_wait_timer(void)
+{
+  TCCR1A = 0;
+  TCCR1A &= ~(1<<COM1A1 | 1<<COM1A0 | 1<<COM1B1 | 1<<COM1B0 | 1<<COM1C1 | 1<<COM1C0); // Normal port (OCnA) operation
+  TCCR1A |= (1<<WGM11); // Fast PWM mode
+
+  TCCR1B = 0;
+  TCCR1B |= (1<<WGM13); // Fast PWM mode
+  TCCR1B |= (1<<WGM12); // Fast PWM mode
+
+  const uint16_t prescaler = 256u;
+  const uint32_t us_tick = 10000 * 2u; // the formula calculates the period, but we want half of that so it gets multiplied
+
+  uint32_t val = F_CPU/100000u; // 10^5 is used instead of 10^6(to make sec to usec) but I keep the extra digit to be able to use rounding, after that, it is devided by 10, thus 10^6 in total
+  val *= (uint32_t)us_tick;
+  val /= 2u;
+  val /= prescaler;
+  val += 5u; // rounding
+  val /= 10u;
+  val -= 1u;
+
+  if(val <= UINT_LEAST16_MAX){
+//   OCR1AH = 60 >> 8;//val >> 8;
+//   OCR1AL = 60;//val; 
+  }
+  OCR1A = 65000;
+  ICR1 = 0xffff;
+
+  TIMSK |= 1<<OCIE1A; /* only the OCR1A value will trigger an interrupt */
+}
+
+
+
 /*************************************************
  **             SYSTEM CALLS 
  ************************************************/
@@ -285,261 +348,374 @@ void disable_systick(void)
 
 void reboot(void)
 {
-    KERNEL_ENTER_ATOMIC();
-    disable_systick();
-    asm volatile("jmp 0x00"); // 0x00 is the reset vector
+  KERNEL_ENTER_ATOMIC();
+  disable_systick();
+  asm volatile("jmp 0x00"); // 0x00 is the reset vector
 }
 
 
 void halt_system(void)
 {
-    KERNEL_ENTER_ATOMIC();
-    disable_systick();
-    while(1){;}
+  KERNEL_ENTER_ATOMIC();
+  disable_systick();
+  cli();
+  while(1){;}
 }
 
 
 uint8_t get_num_of_threads(void)
 {
-    return tcb.active_threads;
+  return tcb.active_threads;
 }
 
 
 k_error_t load(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
 {
-    KERNEL_ENTER_ATOMIC();
+  KERNEL_ENTER_ATOMIC();
 
-    /* senity checks */
-    if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
-    if(stack_size < CONFIG_MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
+  /* senity checks */
+  if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+  if(stack_size < CONFIG_MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
 
-    bool already_used = false;
-    for(thread_t *th = tcb.current_thread->next; th != tcb.current_thread; th = th->next){
-        if(th->id == thread_addr || th->stack_bottom == stack_start){
-            already_used = true;
-            break;
-        }
+  bool already_used = false;
+  for(thread_t *th = tcb.current_thread->next; th != tcb.current_thread; th = th->next){
+    if(th->id == thread_addr || th->stack_bottom == stack_start){
+      already_used = true;
+      break;
     }
-    if(tcb.current_thread->id == thread_addr || tcb.current_thread->stack_bottom == stack_start) already_used = true; // take into account current thread
+  }
+  if(tcb.current_thread->id == thread_addr || tcb.current_thread->stack_bottom == stack_start) already_used = true; // take into account current thread
 
-    if(already_used){
-        KERNEL_EXIT_ATOMIC();
-        return K_ERR_MULTIPLE_THREADS_IN_SYSTEM;
-    }
-
-    already_used = true;
-
-    /* search for first deleted or non registered thread */
-    for(uint8_t i = 0; i < CONFIG_NUM_OF_THREADS; ++i){
-        if(tcb.thread[i].state == DELETED || tcb.thread[i].next == NULL || tcb.thread[i].state == 0){ /* DELETED -> was registered, NULL -> was never registered(requires init.-ing tcb to 0) */
-           tcb.thread[i] = \
-            (thread_t){
-            .stack_bottom = stack_start,
-            .stack_pointer = stack_start + stack_size - 1,
-            .state = READY,
-            .wait_roundabouts = 0,
-            .id = thread_addr,
-            };
-
-            /* inserting new thread ahead of current one */
-            tcb.thread[i].next = tcb.current_thread->next;
-            tcb.current_thread->next = &tcb.thread[i];
-
-            init_stack(&tcb.thread[i]);
-            ++tcb.active_threads;
-            already_used = false;
-
-            break;
-        }
-    }
+  if(already_used){
     KERNEL_EXIT_ATOMIC();
-    return (already_used) ? K_ERR_NO_AVAILABLE_THREAD : NO_ERROR;
+    return K_ERR_MULTIPLE_THREADS_IN_SYSTEM;
+  }
+
+  already_used = true;
+
+  /* search for first deleted or non registered thread */
+  for(uint8_t i = 0; i < CONFIG_NUM_OF_THREADS; ++i){
+    if(tcb.thread[i].state == DELETED || tcb.thread[i].next == NULL || tcb.thread[i].state == 0){ /* DELETED -> was registered, NULL -> was never registered(requires init.-ing tcb to 0) */
+      tcb.thread[i] = \
+                      (thread_t){
+                        .stack_bottom = stack_start,
+                          .stack_pointer = stack_start + stack_size - 1,
+                          .state = READY,
+                          .id = thread_addr,
+                      };
+
+      /* inserting new thread ahead of current one */
+      tcb.thread[i].next = tcb.current_thread->next;
+      tcb.current_thread->next = &tcb.thread[i];
+
+      init_stack(&tcb.thread[i]);
+      ++tcb.active_threads;
+      if(tcb.active_threads == 2) tcb.prev_thread = &tcb.thread[i];
+      if(tcb.active_threads == 3) tcb.prev_thread = &tcb.thread[i];
+      already_used = false;
+
+      break;
+    }
+  }
+  KERNEL_EXIT_ATOMIC();
+  return (already_used) ? K_ERR_NO_AVAILABLE_THREAD : NO_ERROR;
 }
 
 
 void exit_(void)
 {
-    release_owned_devices();
+  release_owned_devices();
 
+  KERNEL_ENTER_ATOMIC();
+  tcb.current_thread->state = DELETED;
+  --tcb.active_threads;
+
+  if(tcb.active_threads == 0) halt_system();
+
+  remove_curr_thread_from_list();
+  SWITCH_THREAD();
+}
+
+
+uint32_t ms_to_timerval(uint16_t ms)
+{
+  uint16_t prescaler = 256;
+  return ( ((uint32_t)ms*(F_CPU/1000)) / prescaler) + TCNT1; /* TODO: get prescaler in an elegant way */
+}
+
+/*
+  max overflow value:
+                   16000000
+           65535 * --------
+                     1000
+ 4095937 = ------------------ + 65535
+                  256
+
+63,499 ~ 64 = 4095937/65535 how many times the loop will take at maximum 
+
+                16000000
+            1 * --------
+                  1000
+ 62,5 = ----------------- + 0
+                  256
+  
+
+*/
+
+void wait_ms(uint16_t ms)
+{
+  if(tcb.active_threads == 1){
+    while(ms--) _delay_ms(1);
+    return;
+  }
+
+  KERNEL_ENTER_ATOMIC(); 
+  HALT_WAIT_TIMER();
+
+  uint32_t unbound_OCR1A = ms_to_timerval(ms); /* NOTE: what if the calculation turns out to be 0? */
+
+  while(unbound_OCR1A){
     KERNEL_ENTER_ATOMIC();
-    tcb.current_thread->state = DELETED;
-    --tcb.active_threads;
+    HALT_WAIT_TIMER();
+    /* NOTE: case when ms triggers larger than 16 bit value, remainder still written into OCR1A, triggering falsely - whole number into thread structure, ISR decrements it if > 0 */
+    if(unbound_OCR1A >= UINT16_MAX){
+      tcb.current_thread->wait_value = TCNT1-1; /* NOTE: TCNT1-1 simulates TCNT1+65535 */ /* TODO: do not tie the timerval to T1 */
+      unbound_OCR1A -= UINT16_MAX;
+    }
+    else{
+      tcb.current_thread->wait_value = unbound_OCR1A/2; /* NOTE: why the 2 though? */
+      unbound_OCR1A = 0;
+    } 
 
-    if(tcb.active_threads == 0) halt_system();
- 
-    remove_curr_thread_from_list();
+    remove_curr_thread_from_list(); /* NOTE: if last running thread goes waiting? - nothing, it doesnt reach this part of the code */
+    --tcb.active_threads;
+    tcb.current_thread->state = WAITING;
+
+    if(tcb.wait_list == EMPTY){
+      tcb.wait_list = tcb.current_thread;
+      tcb.wait_list->next = NULL;
+      TCCR1A &= ~(1<<WGM10 | 1<<WGM11); 
+      TCCR1B |= (1<<WGM12); 
+      TCCR1B &= ~(1<<WGM13); 
+      OCR1A = tcb.wait_list->wait_value; /* timer needs an initial compare value */
+      TCCR1A |= (1<<WGM11); // Fast PWM mode
+      TCCR1B |= (1<<WGM13); // Fast PWM mode
+      TCCR1B |= (1<<WGM12); // Fast PWM mode
+    }
+    else{
+      thread_t *t = tcb.wait_list;
+      for(; t->next; t = t->next){
+        if(t->next->wait_value > tcb.current_thread->wait_value){
+          break;
+        }
+      }
+      tcb.current_thread->next = t->next; /* NOTE: whether we are at end of somewhere in the the line it does not metter */ 
+      t->next = tcb.current_thread;
+      /* NOTE: ha wait_val kisebb mint a mostani OCR1A ,de nagyobb mint TCNT1 akkor mivan? */
+    }
+  
+//    if(OCR1A == 31250) PORTC |= 1<<LED_D7;
+//    else PORTC &= ~1<<LED_D7;
+
+    RESUME_WAIT_TIMER();
     SWITCH_THREAD();
+  }
+
+  KERNEL_EXIT_ATOMIC();
+}
+
+
+ISR(TIMER1_COMPA_vect) /* NOTE: timer at this point has not advanced due to the prescaler being 256 */
+{
+  HALT_WAIT_TIMER();
+  
+  DDRC |= 1<<LED_D5;
+  PORTC |= 1<<LED_D5;
+  thread_t **t = &tcb.wait_list;
+  thread_t *tmp = NULL;
+
+  while((*t) && (*t)->wait_value < TCNT1) t = &(*t)->next; /* NOTE: the (*t) check in theory shouldnt be necessary because there must be an acceptable wait_value in the list */
+
+  if(TCNT1 == 0 ) PORTC &= ~1<<LED_D5;
+  if((*t)->wait_value == 31250) PORTC |= 1<<LED_D7;
+
+  while((*t) && (*t)->wait_value == TCNT1){
+    tmp = *t;  
+    *t = (*t)->next; /* NOTE: *never* step the double pointer when removing an element */
+    tmp->next = tcb.current_thread->next;
+    tmp->state = READY;
+    tcb.current_thread->next = tmp;
+    ++tcb.active_threads;
+  }
+
+  /* NOTE: handle wait_list becoming NULL */
+  if(*t){ /* NOTE: optimize this out */
+    TCCR1A &= ~(1<<WGM10 | 1<<WGM11); 
+    TCCR1B |= (1<<WGM12); 
+    TCCR1B &= ~(1<<WGM13); 
+    OCR1A = (*t)->wait_value;
+    TCCR1A |= (1<<WGM11); // Fast PWM mode
+    TCCR1B |= (1<<WGM13); // Fast PWM mode
+    TCCR1B |= (1<<WGM12); // Fast PWM mode
+    RESUME_WAIT_TIMER();
+  }
+  else if(*t == NULL && tcb.wait_list != EMPTY){
+    TCCR1A &= ~(1<<WGM10 | 1<<WGM11); 
+    TCCR1B |= (1<<WGM12); 
+    TCCR1B &= ~(1<<WGM13); 
+    OCR1A = tcb.wait_list->wait_value;
+    TCCR1A |= (1<<WGM11); // Fast PWM mode
+    TCCR1B |= (1<<WGM13); // Fast PWM mode
+    TCCR1B |= (1<<WGM12); // Fast PWM mode
+    RESUME_WAIT_TIMER();
+  }
+  /* timer halting is implicitly handled at the start of the ISR */
+  else TCNT1 = 0;
 }
 
 
 static void remove_curr_thread_from_list(void)
 {
-    tcb.prev_thread->next = tcb.current_thread->next;
-}
-
-
-void wait_us(const uint32_t us)
-{
-    if(us != 0){
-        KERNEL_ENTER_ATOMIC();
-
-        uint32_t tmp = us/(CONFIG_SYSTEM_TICK_IN_US*tcb.active_threads);
-        if(tmp == 0) tcb.current_thread->wait_roundabouts = 1;
-        else if(tmp < (uint16_t)~0) tcb.current_thread->wait_roundabouts = tmp;
-        else tcb.current_thread->wait_roundabouts = ~0;
-        tcb.current_thread->state = WAITING;
-        thread_t volatile *curr = tcb.current_thread;
-
-        KERNEL_EXIT_ATOMIC();
-        
-        while(curr->state == WAITING){;}
-    }
-}
-
-
-void wait_ms(const uint16_t ms)
-{
-    wait_us((uint32_t)ms*1000);
+  tcb.prev_thread->next = tcb.current_thread->next;
 }
 
 
 uint32_t get_uptime(void)
 {
-    return uptime_in_quanta*CONFIG_SYSTEM_TICK_IN_US/1000000ul;
+  return uptime_in_quanta*CONFIG_SYSTEM_TICK_IN_US/1000000ul;
 }
 
 
 k_error_t start_os(void)
 {
-    KERNEL_ENTER_ATOMIC();
-    uint8_t ret = NO_ERROR;
+  KERNEL_ENTER_ATOMIC();
+  uint8_t ret = NO_ERROR;
 
-    if(tcb.active_threads == 0 || tcb.active_threads > CONFIG_NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+  if(tcb.active_threads == 0 || tcb.active_threads > CONFIG_NUM_OF_THREADS) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
 
-    ret = init_system_ticking();
-    if(ret != NO_ERROR) return ret;
+  init_wait_timer();
+  ret = init_system_ticking();
+  if(ret != NO_ERROR) return ret;
 
-    init_device_ownerships();
-    sort_thread_list_descending();
-    link_thread_list();
-    make_threadlist_circular();
+  init_device_ownerships();
+  sort_thread_list_descending();
+  link_thread_list();
+  make_threadlist_circular();
 
-    RESET_SYSTICK_TIMER();
+  RESET_SYSTICK_TIMER();
 #if TIMER_USED == T2
-    if(TIFR & (1<<OCF2)) TIFR |= 1<<OCF2;
+  if(TIFR & (1<<OCF2)) TIFR |= 1<<OCF2;
 #elif TIMER_USED == T0
-    if(TIFR & (1<<OCF0)) TIFR |= 1<<OCF0;
+  if(TIFR & (1<<OCF0)) TIFR |= 1<<OCF0;
 #endif
-    KERNEL_EXIT_ATOMIC();
-    start_scheduling();
+  KERNEL_EXIT_ATOMIC();
+  start_scheduling();
 
-    return ret;
+  return ret;
 }
 
 
 static void make_threadlist_circular(void)
 {
-    tcb.thread[tcb.active_threads-1].next = &tcb.thread[0];
+  tcb.thread[tcb.active_threads-1].next = &tcb.thread[0];
 }
 
 
 static void sort_thread_list_descending(void)
 {
-    thread_t temp = {0};
-    if(tcb.active_threads > 1){
-        // for now it is a simple bubblesort 
-        for(uint8_t i = 0; i < tcb.active_threads; ++i){
-            for(uint8_t ii = 0; ii < tcb.active_threads - i -1; ++ii){
-                if(tcb.thread[ii].id < tcb.thread[ii+1].id){
-                    temp = tcb.thread[ii];
-                    tcb.thread[ii] = tcb.thread[ii+1];
-                    tcb.thread[ii+1] = temp;
-                }
-            }
+  thread_t temp = {0};
+  if(tcb.active_threads > 1){
+    // for now it is a simple bubblesort 
+    for(uint8_t i = 0; i < tcb.active_threads; ++i){
+      for(uint8_t ii = 0; ii < tcb.active_threads - i -1; ++ii){
+        if(tcb.thread[ii].id < tcb.thread[ii+1].id){
+          temp = tcb.thread[ii];
+          tcb.thread[ii] = tcb.thread[ii+1];
+          tcb.thread[ii+1] = temp;
         }
+      }
     }
+  }
 }
 
 
 static void link_thread_list(void)
 {
-    for(uint8_t i = 0; i < tcb.active_threads-1; ++i) tcb.thread[i].next = &tcb.thread[i+1];
+  for(uint8_t i = 0; i < tcb.active_threads-1; ++i) tcb.thread[i].next = &tcb.thread[i+1];
 }
 
 
 k_error_t get_thread_state(const thread_address_t th_addr)
 {
 #if (CONFIG_NUM_OF_THREADS > 1)
-        uint8_t max = 0;
-        uint8_t min = CONFIG_NUM_OF_THREADS-1;
-        uint8_t middle = CONFIG_NUM_OF_THREADS / 2;
+  uint8_t max = 0;
+  uint8_t min = CONFIG_NUM_OF_THREADS-1;
+  uint8_t middle = CONFIG_NUM_OF_THREADS / 2;
 
-        if(tcb.thread[max].id == th_addr) return tcb.thread[max].state;
-        else if(tcb.thread[min].id == th_addr) return tcb.thread[min].state;
+  if(tcb.thread[max].id == th_addr) return tcb.thread[max].state;
+  else if(tcb.thread[min].id == th_addr) return tcb.thread[min].state;
 
-        for(; middle != max && middle != min; middle = (max + min)/2){
-            if(tcb.thread[middle].id == th_addr) return tcb.thread[middle].state;
-            else if(tcb.thread[middle].id > th_addr) max = middle;
-            else min = middle;
-            middle = (min + max)/2;
-        }
-        return K_ERR_THREAD_NOT_FOUND;
+  for(; middle != max && middle != min; middle = (max + min)/2){
+    if(tcb.thread[middle].id == th_addr) return tcb.thread[middle].state;
+    else if(tcb.thread[middle].id > th_addr) max = middle;
+    else min = middle;
+    middle = (min + max)/2;
+  }
+  return K_ERR_THREAD_NOT_FOUND;
 #else
-    return tcb.current_thread->state;
+  return tcb.current_thread->state;
 #endif
 }
 
 
 k_error_t register_thread(const thread_address_t thread_addr,  register_t * const stack_start, const stack_size_t stack_size)
 {
-    /* error checking */
-    if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
-    if(stack_size < CONFIG_MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
-    if(tcb.active_threads > 0){
-        if(check_if_stack_is_already_registered(stack_start) == K_ERR_ALREADY_REGISTERED_STACK) return K_ERR_ALREADY_REGISTERED_STACK;
-        /* implicitly prohibiting multiple instances of the same thread because those instances should only use one stack to work correctly */
-    }
+  /* error checking */
+  if(tcb.active_threads > CONFIG_NUM_OF_THREADS-1) return K_ERR_THREAD_NUM_OUT_OF_BOUNDS;
+  if(stack_size < CONFIG_MIN_STACK_SIZE) return K_ERR_INVALID_STACKSIZE;
+  if(tcb.active_threads > 0){
+    if(check_if_stack_is_already_registered(stack_start) == K_ERR_ALREADY_REGISTERED_STACK) return K_ERR_ALREADY_REGISTERED_STACK;
+    /* implicitly prohibiting multiple instances of the same thread because those instances should only use one stack to work correctly */
+  }
 
-    tcb.current_thread = &tcb.thread[tcb.active_threads];
+  tcb.current_thread = &tcb.thread[tcb.active_threads];
 
-    /* stack expands towards lower RAM addresses, array start at low adress, is indexed to higher --> bottom and top flipped */
-    *tcb.current_thread = \
-        (thread_t){
-        .stack_bottom = stack_start,
-        .stack_pointer = stack_start + stack_size - 1,
-        .state = READY,
-        .wait_roundabouts = 0,
-        .id = thread_addr,
-        .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. thread_number=NUM_OF_THREADS case is cought at the start of function
-        };
-    
-    init_stack(tcb.current_thread);
-    
-    ++tcb.active_threads;
+  /* stack expands towards lower RAM addresses, array start at low adress, is indexed to higher --> bottom and top flipped */
+  *tcb.current_thread = (thread_t){
+                          .stack_bottom = stack_start,
+                            .stack_pointer = stack_start + stack_size - 1,
+                            .state = READY,
+                            .id = thread_addr,
+                            .next = &tcb.thread[tcb.active_threads+1] // safe, because if thread_number=NUM_OF_THREADS-1 this pointer will be changed to the first thread. thread_number=NUM_OF_THREADS case is cought at the start of function
+                        };
 
-    return NO_ERROR;
+  init_stack(tcb.current_thread);
+
+  ++tcb.active_threads;
+
+  return NO_ERROR;
 }
 
 
 /* CONTEXT
 
-    PC[7:0]
-    PC[15:8]
-    R0
-    R1
-    ...
-    R31
-    SREG
-*/
+   PC[7:0]
+   PC[15:8]
+   R0
+   R1
+   ...
+   R31
+   SREG
+ */
 
 static void init_stack(thread_t *t)
 {
-    *t->stack_pointer = (uint16_t)t->id & (uint16_t)0x00ffu; --t->stack_pointer;
-    *t->stack_pointer = (uint16_t)(t->id)>>8u; --t->stack_pointer;
-    *t->stack_pointer = 0u; /* R0 */ --t->stack_pointer;
-    *t->stack_pointer = 0u; /* R1 */ --t->stack_pointer;
-    for(int i = 2; i <= 31; ++i, --t->stack_pointer) *t->stack_pointer = i; /* R2 - R31 */
-    *t->stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --t->stack_pointer;
+  *t->stack_pointer = (uint16_t)t->id & (uint16_t)0x00ffu; --t->stack_pointer;
+  *t->stack_pointer = (uint16_t)(t->id)>>8u; --t->stack_pointer;
+  *t->stack_pointer = 0u; /* R0 */ --t->stack_pointer;
+  *t->stack_pointer = 0u; /* R1 */ --t->stack_pointer;
+  for(int i = 2; i <= 31; ++i, --t->stack_pointer) *t->stack_pointer = i; /* R2 - R31 */
+  *t->stack_pointer = SREG | 0x80; /* SREG - with global interrupt enabled */ --t->stack_pointer;
 
     insert_stack_overflow_detection_bytes(t);   
 }
